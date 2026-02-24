@@ -22,15 +22,15 @@ export function EditStudentForm({ student, action }: Props) {
   const dateValue =
     student.start_date == null
       ? ""
-      : student.start_date instanceof Date
-        ? student.start_date.toISOString().slice(0, 10)
+      : (student.start_date as unknown) instanceof Date
+        ? (student.start_date as unknown as Date).toISOString().slice(0, 10)
         : String(student.start_date).slice(0, 10);
 
   const timeValue =
     student.start_time == null
       ? ""
-      : student.start_time instanceof Date
-        ? student.start_time.toTimeString().slice(0, 5)
+      : (student.start_time as unknown) instanceof Date
+        ? (student.start_time as unknown as Date).toTimeString().slice(0, 5)
         : typeof student.start_time === "string"
           ? student.start_time.slice(0, 5)
           : "";
