@@ -28,7 +28,7 @@ type Props = {
   initialSummary: string | null;
 };
 
-function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> }) {
+function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> | null }) {
   if (!editor) return null;
   return (
     <div className="flex flex-wrap gap-1 border-b border-zinc-200 bg-zinc-50 p-1 dark:border-zinc-700 dark:bg-zinc-800/50">
@@ -153,8 +153,12 @@ export function SessionSummaryEditor({ sessionId, studentId, initialSummary }: P
         className="overflow-hidden rounded-lg border border-zinc-300 bg-white dark:border-zinc-600 dark:bg-zinc-800"
         onBlur={handleBlur}
       >
-        <Toolbar editor={editor} />
-        <EditorContent editor={editor} />
+        {editor && (
+          <>
+            <Toolbar editor={editor} />
+            <EditorContent editor={editor} />
+          </>
+        )}
       </div>
     </div>
   );
