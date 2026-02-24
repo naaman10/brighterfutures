@@ -9,6 +9,21 @@ type Props = {
   action: (studentId: string, formData: FormData) => Promise<{ error?: string }>;
 };
 
+/** Normalize for type="date" input (YYYY-MM-DD). DB may return Date. */
+function toDateInputValue(val: unknown): string {
+  if (val == null) return "";
+  if (val instanceof Date) return val.toISOString().slice(0, 10);
+  return String(val).slice(0, 10);
+}
+
+/** Normalize for type="time" input (HH:MM). DB may return Date. */
+function toTimeInputValue(val: unknown): string {
+  if (val == null) return "";
+  if (val instanceof Date) return val.toTimeString().slice(0, 5);
+  if (typeof val === "string") return val.slice(0, 5);
+  return "";
+}
+
 export function EditStudentForm({ student, action }: Props) {
   const [error, setError] = useState<string | null>(null);
 
@@ -18,22 +33,8 @@ export function EditStudentForm({ student, action }: Props) {
     if (result.error) setError(result.error);
   }
 
-  // Normalize dates/times from DB (Neon can return Date objects; inputs need strings)
-  const dateValue =
-    student.start_date == null
-      ? ""
-      : (student.start_date as unknown) instanceof Date
-        ? (student.start_date as unknown as Date).toISOString().slice(0, 10)
-        : String(student.start_date).slice(0, 10);
-
-  const timeValue =
-    student.start_time == null
-      ? ""
-      : (student.start_time as unknown) instanceof Date
-        ? (student.start_time as unknown as Date).toTimeString().slice(0, 5)
-        : typeof student.start_time === "string"
-          ? student.start_time.slice(0, 5)
-          : "";
+  const dateValue = toDateInputValue(student.start_date);
+  const timeValue = toTimeInputValue(student.start_time);
 
   return (
     <form action={handleSubmit} className="space-y-4">
