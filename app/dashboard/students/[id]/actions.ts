@@ -1,7 +1,16 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createSession, getStudentById, setStudentWelcomeSent, updateStudentWelcomeSentAt } from "@/lib/db";
+import Anthropic from "@anthropic-ai/sdk";
+import {
+  createSession,
+  getSessionsByStudentId,
+  getStudentById,
+  setStudentWelcomeSent,
+  updateStudentAISummary,
+  updateStudentWelcomeSentAt,
+} from "@/lib/db";
+import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { sendTemplate } from "@/lib/email";
 
 const WELCOME_TEMPLATE_ID = "d-ed0dda2b7cf54a348006d3804db1a5ad";
@@ -248,4 +257,101 @@ export async function addSessions(
   }
   revalidatePath(`/dashboard/students/${studentId}`);
   return {};
+}
+
+/** Strip HTML tags to get plain text for AI context. */
+function stripHtml(html: string | null): string {
+  if (!html || !html.trim()) return "";
+  return html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const CLAUDE_SONNET_MODEL = "claude-sonnet-4-5-20250929";
+
+export async function generateStudentAISummary(
+  studentId: string
+): Promise<{ summary?: string; error?: string }> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { error: "ANTHROPIC_API_KEY is not set. Add it in environment variables." };
+
+  const [student, sessions] = await Promise.all([
+    getStudentById(studentId),
+    getSessionsByStudentId(studentId),
+  ]);
+  if (!student) return { error: "Student not found" };
+
+  if (sessions.length === 0) {
+    return { error: "No sessions yet. Add at least one session with summary or feedback to generate an AI summary." };
+  }
+
+  const sessionBlocks = sessions.map((s, i) => {
+    const date = formatDisplayDate(s.session_date);
+    const time = formatDisplayTime(s.session_time);
+    const summaryText = stripHtml(s.summary_markdown);
+    const feedbackText = stripHtml(s.feedback_markdown);
+    return [
+      `## Session ${i + 1} — ${date} ${time} — ${s.subject}`,
+      summaryText ? `**Summary:** ${summaryText}` : "",
+      feedbackText ? `**Feedback:** ${feedbackText}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  });
+
+  const sessionData = sessionBlocks.join("\n\n---\n\n");
+  const studentName = `${student.first_name} ${student.last_name}`.trim();
+
+  const systemPrompt = `You are a teaching assistant. Review the summary and feedback for all of the student's previous sessions and provide a concise summary of their progress and recommend any areas the student should focus on. Be clear and practical.`;
+
+  const userMessage = `Student: ${studentName}\n\nBelow are the session summaries and feedback (oldest to newest):\n\n${sessionData}`;
+
+  const anthropic = new Anthropic({ apiKey });
+  const maxRetries = 3;
+  const baseDelayMs = 2000;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const message = await anthropic.messages.create({
+        model: CLAUDE_SONNET_MODEL,
+        max_tokens: 1024,
+        system: systemPrompt,
+        messages: [{ role: "user", content: userMessage }],
+      });
+      const textParts = message.content
+        .filter((b) => b.type === "text")
+        .map((b) => (b as { type: "text"; text: string }).text);
+      const summary = textParts.length ? textParts.join("\n").trim() : null;
+      if (!summary) return { error: "No response from AI." };
+
+      const updateResult = await updateStudentAISummary(studentId, summary);
+      if ("error" in updateResult) return { error: updateResult.error };
+
+      revalidatePath(`/dashboard/students/${studentId}`);
+      return { summary };
+    } catch (err) {
+      const status = err && typeof err === "object" && "status" in err ? (err as { status: unknown }).status : null;
+      const is429 = status === 429;
+      const isLastAttempt = attempt === maxRetries;
+
+      if (is429 && !isLastAttempt) {
+        const delayMs = baseDelayMs * Math.pow(2, attempt - 1);
+        await new Promise((r) => setTimeout(r, delayMs));
+        continue;
+      }
+
+      if (is429 && isLastAttempt) {
+        return {
+          error:
+            "Anthropic rate limit exceeded. Check usage at https://console.anthropic.com/ or wait a minute and try again.",
+        };
+      }
+
+      const message = err instanceof Error ? err.message : "Claude API request failed";
+      return { error: message };
+    }
+  }
+
+  return { error: "Claude API request failed after retries." };
 }

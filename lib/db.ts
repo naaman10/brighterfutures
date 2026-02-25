@@ -69,6 +69,8 @@ export type StudentDetail = {
   start_time: string | null;
   welcome: boolean;
   welcome_sent_at: string | Date | null;
+  ai_summary: string | null;
+  ai_summary_updated: string | Date | null;
   created_at: string | Date | null;
   updated_at: string | Date | null;
   parent_id: string;
@@ -246,6 +248,8 @@ export async function getStudentById(
       s.start_time,
       s.welcome,
       s.welcome_sent_at,
+      s.ai_summary,
+      s.ai_summary_updated,
       s.created_at,
       s.updated_at,
       s.parent_id,
@@ -258,6 +262,24 @@ export async function getStudentById(
   `;
   const row = rows[0];
   return (row as StudentDetail) ?? null;
+}
+
+/**
+ * Updates a student's ai_summary (e.g. after generating from Claude).
+ */
+export async function updateStudentAISummary(
+  id: string,
+  ai_summary: string | null
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE students SET ai_summary = ${ai_summary}, ai_summary_updated = NOW(), updated_at = NOW() WHERE id = ${id}
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
 }
 
 /**

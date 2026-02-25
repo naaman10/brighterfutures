@@ -4,6 +4,7 @@ import { getStudentById, getSessionsByStudentId } from "@/lib/db";
 import { formatDisplayDate, formatDisplayDateTime, formatDisplayTime } from "@/lib/format";
 import { AddSessionForm } from "./add-session-form";
 import { SendWelcomeEmailButton } from "./send-welcome-email-button";
+import { StudentAISummary } from "./student-ai-summary";
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -110,6 +111,16 @@ export default async function StudentDetailPage({ params }: Props) {
             </div>
           )}
         </dl>
+      </div>
+
+      <div className="mt-8 rounded-xl bg-black p-6 text-white">
+        <h2 className="mb-3 text-lg font-medium text-white">
+          AI summary
+        </h2>
+        <p className="mb-4 text-sm text-zinc-300">
+          Generate a summary of the student&apos;s progress and recommended focus areas from all session summaries and feedback.
+        </p>
+        <StudentAISummary studentId={id} initialSummary={student.ai_summary} />
       </div>
 
       <section className="mt-8">
