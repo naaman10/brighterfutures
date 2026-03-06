@@ -11,7 +11,7 @@ import {
   updateStudentWelcomeSentAt,
 } from "@/lib/db";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
-import { sendTemplate } from "@/lib/email";
+import { getWelcomeEmailAttachments, sendTemplate } from "@/lib/email";
 
 const WELCOME_TEMPLATE_ID = "d-ed0dda2b7cf54a348006d3804db1a5ad";
 
@@ -96,6 +96,7 @@ export async function resendWelcomeEmail(studentId: string): Promise<{ error?: s
   if (!parentEmail) return { error: "Parent must have an email address." };
   if (!parentFirstName) return { error: "Parent must have a first name." };
 
+  const attachments = await getWelcomeEmailAttachments();
   const result = await sendTemplate({
     to: parentEmail,
     templateId: WELCOME_TEMPLATE_ID,
@@ -105,6 +106,7 @@ export async function resendWelcomeEmail(studentId: string): Promise<{ error?: s
       start_date: formatDateDDMMYYYY(student.start_date),
       start_time: formatTime(student.start_time),
     },
+    attachments,
   });
 
   if (!result.success) return { error: result.error };

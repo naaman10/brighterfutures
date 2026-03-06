@@ -14,10 +14,45 @@ export type SendEmailOptions = {
   html?: string;
 };
 
+const DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+export type SendTemplateAttachment = {
+  content: string;
+  filename: string;
+  type: string;
+  disposition?: "attachment" | "inline";
+};
+
+const WELCOME_EMAIL_ATTACHMENTS: { url: string; filename: string }[] = [
+  { url: "https://res.cloudinary.com/njh101010/raw/upload/v1772834069/brighterfutures/documents/Parent_Form.docx", filename: "Parent_Form.docx" },
+  { url: "https://res.cloudinary.com/njh101010/raw/upload/v1772834069/brighterfutures/documents/Terms_and_conditions_2026.docx", filename: "Terms_and_conditions_2026.docx" },
+  { url: "https://res.cloudinary.com/njh101010/raw/upload/v1772834069/brighterfutures/documents/Extra_Materials_for_pupils.docx", filename: "Extra_Materials_for_pupils.docx" },
+];
+
+async function fetchAttachment(url: string, filename: string): Promise<SendTemplateAttachment> {
+  const res = await fetch(url, { redirect: "follow" });
+  if (!res.ok) throw new Error(`Failed to fetch ${url}: ${res.status}`);
+  const buffer = Buffer.from(await res.arrayBuffer());
+  return {
+    content: buffer.toString("base64"),
+    filename,
+    type: DOCX_MIME,
+    disposition: "attachment",
+  };
+}
+
+/** Fetches all welcome email attachments from Cloudinary. */
+export async function getWelcomeEmailAttachments(): Promise<SendTemplateAttachment[]> {
+  return Promise.all(
+    WELCOME_EMAIL_ATTACHMENTS.map(({ url, filename }) => fetchAttachment(url, filename))
+  );
+}
+
 export type SendTemplateOptions = {
   to: string;
   templateId: string;
   dynamicTemplateData: Record<string, string | number | boolean>;
+  attachments?: SendTemplateAttachment[];
 };
 
 /**
@@ -76,6 +111,7 @@ export async function sendTemplate({
   to,
   templateId,
   dynamicTemplateData,
+  attachments,
 }: SendTemplateOptions): Promise<{ success: true } | { success: false; error: string }> {
   if (!apiKey) {
     return {
@@ -90,6 +126,7 @@ export async function sendTemplate({
       from: fromEmail,
       templateId,
       dynamicTemplateData,
+      attachments: attachments?.length ? attachments : undefined,
     });
     return { success: true };
   } catch (err: unknown) {
