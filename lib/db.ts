@@ -1,5 +1,11 @@
 import { neon } from "@neondatabase/serverless";
 
+import type { SessionStatus } from "./session-status";
+import { SESSION_STATUS_LABELS, SESSION_STATUSES } from "./session-status";
+
+export type { SessionStatus };
+export { SESSION_STATUS_LABELS, SESSION_STATUSES };
+
 const sql = neon(process.env.DATABASE_URL!);
 
 export type StudentSummary = {
@@ -60,6 +66,49 @@ export async function getParents(): Promise<Parent[]> {
   })) as Parent[];
 }
 
+export type ParentBasic = {
+  id: string;
+  first_name: string | null;
+  last_name: string | null;
+};
+
+/**
+ * Fetches a parent by id (basic info only).
+ */
+export async function getParentById(id: string): Promise<ParentBasic | null> {
+  const rows = await sql`
+    SELECT id, first_name, last_name
+    FROM parents
+    WHERE id = ${id}
+  `;
+  const row = rows[0];
+  return (row as ParentBasic) ?? null;
+}
+
+export type StudentWithParent = StudentSummary & {
+  parent_name: string | null;
+};
+
+/**
+ * Fetches all students with their parent name (for list display).
+ */
+export async function getStudents(): Promise<StudentWithParent[]> {
+  const rows = await sql`
+    SELECT
+      s.id,
+      s.first_name,
+      s.last_name,
+      s.age,
+      s.start_date,
+      s.start_time,
+      p.first_name || ' ' || p.last_name AS parent_name
+    FROM students s
+    LEFT JOIN parents p ON p.id = s.parent_id
+    ORDER BY s.last_name ASC NULLS LAST, s.first_name ASC NULLS LAST
+  `;
+  return rows as StudentWithParent[];
+}
+
 export type StudentDetail = {
   id: string;
   first_name: string;
@@ -85,6 +134,7 @@ export type Session = {
   session_date: string;
   session_time: string;
   subject: string;
+  status: SessionStatus;
   summary_markdown: string | null;
   feedback_markdown: string | null;
   feedback_sent_at: string | Date | null;
@@ -97,7 +147,7 @@ export type Session = {
  */
 export async function getSessionsByStudentId(studentId: string): Promise<Session[]> {
   const rows = await sql`
-    SELECT id, student_id, session_date, session_time, subject, summary_markdown, feedback_markdown, feedback_sent_at, created_at, updated_at
+    SELECT id, student_id, session_date, session_time, subject, status, summary_markdown, feedback_markdown, feedback_sent_at, created_at, updated_at
     FROM sessions
     WHERE student_id = ${studentId}
     ORDER BY session_date ASC, session_time ASC
@@ -126,6 +176,7 @@ export async function getSessionsForDate(
       s.session_date,
       s.session_time,
       s.subject,
+      s.status,
       s.summary_markdown,
       s.feedback_markdown,
       s.feedback_sent_at,
@@ -142,11 +193,37 @@ export async function getSessionsForDate(
 }
 
 /**
+ * Fetches all sessions with student names, newest first.
+ */
+export async function getSessions(): Promise<SessionWithStudent[]> {
+  const rows = await sql`
+    SELECT
+      s.id,
+      s.student_id,
+      s.session_date,
+      s.session_time,
+      s.subject,
+      s.status,
+      s.summary_markdown,
+      s.feedback_markdown,
+      s.feedback_sent_at,
+      s.created_at,
+      s.updated_at,
+      st.first_name AS student_first_name,
+      st.last_name AS student_last_name
+    FROM sessions s
+    JOIN students st ON st.id = s.student_id
+    ORDER BY s.session_date DESC, s.session_time DESC
+  `;
+  return rows as SessionWithStudent[];
+}
+
+/**
  * Fetches a single session by id. Returns null if not found.
  */
 export async function getSessionById(sessionId: string): Promise<Session | null> {
   const rows = await sql`
-    SELECT id, student_id, session_date, session_time, subject, summary_markdown, feedback_markdown, feedback_sent_at, created_at, updated_at
+    SELECT id, student_id, session_date, session_time, subject, status, summary_markdown, feedback_markdown, feedback_sent_at, created_at, updated_at
     FROM sessions
     WHERE id = ${sessionId}
   `;
@@ -191,6 +268,24 @@ export async function updateSessionFeedback(
 }
 
 /**
+ * Updates a session's status.
+ */
+export async function updateSessionStatus(
+  sessionId: string,
+  status: SessionStatus
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE sessions SET status = ${status}, updated_at = NOW() WHERE id = ${sessionId}
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+/**
  * Sets feedback_sent_at to NOW() after sending feedback email. Call only after SendGrid success.
  */
 export async function updateSessionFeedbackSentAt(
@@ -212,6 +307,7 @@ export type CreateSessionInput = {
   session_date: string;
   session_time: string;
   subject: string;
+  status?: SessionStatus;
 };
 
 /**
@@ -220,10 +316,11 @@ export type CreateSessionInput = {
 export async function createSession(
   data: CreateSessionInput
 ): Promise<{ ok: true } | { error: string }> {
+  const status = data.status ?? "planned";
   try {
     await sql`
-      INSERT INTO sessions (student_id, session_date, session_time, subject)
-      VALUES (${data.student_id}, ${data.session_date}, ${data.session_time}, ${data.subject})
+      INSERT INTO sessions (student_id, session_date, session_time, subject, status)
+      VALUES (${data.student_id}, ${data.session_date}, ${data.session_time}, ${data.subject}, ${status})
     `;
     return { ok: true };
   } catch (e) {

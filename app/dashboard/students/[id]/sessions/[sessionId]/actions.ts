@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { SessionStatus } from "@/lib/db";
 import {
   getSessionById,
   getStudentById,
   updateSessionFeedback,
   updateSessionFeedbackSentAt,
+  updateSessionStatus,
   updateSessionSummary,
 } from "@/lib/db";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
@@ -19,6 +21,18 @@ export async function saveSessionSummaryAction(
   summaryMarkdown: string | null
 ): Promise<{ error?: string }> {
   const result = await updateSessionSummary(sessionId, summaryMarkdown);
+  if ("error" in result) return { error: result.error };
+  revalidatePath(`/dashboard/students/${studentId}`);
+  revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);
+  return {};
+}
+
+export async function updateSessionStatusAction(
+  sessionId: string,
+  studentId: string,
+  status: SessionStatus
+): Promise<{ error?: string }> {
+  const result = await updateSessionStatus(sessionId, status);
   if ("error" in result) return { error: result.error };
   revalidatePath(`/dashboard/students/${studentId}`);
   revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);

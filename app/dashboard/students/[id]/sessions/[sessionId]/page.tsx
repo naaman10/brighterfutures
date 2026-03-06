@@ -4,6 +4,7 @@ import { getSessionById, getStudentById } from "@/lib/db";
 import { formatDisplayDate, formatDisplayDateTime, formatDisplayTime } from "@/lib/format";
 import { SendFeedbackButton } from "./send-feedback-button";
 import { SessionFeedbackEditor } from "./session-feedback-editor";
+import { SessionStatusSelect } from "./session-status-select";
 import { SessionSummaryEditor } from "./session-summary-editor";
 
 type Props = { params: Promise<{ id: string; sessionId: string }> };
@@ -44,7 +45,7 @@ export default async function SessionViewPage({ params }: Props) {
         <h1 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
           Session details
         </h1>
-        <dl className="grid gap-3 sm:grid-cols-3">
+        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Date
@@ -67,6 +68,18 @@ export default async function SessionViewPage({ params }: Props) {
             </dt>
             <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
               {session.subject}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Status
+            </dt>
+            <dd className="mt-0.5">
+              <SessionStatusSelect
+                sessionId={sessionId}
+                studentId={studentId}
+                currentStatus={session.status ?? "planned"}
+              />
             </dd>
           </div>
         </dl>

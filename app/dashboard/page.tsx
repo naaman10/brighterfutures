@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import Link from "next/link";
-import { getParents, getSessionsForDate } from "@/lib/db";
+import React from "react";
+import { getParents, getSessionsForDate, SESSION_STATUS_LABELS } from "@/lib/db";
 import { formatDisplayTime } from "@/lib/format";
 import { ParentAccordion } from "./parent-accordion";
 
@@ -12,17 +13,54 @@ function todayDateStr(): string {
 export default async function DashboardPage() {
   const session = await auth();
   let parents: Awaited<ReturnType<typeof getParents>> = [];
-  let dbError: string | null = null;
   let sessionsToday: Awaited<ReturnType<typeof getSessionsForDate>> = [];
+  let dbError: string | null = null;
+  let dbErrorHint: React.ReactNode = null;
 
   try {
-    [parents, sessionsToday] = await Promise.all([
-      getParents(),
-      getSessionsForDate(todayDateStr()),
-    ]);
+    parents = await getParents();
   } catch (e) {
-    dbError =
-      e instanceof Error ? e.message : "Failed to load parents from database.";
+    const msg = e instanceof Error ? e.message : "Failed to load parents.";
+    dbError = dbError ? `${dbError} ` : "";
+    dbError += msg;
+    if (!dbErrorHint) {
+      dbErrorHint = (
+        <>
+          If the <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">parents</code> table
+          doesn&apos;t exist, run{" "}
+          <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">sql/create-parents.sql</code>{" "}
+          in the Neon SQL Editor.
+        </>
+      );
+    }
+  }
+
+  try {
+    sessionsToday = await getSessionsForDate(todayDateStr());
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "Failed to load sessions.";
+    dbError = dbError ? `${dbError} ` : "";
+    dbError += msg;
+    if (msg.includes("status") || msg.includes("column")) {
+      dbErrorHint = (
+        <>
+          If the <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">sessions</code> table
+          is missing the <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">status</code> column,
+          run{" "}
+          <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">sql/add-sessions-status.sql</code>{" "}
+          in the Neon SQL Editor.
+        </>
+      );
+    } else if (!dbErrorHint) {
+      dbErrorHint = (
+        <>
+          If the <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">parents</code> table
+          doesn&apos;t exist, run{" "}
+          <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">sql/create-parents.sql</code>{" "}
+          in the Neon SQL Editor.
+        </>
+      );
+    }
   }
 
   return (
@@ -55,6 +93,9 @@ export default async function DashboardPage() {
                   <span className="text-sm text-zinc-500 dark:text-zinc-500">
                     {s.student_first_name} {s.student_last_name}
                   </span>
+                  <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+                    {SESSION_STATUS_LABELS[s.status ?? "planned"]}
+                  </span>
                 </div>
                 <Link
                   href={`/dashboard/students/${s.student_id}/sessions/${s.id}`}
@@ -71,12 +112,7 @@ export default async function DashboardPage() {
       {dbError && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
           {dbError}
-          <p className="mt-2">
-            If the <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">parents</code> table
-            doesn&apos;t exist, run{" "}
-            <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">sql/create-parents.sql</code>{" "}
-            in the Neon SQL Editor.
-          </p>
+          {dbErrorHint && <p className="mt-2">{dbErrorHint}</p>}
         </div>
       )}
 

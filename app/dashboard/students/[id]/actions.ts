@@ -211,6 +211,12 @@ export async function addSessions(
   const subject = (formData.get("subject") as string)?.trim();
   if (!subject) return { error: "Subject is required" };
 
+  const statusRaw = (formData.get("session_status") as string)?.trim();
+  const validStatuses = ["planned", "in_progress", "completed", "rescheduled", "planned_reschedule"] as const;
+  const status = statusRaw && validStatuses.includes(statusRaw as (typeof validStatuses)[number])
+    ? (statusRaw as (typeof validStatuses)[number])
+    : "planned";
+
   if (mode === "single") {
     const session_date = (formData.get("session_date") as string)?.trim();
     const session_time = (formData.get("session_time") as string)?.trim();
@@ -220,6 +226,7 @@ export async function addSessions(
       session_date,
       session_time,
       subject,
+      status,
     });
     if ("error" in result) return { error: result.error };
     revalidatePath(`/dashboard/students/${studentId}`);
@@ -250,6 +257,7 @@ export async function addSessions(
       session_date,
       session_time,
       subject,
+      status,
     });
     if ("error" in result) {
       return { error: result.error };

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SESSION_STATUSES, SESSION_STATUS_LABELS } from "@/lib/session-status";
 import { addSessions } from "./actions";
 
 const DAYS = [
@@ -57,6 +58,22 @@ export function AddSessionForm({ studentId }: Props) {
           className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
           placeholder="e.g. Maths"
         />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
+          Status
+        </label>
+        <select
+          name="session_status"
+          defaultValue="planned"
+          className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+        >
+          {SESSION_STATUSES.map((value) => (
+            <option key={value} value={value}>
+              {SESSION_STATUS_LABELS[value]}
+            </option>
+          ))}
+        </select>
       </div>
       <div className="flex gap-4">
         <label className="flex items-center gap-2">

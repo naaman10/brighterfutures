@@ -50,9 +50,17 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
       </div>
       {open && (
         <div className="border-t border-zinc-100 bg-zinc-50 px-4 py-3 pl-10 dark:border-zinc-700 dark:bg-zinc-800/50">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-            Students
-          </p>
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Students
+            </p>
+            <Link
+              href={`/dashboard/parents/${parent.id}/students/new`}
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            >
+              + Add student
+            </Link>
+          </div>
           {!hasStudents ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">No students added yet.</p>
           ) : (

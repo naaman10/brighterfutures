@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudentById, getSessionsByStudentId } from "@/lib/db";
+import { getStudentById, getSessionsByStudentId, SESSION_STATUS_LABELS } from "@/lib/db";
 import { formatDisplayDate, formatDisplayDateTime, formatDisplayTime } from "@/lib/format";
 import { AddSessionForm } from "./add-session-form";
 import { SendWelcomeEmailButton } from "./send-welcome-email-button";
@@ -150,6 +150,9 @@ export default async function StudentDetailPage({ params }: Props) {
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Subject
                   </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Status
+                  </th>
                   <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Actions
                   </th>
@@ -166,6 +169,9 @@ export default async function StudentDetailPage({ params }: Props) {
                     </td>
                     <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
                       {session.subject}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                      {SESSION_STATUS_LABELS[session.status ?? "planned"]}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Link

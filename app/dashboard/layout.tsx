@@ -1,6 +1,7 @@
 import { auth, signOut } from "@/auth";
 import Link from "next/link";
 import NextImage from "next/image";
+import { DashboardSidebar } from "./components/dashboard-sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -10,9 +11,9 @@ export default async function DashboardLayout({
   const session = await auth();
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
-      <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
+    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
+      <header className="shrink-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex h-14 items-center justify-between px-4">
           <Link
             href="/dashboard"
             className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50"
@@ -46,7 +47,10 @@ export default async function DashboardLayout({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
+      <div className="flex min-h-0 flex-1">
+        <DashboardSidebar />
+        <main className="min-w-0 flex-1 px-4 py-8 lg:px-8">{children}</main>
+      </div>
     </div>
   );
 }
