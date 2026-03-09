@@ -83,6 +83,16 @@ export default async function SessionViewPage({ params }: Props) {
             </dd>
           </div>
         </dl>
+        {session.status !== "rescheduled" && session.status !== "planned_reschedule" ? (
+          <div className="mt-4 border-t border-zinc-200 pt-4 dark:border-zinc-700">
+            <Link
+              href={`/dashboard/students/${studentId}/sessions/${sessionId}/reschedule`}
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            >
+              Reschedule session →
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">

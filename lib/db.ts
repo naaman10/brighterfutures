@@ -23,6 +23,7 @@ export type Parent = {
   last_name: string | null;
   email: string | null;
   contact_number: string | null;
+  session_rate: number | null;
   child_name: string | null;
   created_at: string | Date | null;
   updated_at: string | Date | null;
@@ -40,6 +41,7 @@ export async function getParents(): Promise<Parent[]> {
       p.last_name,
       p.email,
       p.contact_number,
+      p.session_rate,
       (
         SELECT string_agg(s.first_name || ' ' || s.last_name, ', ' ORDER BY s.last_name, s.first_name)
         FROM students s
@@ -70,14 +72,17 @@ export type ParentBasic = {
   id: string;
   first_name: string | null;
   last_name: string | null;
+  email: string | null;
+  contact_number: string | null;
+  session_rate: number | null;
 };
 
 /**
- * Fetches a parent by id (basic info only).
+ * Fetches a parent by id (for viewing/editing).
  */
 export async function getParentById(id: string): Promise<ParentBasic | null> {
   const rows = await sql`
-    SELECT id, first_name, last_name
+    SELECT id, first_name, last_name, email, contact_number, session_rate
     FROM parents
     WHERE id = ${id}
   `;
@@ -107,6 +112,211 @@ export async function getStudents(): Promise<StudentWithParent[]> {
     ORDER BY s.last_name ASC NULLS LAST, s.first_name ASC NULLS LAST
   `;
   return rows as StudentWithParent[];
+}
+
+export type Invoice = {
+  id: number;
+  invoice_number: string;
+  parents_id: string;
+  parent_name: string | null;
+  parent_first_name?: string | null;
+  parent_email?: string | null;
+  billing_month: string | null;
+  issued_date: string | null;
+  due_date: string | null;
+  status: string;
+  subtotal: string;
+  total: string | null;
+  created_at: string | Date | null;
+  paid_at: string | Date | null;
+};
+
+/**
+ * Fetches all invoices with parent name.
+ */
+export async function getInvoices(): Promise<Invoice[]> {
+  const rows = await sql`
+    SELECT
+      i.id,
+      i.invoice_number,
+      i.parents_id,
+      p.first_name || ' ' || p.last_name AS parent_name,
+      i.billing_month,
+      i.issued_date,
+      i.due_date,
+      i.status,
+      i.subtotal::text,
+      COALESCE(i.total::text, i.subtotal::text) AS total,
+      i.created_at,
+      i.paid_at
+    FROM invoices i
+    LEFT JOIN parents p ON p.id = i.parents_id
+    ORDER BY i.created_at DESC NULLS LAST, i.invoice_number DESC
+  `;
+  return rows as Invoice[];
+}
+
+/**
+ * Fetches a single invoice by id with parent details.
+ */
+export async function getInvoiceById(id: number): Promise<Invoice | null> {
+  const rows = await sql`
+    SELECT
+      i.id,
+      i.invoice_number,
+      i.parents_id,
+      p.first_name || ' ' || p.last_name AS parent_name,
+      p.first_name AS parent_first_name,
+      p.email AS parent_email,
+      i.billing_month,
+      i.issued_date,
+      i.due_date,
+      i.status,
+      i.subtotal::text,
+      COALESCE(i.total::text, i.subtotal::text) AS total,
+      i.created_at,
+      i.paid_at
+    FROM invoices i
+    LEFT JOIN parents p ON p.id = i.parents_id
+    WHERE i.id = ${id}
+  `;
+  const row = rows[0];
+  return (row as Invoice) ?? null;
+}
+
+/**
+ * Updates an invoice's status (e.g. to "sent" after emailing).
+ */
+export async function updateInvoiceStatus(
+  id: number,
+  status: string
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`UPDATE invoices SET status = ${status} WHERE id = ${id}`;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export type SessionForInvoice = {
+  id: string;
+  student_id: string;
+  student_first_name: string;
+  student_last_name: string;
+  session_date: string;
+  session_time: string;
+  subject: string;
+  status: SessionStatus;
+  session_rate: number | null;
+};
+
+/**
+ * Fetches sessions for invoice PDF: all sessions for a parent in a billing month
+ * (including planned_reschedule, which are shown as no-cost rescheduled sessions).
+ */
+export async function getSessionsForInvoice(
+  parentsId: string,
+  billingMonthStart: string
+): Promise<SessionForInvoice[]> {
+  const rows = await sql`
+    SELECT
+      s.id,
+      s.student_id,
+      st.first_name AS student_first_name,
+      st.last_name AS student_last_name,
+      s.session_date,
+      s.session_time,
+      s.subject,
+      s.status,
+      p.session_rate
+    FROM sessions s
+    JOIN students st ON st.id = s.student_id
+    JOIN parents p ON p.id = st.parent_id
+    WHERE st.parent_id = ${parentsId}
+      AND s.session_date >= ${billingMonthStart}::date
+      AND s.session_date < (${billingMonthStart}::date + INTERVAL '1 month')
+    ORDER BY s.session_date ASC, s.session_time ASC
+  `;
+  return rows as SessionForInvoice[];
+}
+
+export type SessionsByParentForInvoice = {
+  parents_id: string;
+  parent_first_name: string | null;
+  parent_last_name: string | null;
+  session_count: number;
+  session_rate: number | null;
+};
+
+/**
+ * Fetches parents with session counts for the next calendar month,
+ * excluding 'planned_reschedule' status. Includes each parent's session_rate (£).
+ */
+export async function getSessionsByParentForNextMonth(): Promise<
+  SessionsByParentForInvoice[]
+> {
+  const rows = await sql`
+    WITH next_month AS (
+      SELECT date_trunc('month', CURRENT_DATE + INTERVAL '1 month')::date AS start_date
+    ),
+    sessions_in_month AS (
+      SELECT
+        st.parent_id AS parents_id,
+        p.first_name AS parent_first_name,
+        p.last_name AS parent_last_name,
+        COUNT(*)::int AS session_count,
+        p.session_rate
+      FROM sessions s
+      JOIN students st ON st.id = s.student_id
+      JOIN parents p ON p.id = st.parent_id
+      CROSS JOIN next_month nm
+      WHERE s.session_date >= nm.start_date
+        AND s.session_date < nm.start_date + INTERVAL '1 month'
+        AND s.status != 'planned_reschedule'
+      GROUP BY st.parent_id, p.first_name, p.last_name, p.session_rate
+    )
+    SELECT parents_id, parent_first_name, parent_last_name, session_count, session_rate
+    FROM sessions_in_month
+  `;
+  return rows as SessionsByParentForInvoice[];
+}
+
+export type CreateInvoiceInput = {
+  parents_id: string;
+  billing_month: string;
+  issued_date: string;
+  due_date: string;
+  subtotal: number;
+};
+
+/**
+ * Inserts an invoice. Returns the new invoice id and invoice_number.
+ */
+export async function createInvoice(
+  data: CreateInvoiceInput
+): Promise<{ ok: true; id: number; invoice_number: string } | { error: string }> {
+  try {
+    const rows = await sql`
+      INSERT INTO invoices (parents_id, billing_month, issued_date, due_date, subtotal, discount_pct, tax_pct)
+      VALUES (
+        ${data.parents_id},
+        ${data.billing_month}::date,
+        ${data.issued_date}::date,
+        ${data.due_date}::date,
+        ${data.subtotal},
+        0,
+        0
+      )
+      RETURNING id, invoice_number
+    `;
+    const row = rows[0] as { id: number; invoice_number: string };
+    return { ok: true, id: row.id, invoice_number: row.invoice_number };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
 }
 
 export type StudentDetail = {
@@ -448,6 +658,15 @@ export type CreateParentInput = {
   last_name: string;
   email: string;
   contact_number?: string | null;
+  session_rate?: number | null;
+};
+
+export type UpdateParentInput = {
+  first_name: string;
+  last_name: string;
+  email: string;
+  contact_number?: string | null;
+  session_rate?: number | null;
 };
 
 export type CreateStudentInput = {
@@ -464,13 +683,39 @@ export type CreateStudentInput = {
 export async function createParent(data: CreateParentInput): Promise<{ id: string } | { error: string }> {
   try {
     const rows = await sql`
-      INSERT INTO parents (first_name, last_name, email, contact_number)
-      VALUES (${data.first_name}, ${data.last_name}, ${data.email}, ${data.contact_number ?? null})
+      INSERT INTO parents (first_name, last_name, email, contact_number, session_rate)
+      VALUES (${data.first_name}, ${data.last_name}, ${data.email}, ${data.contact_number ?? null}, ${data.session_rate ?? null})
       RETURNING id
     `;
     const row = rows[0] as { id: string } | undefined;
     if (!row?.id) return { error: "Failed to create parent" };
     return { id: row.id };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+/**
+ * Updates a parent's details.
+ */
+export async function updateParent(
+  id: string,
+  data: UpdateParentInput
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE parents
+      SET
+        first_name = ${data.first_name},
+        last_name = ${data.last_name},
+        email = ${data.email},
+        contact_number = ${data.contact_number ?? null},
+        session_rate = ${data.session_rate ?? null},
+        updated_at = NOW()
+      WHERE id = ${id}
+    `;
+    return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Database error";
     return { error: message };

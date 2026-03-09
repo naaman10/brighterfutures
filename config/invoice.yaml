@@ -1,0 +1,16 @@
+# Invoice branding and billing config.
+# Edit these values for your organisation.
+
+# Logo URL (absolute, e.g. Cloudinary or your domain). Optional.
+logo_url: "https://res.cloudinary.com/njh101010/image/upload/v1772015902/brighterfutures/bft-logo-colour.png"
+
+# Bank account details for payment instructions
+billing_account_name: "Ellie Langford"
+billing_account_number: "00000000"
+billing_sort_code: "00-00-00"
+
+# Terms and conditions (supports multiple lines)
+terms: |
+  Payment is due by the first of the month for the commencing lessons, lessons cannot proceed until the invoice is paid.
+  Please include the invoice number as the payment reference.
+  Where a session is rescheduled, the session is still payable within the original billing month. The rescheduled session will not be invoiced.

@@ -113,6 +113,20 @@ export function AddParentForm() {
               className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>
+          <div>
+            <label htmlFor="parent_session_rate" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
+              Session rate (£)
+            </label>
+            <input
+              id="parent_session_rate"
+              name="parent_session_rate"
+              type="number"
+              min={0}
+              step={0.01}
+              placeholder="e.g. 45"
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+            />
+          </div>
         </div>
       </section>
 

@@ -1,0 +1,1 @@
+ALTER TABLE parents ADD COLUMN IF NOT EXISTS session_rate NUMERIC(10, 2);

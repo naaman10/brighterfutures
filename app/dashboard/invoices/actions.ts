@@ -1,0 +1,179 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import {
+  createInvoice,
+  getInvoiceById,
+  getSessionsByParentForNextMonth,
+  updateInvoiceStatus,
+} from "@/lib/db";
+import { renderInvoicePdfBuffer } from "@/lib/invoice-pdf-buffer";
+import { sendTemplate } from "@/lib/email";
+
+/**
+ * Returns the first day of next calendar month as YYYY-MM-DD.
+ */
+function getNextMonthStart(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() + 1);
+  d.setDate(1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Due date is the 1st of the billing month (YYYY-MM-DD).
+ */
+function getDueDate(billingMonthStart: string): string {
+  return billingMonthStart.slice(0, 10);
+}
+
+export async function generateInvoices(): Promise<{
+  ok?: boolean;
+  error?: string;
+  created?: number;
+  message?: string;
+}> {
+  try {
+    const parentsWithSessions = await getSessionsByParentForNextMonth();
+    if (parentsWithSessions.length === 0) {
+      return {
+        ok: false,
+        error: "No parents have billable sessions for next month.",
+        message:
+          "Sessions must be in the next calendar month and not have status 'Planned reschedule'.",
+      };
+    }
+
+    const billingMonth = getNextMonthStart();
+    const issuedDate = new Date().toISOString().slice(0, 10);
+    const dueDate = getDueDate(billingMonth);
+    let created = 0;
+
+    for (const row of parentsWithSessions) {
+      const rate = row.session_rate != null ? Number(row.session_rate) : null;
+      if (rate == null || Number.isNaN(rate)) {
+        return {
+          ok: false,
+          error: `Parent ${row.parent_first_name ?? ""} ${row.parent_last_name ?? ""} has no session_rate set. Add a session_rate (£) to the parent.`,
+          created,
+        };
+      }
+      const subtotal = row.session_count * rate;
+      const result = await createInvoice({
+        parents_id: row.parents_id,
+        billing_month: billingMonth,
+        issued_date: issuedDate,
+        due_date: dueDate,
+        subtotal,
+      });
+      if (result.ok) {
+        created++;
+      } else {
+        return {
+          ok: false,
+          error: result.error,
+          created,
+        };
+      }
+    }
+
+    revalidatePath("/dashboard/invoices");
+    return {
+      ok: true,
+      created,
+      message: `Generated ${created} invoice${created === 1 ? "" : "s"} for ${billingMonth}.`,
+    };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Failed to generate invoices.";
+    return { ok: false, error: message };
+  }
+}
+
+const INVOICE_EMAIL_TEMPLATE_ID = "d-0b61465b24144177bb2cd4f23a0bcb33";
+
+function formatInvoiceMonth(billingMonth: string | Date | null): string {
+  if (!billingMonth) return "";
+  const d = typeof billingMonth === "string" ? new Date(billingMonth.slice(0, 10) + "T12:00:00Z") : new Date(billingMonth);
+  return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(d);
+}
+
+export async function sendSelectedInvoices(invoiceIds: number[]): Promise<{
+  ok?: boolean;
+  sent?: number;
+  error?: string;
+}> {
+  if (invoiceIds.length === 0) {
+    return { ok: false, error: "No invoices selected." };
+  }
+
+  let sent = 0;
+
+  for (const invoiceId of invoiceIds) {
+    const invoice = await getInvoiceById(invoiceId);
+    if (!invoice) {
+      return { ok: false, sent, error: `Invoice ${invoiceId} not found.` };
+    }
+
+    const email = invoice.parent_email?.trim();
+    if (!email) {
+      return { ok: false, sent, error: `Parent for invoice ${invoice.invoice_number} has no email address.` };
+    }
+
+    const pdfResult = await renderInvoicePdfBuffer(invoiceId);
+    if ("error" in pdfResult) {
+      return { ok: false, sent, error: `Failed to generate PDF for ${invoice.invoice_number}: ${pdfResult.error}` };
+    }
+
+    const templateResult = await sendTemplate({
+      to: email,
+      templateId: INVOICE_EMAIL_TEMPLATE_ID,
+      dynamicTemplateData: {
+        parent_name: invoice.parent_first_name?.trim() ?? invoice.parent_name?.split(" ")[0] ?? "Parent",
+        invoice_month: formatInvoiceMonth(invoice.billing_month),
+      },
+      attachments: [
+        {
+          content: pdfResult.toString("base64"),
+          filename: `invoice-${invoice.invoice_number}.pdf`,
+          type: "application/pdf",
+          disposition: "attachment",
+        },
+      ],
+    });
+
+    if (!templateResult.success) {
+      return { ok: false, sent, error: `Failed to send ${invoice.invoice_number}: ${templateResult.error}` };
+    }
+
+    const updateResult = await updateInvoiceStatus(invoiceId, "sent");
+    if (!updateResult.ok) {
+      return { ok: false, sent, error: `Invoice sent but status update failed: ${updateResult.error}` };
+    }
+    sent++;
+  }
+
+  revalidatePath("/dashboard/invoices");
+  return { ok: true, sent };
+}
+
+export async function markSelectedInvoicesAsPaid(invoiceIds: number[]): Promise<{
+  ok?: boolean;
+  updated?: number;
+  error?: string;
+}> {
+  if (invoiceIds.length === 0) {
+    return { ok: false, error: "No invoices selected." };
+  }
+
+  let updated = 0;
+  for (const invoiceId of invoiceIds) {
+    const result = await updateInvoiceStatus(invoiceId, "paid");
+    if (!result.ok) {
+      return { ok: false, updated, error: result.error ?? "Failed to update invoice status." };
+    }
+    updated++;
+  }
+
+  revalidatePath("/dashboard/invoices");
+  return { ok: true, updated };
+}

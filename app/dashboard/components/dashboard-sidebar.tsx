@@ -8,6 +8,7 @@ const navItems = [
   { href: "/dashboard/parents", label: "Parents" },
   { href: "/dashboard/students", label: "Students" },
   { href: "/dashboard/sessions", label: "Sessions" },
+  { href: "/dashboard/invoices", label: "Invoices" },
 ];
 
 export function DashboardSidebar() {

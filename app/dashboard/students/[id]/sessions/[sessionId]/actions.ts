@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { SessionStatus } from "@/lib/db";
 import {
+  createSession,
   getSessionById,
   getStudentById,
   updateSessionFeedback,
@@ -86,6 +87,46 @@ export async function sendSessionFeedbackEmailAction(
 
   const updateResult = await updateSessionFeedbackSentAt(sessionId);
   if ("error" in updateResult) return { error: updateResult.error };
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+  revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);
+  return {};
+}
+
+export async function rescheduleSessionAction(
+  sessionId: string,
+  studentId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const session = await getSessionById(sessionId);
+  if (!session || session.student_id !== studentId) {
+    return { error: "Session not found." };
+  }
+  if (session.status === "rescheduled" || session.status === "planned_reschedule") {
+    return { error: "This session is already rescheduled." };
+  }
+
+  const session_date = (formData.get("session_date") as string)?.trim();
+  const session_time = (formData.get("session_time") as string)?.trim();
+  const subject = (formData.get("subject") as string)?.trim() || session.subject;
+
+  if (!session_date || !session_time) {
+    return { error: "Date and time are required for the new session." };
+  }
+
+  const updateResult = await updateSessionStatus(sessionId, "rescheduled");
+  if ("error" in updateResult) return { error: updateResult.error };
+
+  const createResult = await createSession({
+    student_id: studentId,
+    session_date,
+    session_time,
+    subject,
+    status: "planned_reschedule",
+  });
+  if ("error" in createResult) {
+    return { error: "Original session marked rescheduled but failed to create new session." };
+  }
 
   revalidatePath(`/dashboard/students/${studentId}`);
   revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);

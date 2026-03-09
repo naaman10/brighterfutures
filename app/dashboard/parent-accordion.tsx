@@ -31,6 +31,7 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               {parent.email ?? "—"}
               {parent.contact_number ? ` · ${parent.contact_number}` : null}
+              {parent.session_rate != null ? ` · £${parent.session_rate}/session` : null}
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -54,12 +55,20 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Students
             </p>
-            <Link
-              href={`/dashboard/parents/${parent.id}/students/new`}
-              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-            >
-              + Add student
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href={`/dashboard/parents/${parent.id}/edit`}
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+              >
+                Edit parent
+              </Link>
+              <Link
+                href={`/dashboard/parents/${parent.id}/students/new`}
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+              >
+                + Add student
+              </Link>
+            </div>
           </div>
           {!hasStudents ? (
             <p className="text-sm text-zinc-500 dark:text-zinc-400">No students added yet.</p>
