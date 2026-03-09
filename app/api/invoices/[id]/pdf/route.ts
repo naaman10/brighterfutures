@@ -77,12 +77,13 @@ export async function GET(
     const buffer = await renderToBuffer(doc);
 
     const filename = `invoice-${invoice.invoice_number}.pdf`;
-    return new NextResponse(buffer, {
+    const body = new Uint8Array(buffer);
+    return new NextResponse(body, {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": buffer.length.toString(),
+        "Content-Length": body.length.toString(),
       },
     });
   } catch (e) {
