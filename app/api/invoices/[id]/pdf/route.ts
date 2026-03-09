@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
-import React from "react";
 import { getInvoiceById, getSessionsForInvoice } from "@/lib/db";
 import { getInvoiceConfig } from "@/lib/invoice-config";
 import { InvoicePDFDocument } from "@/lib/invoice-pdf";
@@ -74,11 +73,7 @@ export async function GET(
   };
 
   try {
-    const doc = React.createElement(InvoicePDFDocument, {
-      invoice,
-      sessions,
-      config,
-    });
+    const doc = InvoicePDFDocument({ invoice, sessions, config });
     const buffer = await renderToBuffer(doc);
 
     const filename = `invoice-${invoice.invoice_number}.pdf`;
