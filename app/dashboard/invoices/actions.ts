@@ -66,12 +66,12 @@ export async function generateInvoices(): Promise<{
         due_date: dueDate,
         subtotal,
       });
-      if (result.ok) {
+      if ("ok" in result && result.ok) {
         created++;
       } else {
         return {
           ok: false,
-          error: result.error,
+          error: "error" in result ? result.error : "Failed to create invoice",
           created,
         };
       }
@@ -146,10 +146,17 @@ export async function sendSelectedInvoices(invoiceIds: number[]): Promise<{
     }
 
     const updateResult = await updateInvoiceStatus(invoiceId, "sent");
-    if (!updateResult.ok) {
-      return { ok: false, sent, error: `Invoice sent but status update failed: ${updateResult.error}` };
+    if ("ok" in updateResult && updateResult.ok) {
+      sent++;
+    } else {
+      return {
+        ok: false,
+        sent,
+        error: "error" in updateResult
+          ? `Invoice sent but status update failed: ${updateResult.error}`
+          : "Invoice sent but status update failed.",
+      };
     }
-    sent++;
   }
 
   revalidatePath("/dashboard/invoices");
@@ -168,10 +175,15 @@ export async function markSelectedInvoicesAsPaid(invoiceIds: number[]): Promise<
   let updated = 0;
   for (const invoiceId of invoiceIds) {
     const result = await updateInvoiceStatus(invoiceId, "paid");
-    if (!result.ok) {
-      return { ok: false, updated, error: result.error ?? "Failed to update invoice status." };
+    if ("ok" in result && result.ok) {
+      updated++;
+    } else {
+      return {
+        ok: false,
+        updated,
+        error: "error" in result ? result.error : "Failed to update invoice status.",
+      };
     }
-    updated++;
   }
 
   revalidatePath("/dashboard/invoices");
