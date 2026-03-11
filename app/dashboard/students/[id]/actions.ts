@@ -149,10 +149,11 @@ function getNthWeekdayInMonth(
   dayOfWeek: number,
   n: number
 ): Date {
-  const d = new Date(year, month, 1);
+  const month0 = month - 1; // JS Date uses 0-based month
+  const d = new Date(year, month0, 1);
   let count = 0;
   let last: Date | null = null;
-  while (d.getMonth() === month) {
+  while (d.getMonth() === month0) {
     if (d.getDay() === dayOfWeek) {
       count++;
       last = new Date(d);
@@ -160,7 +161,15 @@ function getNthWeekdayInMonth(
     }
     d.setDate(d.getDate() + 1);
   }
-  return last ?? new Date(year, month, 1);
+  return last ?? new Date(year, month0, 1);
+}
+
+/** Format date as YYYY-MM-DD using local timezone (avoids toISOString UTC shift). */
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
 
 /**
@@ -183,7 +192,7 @@ function getRecurringDates(
     const occurrenceN = getWeekdayOccurrenceInMonth(first);
     let cur = new Date(first);
     while (cur <= end) {
-      out.push(cur.toISOString().slice(0, 10));
+      out.push(toLocalDateString(cur));
       cur = getNthWeekdayInMonth(
         cur.getFullYear(),
         cur.getMonth() + 1,
@@ -199,7 +208,7 @@ function getRecurringDates(
 
   let cur = getFirstMatchingWeekday(startDate, dayOfWeek);
   while (cur <= end) {
-    out.push(cur.toISOString().slice(0, 10));
+    out.push(toLocalDateString(cur));
     cur.setDate(cur.getDate() + stepDays);
   }
   return out;

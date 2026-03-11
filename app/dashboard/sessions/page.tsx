@@ -1,13 +1,28 @@
 import Link from "next/link";
 import { getSessions, SESSION_STATUS_LABELS } from "@/lib/db";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
+import { SessionStatusFilter } from "./session-status-filter";
 
-export default async function SessionsPage() {
+const VALID_STATUSES = ["planned", "in_progress", "completed", "rescheduled", "planned_reschedule"] as const;
+
+function parseStatus(status: string | undefined): string | null {
+  if (!status) return null;
+  return VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number]) ? status : null;
+}
+
+export default async function SessionsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }> | { status?: string };
+}) {
+  const params = searchParams instanceof Promise ? await searchParams : searchParams;
+  const statusFilter = parseStatus(params?.status);
+
   let sessions: Awaited<ReturnType<typeof getSessions>> = [];
   let dbError: string | null = null;
 
   try {
-    sessions = await getSessions();
+    sessions = await getSessions(statusFilter);
   } catch (e) {
     dbError =
       e instanceof Error ? e.message : "Failed to load sessions from database.";
@@ -30,7 +45,12 @@ export default async function SessionsPage() {
           No sessions yet. Add sessions from a student&apos;s page.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <>
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="text-sm text-zinc-600 dark:text-zinc-400">Filter by status:</span>
+            <SessionStatusFilter currentStatus={statusFilter} />
+          </div>
+          <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
           <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
             <thead>
               <tr>
@@ -90,6 +110,7 @@ export default async function SessionsPage() {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

@@ -374,6 +374,38 @@ export type SessionWithStudent = Session & {
 };
 
 /**
+ * Fetches all sessions for a calendar month (startDate to endDate inclusive),
+ * ordered by session_date, session_time.
+ */
+export async function getSessionsForMonth(
+  startDate: string,
+  endDate: string
+): Promise<SessionWithStudent[]> {
+  const rows = await sql`
+    SELECT
+      s.id,
+      s.student_id,
+      s.session_date,
+      s.session_time,
+      s.subject,
+      s.status,
+      s.summary_markdown,
+      s.feedback_markdown,
+      s.feedback_sent_at,
+      s.created_at,
+      s.updated_at,
+      st.first_name AS student_first_name,
+      st.last_name AS student_last_name
+    FROM sessions s
+    JOIN students st ON st.id = s.student_id
+    WHERE s.session_date >= ${startDate}::date
+      AND s.session_date <= ${endDate}::date
+    ORDER BY s.session_date ASC, s.session_time ASC
+  `;
+  return rows as SessionWithStudent[];
+}
+
+/**
  * Fetches all sessions for a given date (YYYY-MM-DD), ordered by session_time.
  */
 export async function getSessionsForDate(
@@ -403,28 +435,56 @@ export async function getSessionsForDate(
 }
 
 /**
- * Fetches all sessions with student names, newest first.
+ * Fetches all sessions with student names, soonest first (by date then time).
+ * Optional status filter: only sessions with this status are returned.
  */
-export async function getSessions(): Promise<SessionWithStudent[]> {
-  const rows = await sql`
-    SELECT
-      s.id,
-      s.student_id,
-      s.session_date,
-      s.session_time,
-      s.subject,
-      s.status,
-      s.summary_markdown,
-      s.feedback_markdown,
-      s.feedback_sent_at,
-      s.created_at,
-      s.updated_at,
-      st.first_name AS student_first_name,
-      st.last_name AS student_last_name
-    FROM sessions s
-    JOIN students st ON st.id = s.student_id
-    ORDER BY s.session_date DESC, s.session_time DESC
-  `;
+export async function getSessions(status?: string | null): Promise<SessionWithStudent[]> {
+  const validStatuses = ["planned", "in_progress", "completed", "rescheduled", "planned_reschedule"] as const;
+  const filterStatus =
+    status && validStatuses.includes(status as (typeof validStatuses)[number])
+      ? status
+      : null;
+
+  const rows = filterStatus
+    ? await sql`
+        SELECT
+          s.id,
+          s.student_id,
+          s.session_date,
+          s.session_time,
+          s.subject,
+          s.status,
+          s.summary_markdown,
+          s.feedback_markdown,
+          s.feedback_sent_at,
+          s.created_at,
+          s.updated_at,
+          st.first_name AS student_first_name,
+          st.last_name AS student_last_name
+        FROM sessions s
+        JOIN students st ON st.id = s.student_id
+        WHERE s.status = ${filterStatus}
+        ORDER BY s.session_date ASC, s.session_time ASC
+      `
+    : await sql`
+        SELECT
+          s.id,
+          s.student_id,
+          s.session_date,
+          s.session_time,
+          s.subject,
+          s.status,
+          s.summary_markdown,
+          s.feedback_markdown,
+          s.feedback_sent_at,
+          s.created_at,
+          s.updated_at,
+          st.first_name AS student_first_name,
+          st.last_name AS student_last_name
+        FROM sessions s
+        JOIN students st ON st.id = s.student_id
+        ORDER BY s.session_date ASC, s.session_time ASC
+      `;
   return rows as SessionWithStudent[];
 }
 
