@@ -9,6 +9,8 @@ import {
 import { formatDisplayTime } from "@/lib/format";
 import { MonthCalendar } from "./components/month-calendar";
 
+export const dynamic = "force-dynamic";
+
 function todayDateStr(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

@@ -10,6 +10,8 @@ function parseStatus(status: string | undefined): string | null {
   return VALID_STATUSES.includes(status as (typeof VALID_STATUSES)[number]) ? status : null;
 }
 
+export const dynamic = "force-dynamic";
+
 export default async function SessionsPage({
   searchParams,
 }: {

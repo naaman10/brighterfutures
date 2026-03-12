@@ -4,6 +4,8 @@ import { getStudentById } from "@/lib/db";
 import { updateStudentAction } from "./actions";
 import { EditStudentForm } from "./edit-student-form";
 
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ id: string }> };
 
 export default async function EditStudentPage({ params }: Props) {

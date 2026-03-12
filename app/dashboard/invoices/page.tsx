@@ -2,6 +2,8 @@ import { getInvoices } from "@/lib/db";
 import { GenerateInvoicesButton } from "./generate-invoices-button";
 import { InvoicesTable } from "./invoices-table";
 
+export const dynamic = "force-dynamic";
+
 export default async function InvoicesPage() {
   let invoices: Awaited<ReturnType<typeof getInvoices>> = [];
   let dbError: string | null = null;

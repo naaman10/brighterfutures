@@ -7,6 +7,8 @@ import { SessionFeedbackEditor } from "./session-feedback-editor";
 import { SessionStatusSelect } from "./session-status-select";
 import { SessionSummaryEditor } from "./session-summary-editor";
 
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ id: string; sessionId: string }> };
 
 export default async function SessionViewPage({ params }: Props) {

@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getParents } from "@/lib/db";
 import { ParentAccordion } from "../parent-accordion";
 
+export const dynamic = "force-dynamic";
+
 export default async function ParentsPage() {
   let parents: Awaited<ReturnType<typeof getParents>> = [];
   let dbError: string | null = null;

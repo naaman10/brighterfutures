@@ -4,6 +4,8 @@ import { getSessionById, getStudentById } from "@/lib/db";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { RescheduleSessionForm } from "./reschedule-session-form";
 
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ id: string; sessionId: string }> };
 
 export default async function RescheduleSessionPage({ params }: Props) {

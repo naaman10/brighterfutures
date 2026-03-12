@@ -6,6 +6,8 @@ import { AddSessionForm } from "./add-session-form";
 import { SendWelcomeEmailButton } from "./send-welcome-email-button";
 import { StudentAISummary } from "./student-ai-summary";
 
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ id: string }> };
 
 export default async function StudentDetailPage({ params }: Props) {

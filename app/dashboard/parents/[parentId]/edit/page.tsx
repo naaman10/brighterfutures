@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getParentById } from "@/lib/db";
 import { EditParentForm } from "./edit-parent-form";
 
+export const dynamic = "force-dynamic";
+
 type Props = { params: Promise<{ parentId: string }> };
 
 export default async function EditParentPage({ params }: Props) {

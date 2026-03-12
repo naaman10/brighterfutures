@@ -2,6 +2,8 @@ import Link from "next/link";
 import { getStudents } from "@/lib/db";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 
+export const dynamic = "force-dynamic";
+
 export default async function StudentsPage() {
   let students: Awaited<ReturnType<typeof getStudents>> = [];
   let dbError: string | null = null;
