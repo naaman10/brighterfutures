@@ -2,11 +2,12 @@ import { auth } from "@/auth";
 import Link from "next/link";
 import React from "react";
 import {
+  getInvoiceTotalsForNextMonth,
   getSessionsForDate,
   getSessionsForMonth,
   SESSION_STATUS_LABELS,
 } from "@/lib/db";
-import { formatDisplayTime } from "@/lib/format";
+import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { MonthCalendar } from "./components/month-calendar";
 
 export const dynamic = "force-dynamic";
@@ -43,14 +44,17 @@ export default async function DashboardPage({
   const session = await auth();
   let sessionsToday: Awaited<ReturnType<typeof getSessionsForDate>> = [];
   let sessionsMonth: Awaited<ReturnType<typeof getSessionsForMonth>> = [];
+  let invoiceTotals: Awaited<ReturnType<typeof getInvoiceTotalsForNextMonth>> | null =
+    null;
   let dbError: string | null = null;
   let dbErrorHint: React.ReactNode = null;
 
   try {
     const { start, end } = getMonthRange(year, month);
-    [sessionsToday, sessionsMonth] = await Promise.all([
+    [sessionsToday, sessionsMonth, invoiceTotals] = await Promise.all([
       getSessionsForDate(todayDateStr()),
       getSessionsForMonth(start, end),
+      getInvoiceTotalsForNextMonth(),
     ]);
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Failed to load sessions.";
@@ -117,6 +121,40 @@ export default async function DashboardPage({
           {dbError}
           {dbErrorHint && <p className="mt-2">{dbErrorHint}</p>}
         </div>
+      )}
+
+      {invoiceTotals && invoiceTotals.billing_month && (
+        <section className="mb-8">
+          <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <h2 className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                Next month invoices
+              </h2>
+              <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                Billing month:{" "}
+                {formatDisplayDate(invoiceTotals.billing_month) || "—"}
+              </span>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-md bg-zinc-50 p-3 dark:bg-zinc-800/60">
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Total owed
+                </p>
+                <p className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+                  £{invoiceTotals.total_owed.toFixed(2)}
+                </p>
+              </div>
+              <div className="rounded-md bg-zinc-50 p-3 dark:bg-zinc-800/60">
+                <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Total paid
+                </p>
+                <p className="mt-1 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+                  £{invoiceTotals.total_paid.toFixed(2)}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
       )}
 
       <section>

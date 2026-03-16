@@ -27,17 +27,22 @@ type Props = { studentId: string };
 export function AddSessionForm({ studentId }: Props) {
   const [mode, setMode] = useState<"single" | "recurring">("single");
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
+    if (isSubmitting) return;
     setError(null);
+    setIsSubmitting(true);
     formData.set("mode", mode);
     const result = await addSessions(studentId, formData);
     if (result.error) {
       setError(result.error);
+      setIsSubmitting(false);
       return;
     }
     router.refresh();
+    setIsSubmitting(false);
   }
 
   return (
@@ -193,9 +198,16 @@ export function AddSessionForm({ studentId }: Props) {
       )}
       <button
         type="submit"
-        className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        disabled={isSubmitting}
+        className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
       >
-        {mode === "single" ? "Add session" : "Add recurring sessions"}
+        {isSubmitting
+          ? mode === "single"
+            ? "Adding..."
+            : "Adding sessions..."
+          : mode === "single"
+          ? "Add session"
+          : "Add recurring sessions"}
       </button>
     </form>
   );

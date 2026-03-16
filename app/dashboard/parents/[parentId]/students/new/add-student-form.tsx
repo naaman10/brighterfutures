@@ -9,17 +9,22 @@ type Props = { parentId: string };
 
 export function AddStudentForm({ parentId }: Props) {
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
+    if (isSubmitting) return;
     setError(null);
+    setIsSubmitting(true);
     const result = await addStudentToParent(parentId, formData);
     if (result?.error) {
       setError(result.error);
+      setIsSubmitting(false);
       return;
     }
     router.push("/dashboard/parents");
     router.refresh();
+    setIsSubmitting(false);
   }
 
   return (
@@ -93,9 +98,10 @@ export function AddStudentForm({ parentId }: Props) {
       <div className="flex gap-3">
         <button
           type="submit"
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          disabled={isSubmitting}
+          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          Add student
+          {isSubmitting ? "Adding..." : "Add student"}
         </button>
         <Link
           href="/dashboard/parents"

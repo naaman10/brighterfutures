@@ -23,6 +23,7 @@ const emptyStudent: StudentRow = {
 export function AddParentForm() {
   const [students, setStudents] = useState<StudentRow[]>([{ ...emptyStudent }]);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function addStudent() {
     setStudents((prev) => [...prev, { ...emptyStudent }]);
@@ -41,7 +42,10 @@ export function AddParentForm() {
   }
 
   async function handleSubmit(formData: FormData) {
+    if (isSubmitting) return;
     setError(null);
+    setIsSubmitting(true);
+
     const toSend = students
       .map((s) => ({
         first_name: s.first_name.trim(),
@@ -53,7 +57,11 @@ export function AddParentForm() {
       .filter((s) => s.first_name || s.last_name);
     formData.set("students", JSON.stringify(toSend));
     const result = await addParentWithStudents(formData);
-    if (result && "error" in result) setError(result.error);
+    if (result && "error" in result) {
+      setError(result.error);
+    }
+
+    setIsSubmitting(false);
   }
 
   return (
@@ -203,9 +211,10 @@ export function AddParentForm() {
       <div className="flex gap-3">
         <button
           type="submit"
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          disabled={isSubmitting}
+          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          Add parent
+          {isSubmitting ? "Adding..." : "Add parent"}
         </button>
         <Link
           href="/dashboard"

@@ -185,6 +185,43 @@ export async function getInvoiceById(id: number): Promise<Invoice | null> {
 }
 
 /**
+ * Returns totals for the next billing month:
+ * - billing_month: first day of that month
+ * - total_owed: sum of subtotal for all invoices in that month
+ * - total_paid: sum of subtotal for invoices in that month with status = 'paid'
+ */
+export async function getInvoiceTotalsForNextMonth(): Promise<{
+  billing_month: string | null;
+  total_owed: number;
+  total_paid: number;
+}> {
+  const rows = await sql`
+    WITH next_month AS (
+      SELECT date_trunc('month', CURRENT_DATE + INTERVAL '1 month')::date AS start_date
+    )
+    SELECT
+      nm.start_date AS billing_month,
+      COALESCE(SUM(CASE WHEN i.id IS NOT NULL THEN i.subtotal ELSE 0 END), 0)::float AS total_owed,
+      COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.subtotal ELSE 0 END), 0)::float AS total_paid
+    FROM next_month nm
+    LEFT JOIN invoices i
+      ON i.billing_month >= nm.start_date
+     AND i.billing_month < nm.start_date + INTERVAL '1 month'
+    GROUP BY nm.start_date
+  `;
+  const row = rows[0] as {
+    billing_month: string | null;
+    total_owed: number | null;
+    total_paid: number | null;
+  };
+  return {
+    billing_month: row?.billing_month ?? null,
+    total_owed: row?.total_owed ?? 0,
+    total_paid: row?.total_paid ?? 0,
+  };
+}
+
+/**
  * Updates an invoice's status (e.g. to "sent" after emailing).
  */
 export async function updateInvoiceStatus(
