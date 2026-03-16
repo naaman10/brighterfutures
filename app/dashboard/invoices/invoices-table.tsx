@@ -6,7 +6,11 @@ import { toast } from "sonner";
 import type { Invoice } from "@/lib/db";
 import { InvoiceDownloadButton } from "./invoice-download-button";
 import { formatDisplayDate } from "@/lib/format";
-import { sendSelectedInvoices, markSelectedInvoicesAsPaid } from "./actions";
+import {
+  sendSelectedInvoices,
+  markSelectedInvoicesAsPaid,
+  deleteSelectedInvoices,
+} from "./actions";
 
 type Props = {
   invoices: Invoice[];
@@ -31,6 +35,8 @@ export function InvoicesTable({ invoices }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [sending, setSending] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const toggleOne = (id: number) => {
     setSelected((prev) => {
@@ -79,6 +85,30 @@ export function InvoicesTable({ invoices }: Props) {
     }
   }
 
+  function openDeleteConfirm() {
+    setShowDeleteConfirm(true);
+  }
+
+  function closeDeleteConfirm() {
+    if (!deleting) setShowDeleteConfirm(false);
+  }
+
+  async function handleDeleteConfirmed() {
+    if (selected.size === 0) return;
+    setDeleting(true);
+    const ids = Array.from(selected);
+    const result = await deleteSelectedInvoices(ids);
+    setDeleting(false);
+    setShowDeleteConfirm(false);
+    if (result.ok && result.deleted != null) {
+      setSelected(new Set());
+      router.refresh();
+      toast.success(`Deleted ${result.deleted} invoice${result.deleted !== 1 ? "s" : ""}`);
+    } else {
+      toast.error(result.error ?? "Failed to delete invoices");
+    }
+  }
+
   return (
     <div className="space-y-3">
       {selected.size > 0 && (
@@ -86,7 +116,7 @@ export function InvoicesTable({ invoices }: Props) {
           <button
             type="button"
             onClick={handleSend}
-            disabled={sending || markingPaid}
+            disabled={sending || markingPaid || deleting}
             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:bg-zinc-200"
           >
             {sending ? "Sending…" : `Send ${selected.size} selected`}
@@ -94,20 +124,73 @@ export function InvoicesTable({ invoices }: Props) {
           <button
             type="button"
             onClick={handleMarkAsPaid}
-            disabled={sending || markingPaid}
+            disabled={sending || markingPaid || deleting}
             className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
           >
             {markingPaid ? "Updating…" : "Mark as paid"}
           </button>
           <button
             type="button"
+            onClick={openDeleteConfirm}
+            disabled={sending || markingPaid || deleting}
+            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-950/30"
+          >
+            Delete selected
+          </button>
+          <button
+            type="button"
             onClick={() => setSelected(new Set())}
-            disabled={sending || markingPaid}
+            disabled={sending || markingPaid || deleting}
             className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
           >
             Clear selection
           </button>
         </div>
+      )}
+
+      {showDeleteConfirm && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            aria-hidden
+            onClick={closeDeleteConfirm}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="delete-invoices-title"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            <h2
+              id="delete-invoices-title"
+              className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+            >
+              Delete invoices?
+            </h2>
+            <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+              Are you sure you want to delete {selected.size} selected invoice
+              {selected.size !== 1 ? "s" : ""}? This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeDeleteConfirm}
+                disabled={deleting}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirmed}
+                disabled={deleting}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-600 dark:hover:bg-red-700"
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </div>
+        </>
       )}
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
         <div className="overflow-x-auto">

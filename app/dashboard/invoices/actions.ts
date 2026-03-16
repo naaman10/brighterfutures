@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import {
   createInvoice,
+  deleteInvoices,
   getInvoiceById,
   getSessionsByParentForMonth,
   getSessionsByParentForNextMonth,
@@ -250,4 +251,20 @@ export async function markSelectedInvoicesAsPaid(invoiceIds: number[]): Promise<
 
   revalidatePath("/dashboard/invoices");
   return { ok: true, updated };
+}
+
+export async function deleteSelectedInvoices(invoiceIds: number[]): Promise<{
+  ok?: boolean;
+  deleted?: number;
+  error?: string;
+}> {
+  if (invoiceIds.length === 0) {
+    return { ok: false, error: "No invoices selected." };
+  }
+  const result = await deleteInvoices(invoiceIds);
+  if ("error" in result) {
+    return { ok: false, error: result.error };
+  }
+  revalidatePath("/dashboard/invoices");
+  return { ok: true, deleted: result.deleted };
 }

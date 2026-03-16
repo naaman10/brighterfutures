@@ -237,6 +237,26 @@ export async function updateInvoiceStatus(
   }
 }
 
+/**
+ * Deletes invoices by id. Returns the number of rows deleted.
+ */
+export async function deleteInvoices(
+  ids: number[]
+): Promise<{ ok: true; deleted: number } | { error: string }> {
+  if (ids.length === 0) {
+    return { ok: true, deleted: 0 };
+  }
+  try {
+    for (const id of ids) {
+      await sql`DELETE FROM invoices WHERE id = ${id}`;
+    }
+    return { ok: true, deleted: ids.length };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
 export type SessionForInvoice = {
   id: string;
   student_id: string;
