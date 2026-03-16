@@ -5,9 +5,9 @@
 logo_url: "https://res.cloudinary.com/njh101010/image/upload/v1772015902/brighterfutures/bft-logo-colour.png"
 
 # Bank account details for payment instructions
-billing_account_name: "Ellie Langford"
-billing_account_number: "00000000"
-billing_sort_code: "00-00-00"
+billing_account_name: "Brighter Futures Tutoring"
+billing_account_number: "73952930"
+billing_sort_code: "04-00-03"
 
 # Terms and conditions (supports multiple lines)
 terms: |
