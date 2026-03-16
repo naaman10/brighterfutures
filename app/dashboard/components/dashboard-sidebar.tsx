@@ -9,6 +9,7 @@ const navItems = [
   { href: "/dashboard/students", label: "Students" },
   { href: "/dashboard/sessions", label: "Sessions" },
   { href: "/dashboard/invoices", label: "Invoices" },
+  { href: "/dashboard/email-logs", label: "Email logs" },
 ];
 
 export function DashboardSidebar() {
