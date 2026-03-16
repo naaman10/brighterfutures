@@ -288,6 +288,50 @@ export type SessionsByParentForInvoice = {
 };
 
 /**
+ * Fetches session count and rate for one parent in a given billing month (first day YYYY-MM-DD).
+ * Excludes sessions with status 'planned_reschedule'. Returns null if parent has no sessions that month.
+ */
+export async function getSessionsByParentForMonth(
+  parentId: string,
+  billingMonthStart: string
+): Promise<SessionsByParentForInvoice | null> {
+  const rows = await sql`
+    SELECT
+      st.parent_id AS parents_id,
+      p.first_name AS parent_first_name,
+      p.last_name AS parent_last_name,
+      COUNT(*)::int AS session_count,
+      p.session_rate
+    FROM sessions s
+    JOIN students st ON st.id = s.student_id
+    JOIN parents p ON p.id = st.parent_id
+    WHERE st.parent_id = ${parentId}
+      AND s.session_date >= ${billingMonthStart}::date
+      AND s.session_date < (${billingMonthStart}::date + INTERVAL '1 month')
+      AND s.status != 'planned_reschedule'
+    GROUP BY st.parent_id, p.first_name, p.last_name, p.session_rate
+  `;
+  const row = rows[0];
+  return (row as SessionsByParentForInvoice) ?? null;
+}
+
+/**
+ * Returns whether an invoice already exists for the given parent and billing month.
+ */
+export async function hasInvoiceForParentAndMonth(
+  parentId: string,
+  billingMonthStart: string
+): Promise<boolean> {
+  const rows = await sql`
+    SELECT 1 FROM invoices
+    WHERE parents_id = ${parentId}
+      AND billing_month = ${billingMonthStart}::date
+    LIMIT 1
+  `;
+  return rows.length > 0;
+}
+
+/**
  * Fetches parents with session counts for the next calendar month,
  * excluding 'planned_reschedule' status. Includes each parent's session_rate (£).
  */

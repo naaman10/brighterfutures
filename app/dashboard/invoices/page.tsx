@@ -1,19 +1,27 @@
-import { getInvoices } from "@/lib/db";
+import { getInvoices, getParents } from "@/lib/db";
 import { GenerateInvoicesButton } from "./generate-invoices-button";
+import { GenerateSingleInvoiceModal } from "./generate-single-invoice-modal";
 import { InvoicesTable } from "./invoices-table";
 
 export const dynamic = "force-dynamic";
 
 export default async function InvoicesPage() {
   let invoices: Awaited<ReturnType<typeof getInvoices>> = [];
+  let parents: Awaited<ReturnType<typeof getParents>> = [];
   let dbError: string | null = null;
 
   try {
-    invoices = await getInvoices();
+    [invoices, parents] = await Promise.all([getInvoices(), getParents()]);
   } catch (e) {
     dbError =
       e instanceof Error ? e.message : "Failed to load invoices from database.";
   }
+
+  const parentOptions = parents.map((p) => ({
+    id: p.id,
+    first_name: p.first_name,
+    last_name: p.last_name,
+  }));
 
   return (
     <div>
@@ -23,7 +31,10 @@ export default async function InvoicesPage() {
         </h1>
       </div>
 
-      <GenerateInvoicesButton />
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <GenerateInvoicesButton />
+        <GenerateSingleInvoiceModal parents={parentOptions} />
+      </div>
 
       {dbError && (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">

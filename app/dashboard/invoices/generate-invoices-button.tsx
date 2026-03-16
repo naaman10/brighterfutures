@@ -25,12 +25,12 @@ export function GenerateInvoicesButton() {
   }
 
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-3">
+    <>
       <button
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="h-10 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
       >
         {loading ? "Generating…" : "Generate invoices for next month"}
       </button>
@@ -44,6 +44,6 @@ export function GenerateInvoicesButton() {
           {error}
         </span>
       )}
-    </div>
+    </>
   );
 }

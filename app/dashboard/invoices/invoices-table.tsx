@@ -177,7 +177,7 @@ export function InvoicesTable({ invoices }: Props) {
                           ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
                           : invoice.status === "overdue"
                             ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:bg-amber-300"
-                            : invoice.status === "sent"
+                            : invoice.status === "issued"
                               ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
                               : invoice.status === "cancelled"
                                 ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"

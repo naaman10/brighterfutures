@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import {
   createInvoice,
   getInvoiceById,
+  getSessionsByParentForMonth,
   getSessionsByParentForNextMonth,
+  hasInvoiceForParentAndMonth,
   updateInvoiceStatus,
 } from "@/lib/db";
 import { renderInvoicePdfBuffer } from "@/lib/invoice-pdf-buffer";
@@ -89,6 +91,66 @@ export async function generateInvoices(): Promise<{
   }
 }
 
+/**
+ * Generate a single invoice for a given parent and billing month (YYYY-MM-DD, first day of month).
+ */
+export async function generateInvoiceForParentAndMonth(
+  parentId: string,
+  billingMonth: string
+): Promise<{ ok?: boolean; error?: string; message?: string }> {
+  const monthStart = billingMonth.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(monthStart)) {
+    return { ok: false, error: "Invalid billing month." };
+  }
+
+  const existing = await hasInvoiceForParentAndMonth(parentId, monthStart);
+  if (existing) {
+    return {
+      ok: false,
+      error: "An invoice already exists for this parent and month.",
+    };
+  }
+
+  const row = await getSessionsByParentForMonth(parentId, monthStart);
+  if (!row || row.session_count === 0) {
+    return {
+      ok: false,
+      error:
+        "No billable sessions for this parent in the selected month (or only 'Planned reschedule' sessions).",
+    };
+  }
+
+  const rate = row.session_rate != null ? Number(row.session_rate) : null;
+  if (rate == null || Number.isNaN(rate)) {
+    return {
+      ok: false,
+      error: "Parent has no session rate set. Add a session rate (£) to the parent.",
+    };
+  }
+
+  const issuedDate = new Date().toISOString().slice(0, 10);
+  const dueDate = getDueDate(monthStart);
+  const subtotal = row.session_count * rate;
+
+  const result = await createInvoice({
+    parents_id: parentId,
+    billing_month: monthStart,
+    issued_date: issuedDate,
+    due_date: dueDate,
+    subtotal,
+  });
+
+  if ("error" in result) {
+    return { ok: false, error: result.error };
+  }
+
+  revalidatePath("/dashboard/invoices");
+  return {
+    ok: true,
+    message: `Invoice ${result.invoice_number} created for ${monthStart}.`,
+  };
+}
+
 const INVOICE_EMAIL_TEMPLATE_ID = "d-0b61465b24144177bb2cd4f23a0bcb33";
 
 function formatInvoiceMonth(billingMonth: string | Date | null): string {
@@ -145,7 +207,7 @@ export async function sendSelectedInvoices(invoiceIds: number[]): Promise<{
       return { ok: false, sent, error: `Failed to send ${invoice.invoice_number}: ${templateResult.error}` };
     }
 
-    const updateResult = await updateInvoiceStatus(invoiceId, "sent");
+    const updateResult = await updateInvoiceStatus(invoiceId, "issued");
     if ("ok" in updateResult && updateResult.ok) {
       sent++;
     } else {
