@@ -11,6 +11,6 @@ billing_sort_code: "04-00-03"
 
 # Terms and conditions (supports multiple lines)
 terms: |
-  Payment is due by the first of the month for the commencing lessons, lessons cannot proceed until the invoice is paidbuild fixfix 2.
+  Payment is due by the first of the month for the commencing lessons, lessons cannot proceed until the invoice is paid.
   Please include the invoice number as the payment reference.
   Where a session is rescheduled, the session is still payable within the original billing month. The rescheduled session will not be invoiced.

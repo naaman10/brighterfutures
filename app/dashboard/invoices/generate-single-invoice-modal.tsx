@@ -24,6 +24,8 @@ export function GenerateSingleInvoiceModal({ parents }: Props) {
   const [open, setOpen] = useState(false);
   const [parentId, setParentId] = useState("");
   const [month, setMonth] = useState("");
+  const [discountAmount, setDiscountAmount] = useState("");
+  const [discountPct, setDiscountPct] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
@@ -36,6 +38,8 @@ export function GenerateSingleInvoiceModal({ parents }: Props) {
       setMessage(null);
       setParentId("");
       setMonth("");
+      setDiscountAmount("");
+      setDiscountPct("");
     }
   }
 
@@ -46,7 +50,14 @@ export function GenerateSingleInvoiceModal({ parents }: Props) {
     setError(null);
     setMessage(null);
     const billingMonth = `${month}-01`;
-    const result = await generateInvoiceForParentAndMonth(parentId, billingMonth);
+    const options =
+      discountAmount !== "" || discountPct !== ""
+        ? {
+            discount_amount: discountAmount !== "" ? Number(discountAmount) : undefined,
+            discount_pct: discountPct !== "" ? Number(discountPct) : undefined,
+          }
+        : undefined;
+    const result = await generateInvoiceForParentAndMonth(parentId, billingMonth, options);
     setLoading(false);
     if (result.ok && result.message) {
       setMessage(result.message);
@@ -124,6 +135,45 @@ export function GenerateSingleInvoiceModal({ parents }: Props) {
                   required
                   className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                 />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label
+                    htmlFor="single-invoice-discount-amount"
+                    className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  >
+                    Discount amount (£)
+                  </label>
+                  <input
+                    id="single-invoice-discount-amount"
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={discountAmount}
+                    onChange={(e) => setDiscountAmount(e.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="single-invoice-discount-pct"
+                    className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+                  >
+                    Discount (%)
+                  </label>
+                  <input
+                    id="single-invoice-discount-pct"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={0.01}
+                    value={discountPct}
+                    onChange={(e) => setDiscountPct(e.target.value)}
+                    placeholder="0"
+                    className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                  />
+                </div>
               </div>
               {error && (
                 <p className="text-sm text-amber-600 dark:text-amber-400">

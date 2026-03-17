@@ -10,7 +10,11 @@ import {
   sendSelectedInvoices,
   markSelectedInvoicesAsPaid,
   deleteSelectedInvoices,
+  regenerateSelectedInvoices,
+  cancelSelectedInvoices,
+  updateInvoiceDiscountAction,
 } from "./actions";
+import { EditDiscountModal } from "./edit-discount-modal";
 
 type Props = {
   invoices: Invoice[];
@@ -30,13 +34,32 @@ function formatStatus(status: string): string {
   return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
+function formatDiscountDisplay(invoice: Invoice): string {
+  const amount = Number(invoice.discount_amount);
+  const pct = Number(invoice.discount_pct);
+  const hasAmount = !Number.isNaN(amount) && amount > 0;
+  const hasPct = !Number.isNaN(pct) && pct > 0;
+  if (!hasAmount && !hasPct) return "—";
+  const parts: string[] = [];
+  if (hasAmount) parts.push(formatCurrency(String(amount)));
+  if (hasPct) parts.push(`${pct}%`);
+  return parts.join(" / ");
+}
+
+const LOCKED_STATUSES = ["issued", "paid"];
+
 export function InvoicesTable({ invoices }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [sending, setSending] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [discountInvoice, setDiscountInvoice] = useState<Invoice | null>(null);
 
   const toggleOne = (id: number) => {
     setSelected((prev) => {
@@ -109,6 +132,48 @@ export function InvoicesTable({ invoices }: Props) {
     }
   }
 
+  async function handleRegenerateConfirmed() {
+    if (selected.size === 0) return;
+    setRegenerating(true);
+    const ids = Array.from(selected);
+    const result = await regenerateSelectedInvoices(ids);
+    setRegenerating(false);
+    setShowRegenerateConfirm(false);
+    if (result.regenerated != null && result.regenerated > 0) {
+      setSelected(new Set());
+      router.refresh();
+      toast.success(
+        `Regenerated ${result.regenerated} invoice${result.regenerated !== 1 ? "s" : ""}.${result.errors?.length ? ` ${result.errors.length} skipped.` : ""}`
+      );
+      if (result.errors?.length) {
+        result.errors.forEach((err) => toast.warning(err));
+      }
+    } else {
+      toast.error(result.errors?.[0] ?? "No invoices could be regenerated.");
+      result.errors?.slice(1).forEach((err) => toast.warning(err));
+    }
+  }
+
+  async function handleCancelConfirmed() {
+    if (selected.size === 0) return;
+    setCancelling(true);
+    const ids = Array.from(selected);
+    const result = await cancelSelectedInvoices(ids);
+    setCancelling(false);
+    setShowCancelConfirm(false);
+    if (result.ok && result.cancelled != null) {
+      setSelected(new Set());
+      router.refresh();
+      toast.success(`Cancelled ${result.cancelled} invoice${result.cancelled !== 1 ? "s" : ""}`);
+    } else {
+      toast.error(result.error ?? "Failed to cancel invoices");
+    }
+  }
+
+  const selectedInvoices = invoices.filter((i) => selected.has(i.id));
+  const canRegenerate = selectedInvoices.some((i) => !LOCKED_STATUSES.includes(i.status));
+  const canCancel = selectedInvoices.length > 0;
+
   return (
     <div className="space-y-3">
       {selected.size > 0 && (
@@ -116,7 +181,7 @@ export function InvoicesTable({ invoices }: Props) {
           <button
             type="button"
             onClick={handleSend}
-            disabled={sending || markingPaid || deleting}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling}
             className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:bg-zinc-200"
           >
             {sending ? "Sending…" : `Send ${selected.size} selected`}
@@ -124,15 +189,32 @@ export function InvoicesTable({ invoices }: Props) {
           <button
             type="button"
             onClick={handleMarkAsPaid}
-            disabled={sending || markingPaid || deleting}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling}
             className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
           >
             {markingPaid ? "Updating…" : "Mark as paid"}
           </button>
           <button
             type="button"
+            onClick={() => setShowRegenerateConfirm(true)}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling || !canRegenerate}
+            title={!canRegenerate ? "Select draft invoices to regenerate" : "Recalculate subtotal from current sessions"}
+            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          >
+            {regenerating ? "Regenerating…" : "Regenerate selected"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowCancelConfirm(true)}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling || !canCancel}
+            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
+          >
+            {cancelling ? "Cancelling…" : "Cancel invoice(s)"}
+          </button>
+          <button
+            type="button"
             onClick={openDeleteConfirm}
-            disabled={sending || markingPaid || deleting}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling}
             className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-950/30"
           >
             Delete selected
@@ -140,7 +222,7 @@ export function InvoicesTable({ invoices }: Props) {
           <button
             type="button"
             onClick={() => setSelected(new Set())}
-            disabled={sending || markingPaid || deleting}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling}
             className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
           >
             Clear selection
@@ -192,6 +274,109 @@ export function InvoicesTable({ invoices }: Props) {
           </div>
         </>
       )}
+
+      {showRegenerateConfirm && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            aria-hidden
+            onClick={() => !regenerating && setShowRegenerateConfirm(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="regenerate-invoices-title"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            <h2
+              id="regenerate-invoices-title"
+              className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+            >
+              Regenerate invoices?
+            </h2>
+            <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+              Subtotal will be recalculated from current sessions for the billing month. Issued or paid
+              invoices will be skipped.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => !regenerating && setShowRegenerateConfirm(false)}
+                disabled={regenerating}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleRegenerateConfirmed}
+                disabled={regenerating}
+                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                {regenerating ? "Regenerating…" : "Regenerate"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {showCancelConfirm && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            aria-hidden
+            onClick={() => !cancelling && setShowCancelConfirm(false)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cancel-invoices-title"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+          >
+            <h2
+              id="cancel-invoices-title"
+              className="mb-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50"
+            >
+              Cancel invoices?
+            </h2>
+            <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+              Cancelled invoices can be replaced with new ones. You can then generate a new invoice
+              for the same month.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => !cancelling && setShowCancelConfirm(false)}
+                disabled={cancelling}
+                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelConfirmed}
+                disabled={cancelling}
+                className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50 dark:bg-amber-600 dark:hover:bg-amber-700"
+              >
+                {cancelling ? "Cancelling…" : "Cancel invoice(s)"}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {discountInvoice && (
+        <EditDiscountModal
+          invoice={discountInvoice}
+          onClose={() => setDiscountInvoice(null)}
+          onSaved={() => {
+            setDiscountInvoice(null);
+            router.refresh();
+          }}
+          updateDiscount={updateInvoiceDiscountAction}
+        />
+      )}
+
       <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
@@ -220,6 +405,9 @@ export function InvoicesTable({ invoices }: Props) {
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Status
+                </th>
+                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Discount
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Total
@@ -270,14 +458,29 @@ export function InvoicesTable({ invoices }: Props) {
                       {formatStatus(invoice.status)}
                     </span>
                   </td>
+                  <td className="px-4 py-3 text-right text-sm text-zinc-600 dark:text-zinc-400">
+                    {formatDiscountDisplay(invoice)}
+                  </td>
                   <td className="px-4 py-3 text-right text-sm font-medium text-zinc-900 dark:text-zinc-50">
                     {formatCurrency(invoice.total)}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <InvoiceDownloadButton
-                      invoiceId={invoice.id}
-                      invoiceNumber={invoice.invoice_number}
-                    />
+                    <div className="flex items-center justify-end gap-2">
+                      {!LOCKED_STATUSES.includes(invoice.status) && (
+                        <button
+                          type="button"
+                          onClick={() => setDiscountInvoice(invoice)}
+                          className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                          title="Edit discount"
+                        >
+                          Edit
+                        </button>
+                      )}
+                      <InvoiceDownloadButton
+                        invoiceId={invoice.id}
+                        invoiceNumber={invoice.invoice_number}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

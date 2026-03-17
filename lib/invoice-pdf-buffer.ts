@@ -3,11 +3,17 @@ import { getInvoiceById, getSessionsForInvoice } from "@/lib/db";
 import { getInvoiceConfig } from "@/lib/invoice-config";
 import { InvoicePDFDocument } from "@/lib/invoice-pdf";
 
+/**
+ * Returns the first day of the billing month as YYYY-MM-01 so session range is
+ * strictly that calendar month. Uses Europe/London for Date values so the
+ * calendar month is correct regardless of server timezone (e.g. April 1 00:00
+ * BST must yield April, not March when the server is in UTC).
+ */
 function extractBillingMonthStart(billingMonth: string | Date | null): string | null {
   if (!billingMonth) return null;
   if (typeof billingMonth === "string") {
     const m = billingMonth.slice(0, 10).match(/^(\d{4})-(\d{2})/);
-    return m ? `${m[1]}-${m[2]}-01` : billingMonth.slice(0, 10);
+    return m ? `${m[1]}-${m[2]}-01` : null;
   }
   const d = new Date(billingMonth);
   const formatter = new Intl.DateTimeFormat("en-CA", {

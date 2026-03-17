@@ -122,9 +122,19 @@ const styles = StyleSheet.create({
   },
 });
 
+/**
+ * Formats a date for display. For YYYY-MM-DD strings (e.g. session_date from DB),
+ * parses as calendar date only so timezone never shifts the day (e.g. 2026-04-01
+ * must show as 01/04/2026, not 31/03/2026).
+ */
 function formatDate(value: string | Date | null | undefined): string {
   if (value == null) return "—";
-  const d = value instanceof Date ? value : new Date(String(value));
+  const str = typeof value === "string" ? value.trim() : value instanceof Date ? value.toISOString().slice(0, 10) : String(value);
+  const m = str.slice(0, 10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) {
+    return `${m[3]}/${m[2]}/${m[1]}`;
+  }
+  const d = value instanceof Date ? value : new Date(str);
   if (Number.isNaN(d.getTime())) return "—";
   const day = String(d.getUTCDate()).padStart(2, "0");
   const month = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -251,6 +261,22 @@ export function InvoicePDFDocument({
               {formatCurrency(invoice.subtotal)}
             </Text>
           </View>
+          {Number(invoice.discount_amount ?? 0) > 0 && (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Discount (amount)</Text>
+              <Text style={styles.totalValue}>
+                -{formatCurrency(invoice.discount_amount)}
+              </Text>
+            </View>
+          )}
+          {Number(invoice.discount_pct ?? 0) > 0 && (
+            <View style={styles.totalRow}>
+              <Text style={styles.totalLabel}>Discount ({invoice.discount_pct}%)</Text>
+              <Text style={styles.totalValue}>
+                -{formatCurrency((Number(invoice.subtotal) - Number(invoice.discount_amount ?? 0)) * (Number(invoice.discount_pct) / 100))}
+              </Text>
+            </View>
+          )}
           <View style={[styles.totalRow, styles.grandTotal]}>
             <Text style={styles.totalLabel}>Total</Text>
             <Text style={styles.totalValue}>

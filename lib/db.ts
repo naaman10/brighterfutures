@@ -127,6 +127,8 @@ export type Invoice = {
   status: string;
   subtotal: string;
   total: string | null;
+  discount_amount: string | null;
+  discount_pct: string | null;
   created_at: string | Date | null;
   paid_at: string | Date | null;
 };
@@ -147,6 +149,8 @@ export async function getInvoices(): Promise<Invoice[]> {
       i.status,
       i.subtotal::text,
       COALESCE(i.total::text, i.subtotal::text) AS total,
+      COALESCE(i.discount_amount::text, '0') AS discount_amount,
+      COALESCE(i.discount_pct::text, '0') AS discount_pct,
       i.created_at,
       i.paid_at
     FROM invoices i
@@ -168,12 +172,14 @@ export async function getInvoiceById(id: number): Promise<Invoice | null> {
       p.first_name || ' ' || p.last_name AS parent_name,
       p.first_name AS parent_first_name,
       p.email AS parent_email,
-      i.billing_month,
+      (i.billing_month::date)::text AS billing_month,
       i.issued_date,
       i.due_date,
       i.status,
       i.subtotal::text,
       COALESCE(i.total::text, i.subtotal::text) AS total,
+      COALESCE(i.discount_amount::text, '0') AS discount_amount,
+      COALESCE(i.discount_pct::text, '0') AS discount_pct,
       i.created_at,
       i.paid_at
     FROM invoices i
@@ -187,7 +193,7 @@ export async function getInvoiceById(id: number): Promise<Invoice | null> {
 /**
  * Returns totals for the next billing month:
  * - billing_month: first day of that month
- * - total_owed: sum of subtotal for all invoices in that month
+ * - total_owed: sum of subtotal for all invoices in that month (excluding cancelled)
  * - total_paid: sum of subtotal for invoices in that month with status = 'paid'
  */
 export async function getInvoiceTotalsForNextMonth(): Promise<{
@@ -201,7 +207,7 @@ export async function getInvoiceTotalsForNextMonth(): Promise<{
     )
     SELECT
       nm.start_date AS billing_month,
-      COALESCE(SUM(CASE WHEN i.id IS NOT NULL THEN i.subtotal ELSE 0 END), 0)::float AS total_owed,
+      COALESCE(SUM(CASE WHEN i.id IS NOT NULL AND i.status != 'cancelled' THEN i.subtotal ELSE 0 END), 0)::float AS total_owed,
       COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.subtotal ELSE 0 END), 0)::float AS total_paid
     FROM next_month nm
     LEFT JOIN invoices i
@@ -222,7 +228,7 @@ export async function getInvoiceTotalsForNextMonth(): Promise<{
 }
 
 /**
- * Updates an invoice's status (e.g. to "sent" after emailing).
+ * Updates an invoice's status (e.g. to "issued" after emailing, or "cancelled").
  */
 export async function updateInvoiceStatus(
   id: number,
@@ -230,6 +236,52 @@ export async function updateInvoiceStatus(
 ): Promise<{ ok: true } | { error: string }> {
   try {
     await sql`UPDATE invoices SET status = ${status} WHERE id = ${id}`;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+/**
+ * Updates an invoice's subtotal and optionally issued_date. Use only for draft invoices.
+ */
+export async function updateInvoice(
+  id: number,
+  data: { subtotal: number; issued_date?: string }
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    if (data.issued_date != null) {
+      await sql`
+        UPDATE invoices SET subtotal = ${data.subtotal}, issued_date = ${data.issued_date}::date WHERE id = ${id}
+      `;
+    } else {
+      await sql`UPDATE invoices SET subtotal = ${data.subtotal} WHERE id = ${id}`;
+    }
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+/**
+ * Updates an invoice's discount amount and/or percentage. Use only when status is not issued or paid.
+ */
+export async function updateInvoiceDiscount(
+  id: number,
+  data: { discount_amount?: number; discount_pct?: number }
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    if (data.discount_amount != null && data.discount_pct != null) {
+      await sql`
+        UPDATE invoices SET discount_amount = ${data.discount_amount}, discount_pct = ${data.discount_pct} WHERE id = ${id}
+      `;
+    } else if (data.discount_amount != null) {
+      await sql`UPDATE invoices SET discount_amount = ${data.discount_amount} WHERE id = ${id}`;
+    } else if (data.discount_pct != null) {
+      await sql`UPDATE invoices SET discount_pct = ${data.discount_pct} WHERE id = ${id}`;
+    }
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Database error";
@@ -283,7 +335,7 @@ export async function getSessionsForInvoice(
       s.student_id,
       st.first_name AS student_first_name,
       st.last_name AS student_last_name,
-      s.session_date,
+      (s.session_date::date)::text AS session_date,
       s.session_time,
       s.subject,
       s.status,
@@ -292,8 +344,8 @@ export async function getSessionsForInvoice(
     JOIN students st ON st.id = s.student_id
     JOIN parents p ON p.id = st.parent_id
     WHERE st.parent_id = ${parentsId}
-      AND s.session_date >= ${billingMonthStart}::date
-      AND s.session_date < (${billingMonthStart}::date + INTERVAL '1 month')
+      AND (s.session_date::date) >= (${billingMonthStart}::date)
+      AND (s.session_date::date) < (${billingMonthStart}::date + INTERVAL '1 month')
     ORDER BY s.session_date ASC, s.session_time ASC
   `;
   return rows as SessionForInvoice[];
@@ -326,8 +378,8 @@ export async function getSessionsByParentForMonth(
     JOIN students st ON st.id = s.student_id
     JOIN parents p ON p.id = st.parent_id
     WHERE st.parent_id = ${parentId}
-      AND s.session_date >= ${billingMonthStart}::date
-      AND s.session_date < (${billingMonthStart}::date + INTERVAL '1 month')
+      AND (s.session_date::date) >= (${billingMonthStart}::date)
+      AND (s.session_date::date) < (${billingMonthStart}::date + INTERVAL '1 month')
       AND s.status != 'planned_reschedule'
     GROUP BY st.parent_id, p.first_name, p.last_name, p.session_rate
   `;
@@ -352,34 +404,61 @@ export async function hasInvoiceForParentAndMonth(
 }
 
 /**
- * Fetches parents with session counts for the next calendar month,
- * excluding 'planned_reschedule' status. Includes each parent's session_rate (£).
+ * Returns the invoice for the given parent and billing month, or null.
  */
-export async function getSessionsByParentForNextMonth(): Promise<
-  SessionsByParentForInvoice[]
-> {
+export async function getInvoiceByParentAndMonth(
+  parentId: string,
+  billingMonthStart: string
+): Promise<Invoice | null> {
   const rows = await sql`
-    WITH next_month AS (
-      SELECT date_trunc('month', CURRENT_DATE + INTERVAL '1 month')::date AS start_date
-    ),
-    sessions_in_month AS (
-      SELECT
-        st.parent_id AS parents_id,
-        p.first_name AS parent_first_name,
-        p.last_name AS parent_last_name,
-        COUNT(*)::int AS session_count,
-        p.session_rate
-      FROM sessions s
-      JOIN students st ON st.id = s.student_id
-      JOIN parents p ON p.id = st.parent_id
-      CROSS JOIN next_month nm
-      WHERE s.session_date >= nm.start_date
-        AND s.session_date < nm.start_date + INTERVAL '1 month'
-        AND s.status != 'planned_reschedule'
-      GROUP BY st.parent_id, p.first_name, p.last_name, p.session_rate
-    )
-    SELECT parents_id, parent_first_name, parent_last_name, session_count, session_rate
-    FROM sessions_in_month
+    SELECT
+      i.id,
+      i.invoice_number,
+      i.parents_id,
+      p.first_name || ' ' || p.last_name AS parent_name,
+      i.billing_month,
+      i.issued_date,
+      i.due_date,
+      i.status,
+      i.subtotal::text,
+      COALESCE(i.total::text, i.subtotal::text) AS total,
+      COALESCE(i.discount_amount::text, '0') AS discount_amount,
+      COALESCE(i.discount_pct::text, '0') AS discount_pct,
+      i.created_at,
+      i.paid_at
+    FROM invoices i
+    LEFT JOIN parents p ON p.id = i.parents_id
+    WHERE i.parents_id = ${parentId}
+      AND i.billing_month = ${billingMonthStart}::date
+    LIMIT 1
+  `;
+  const row = rows[0];
+  return (row as Invoice) ?? null;
+}
+
+/**
+ * Fetches parents with session counts for the given billing month (first day YYYY-MM-DD).
+ * Excludes 'planned_reschedule' status. Includes each parent's session_rate (£).
+ * Pass the same billing month used for invoice creation so session range matches (avoids
+ * timezone mismatch between app and DB).
+ */
+export async function getSessionsByParentForNextMonth(
+  billingMonthStart: string
+): Promise<SessionsByParentForInvoice[]> {
+  const rows = await sql`
+    SELECT
+      st.parent_id AS parents_id,
+      p.first_name AS parent_first_name,
+      p.last_name AS parent_last_name,
+      COUNT(*)::int AS session_count,
+      p.session_rate
+    FROM sessions s
+    JOIN students st ON st.id = s.student_id
+    JOIN parents p ON p.id = st.parent_id
+    WHERE (s.session_date::date) >= (${billingMonthStart}::date)
+      AND (s.session_date::date) < (${billingMonthStart}::date + INTERVAL '1 month')
+      AND s.status != 'planned_reschedule'
+    GROUP BY st.parent_id, p.first_name, p.last_name, p.session_rate
   `;
   return rows as SessionsByParentForInvoice[];
 }
@@ -390,6 +469,8 @@ export type CreateInvoiceInput = {
   issued_date: string;
   due_date: string;
   subtotal: number;
+  discount_amount?: number;
+  discount_pct?: number;
 };
 
 /**
@@ -399,15 +480,18 @@ export async function createInvoice(
   data: CreateInvoiceInput
 ): Promise<{ ok: true; id: number; invoice_number: string } | { error: string }> {
   try {
+    const discountAmount = data.discount_amount ?? 0;
+    const discountPct = data.discount_pct ?? 0;
     const rows = await sql`
-      INSERT INTO invoices (parents_id, billing_month, issued_date, due_date, subtotal, discount_pct, tax_pct)
+      INSERT INTO invoices (parents_id, billing_month, issued_date, due_date, subtotal, discount_amount, discount_pct, tax_pct)
       VALUES (
         ${data.parents_id},
         ${data.billing_month}::date,
         ${data.issued_date}::date,
         ${data.due_date}::date,
         ${data.subtotal},
-        0,
+        ${discountAmount},
+        ${discountPct},
         0
       )
       RETURNING id, invoice_number
