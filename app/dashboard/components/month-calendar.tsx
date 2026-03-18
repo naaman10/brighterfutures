@@ -2,6 +2,8 @@ import Link from "next/link";
 import type { SessionWithStudent } from "@/lib/db";
 import { SESSION_STATUS_LABELS } from "@/lib/session-status";
 import { formatDisplayTime } from "@/lib/format";
+import { pickBirthdaySessionIdByStudent } from "@/lib/birthday";
+import { BirthdayEmoji } from "./birthday-emoji";
 
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const MONTH_NAMES = [
@@ -59,6 +61,8 @@ export function MonthCalendar({ year, month, sessions }: Props) {
   const grid = getMonthGrid(year, month);
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  const birthdaySessionIdToTooltip = pickBirthdaySessionIdByStudent(sessions, 5);
 
   const sessionsByDate = new Map<string, SessionWithStudent[]>();
   for (const s of sessions) {
@@ -151,6 +155,14 @@ export function MonthCalendar({ year, month, sessions }: Props) {
                                 {formatDisplayTime(s.session_time)}
                               </span>{" "}
                               {s.student_first_name} {s.student_last_name}
+                              {(() => {
+                                const tooltip = birthdaySessionIdToTooltip.get(s.id) ?? null;
+                                return tooltip ? (
+                                  <span className="ml-1 inline-flex align-middle">
+                                    <BirthdayEmoji tooltip={tooltip} />
+                                  </span>
+                                ) : null;
+                              })()}
                             </Link>
                           ))}
                         </div>

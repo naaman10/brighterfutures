@@ -4,7 +4,9 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Session, StudentDetail } from "@/lib/db";
 import { SESSION_STATUS_LABELS } from "@/lib/session-status";
+import { pickBirthdaySessionIdForStudent } from "@/lib/birthday";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
+import { BirthdayEmoji } from "../../components/birthday-emoji";
 import { AddSessionForm } from "./add-session-form";
 import { StudentAISummary } from "./student-ai-summary";
 
@@ -58,6 +60,7 @@ export function StudentTabs({
   welcomeActions,
 }: Props) {
   const [tab, setTab] = useState<TabKey>(defaultTab);
+  const birthdayPick = pickBirthdaySessionIdForStudent(sessions, student.dob, 5);
 
   const tabs = useMemo(
     () => [
@@ -299,7 +302,12 @@ export function StudentTabs({
                     {sessions.map((session) => (
                       <tr key={session.id}>
                         <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                          {formatDisplayDate(session.session_date) || "—"}
+                          <div className="flex items-center gap-2">
+                            <span>{formatDisplayDate(session.session_date) || "—"}</span>
+                            {birthdayPick?.sessionId === session.id && (
+                              <BirthdayEmoji tooltip={birthdayPick.tooltip} />
+                            )}
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
                           {formatDisplayTime(session.session_time) || "—"}

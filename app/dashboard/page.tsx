@@ -8,6 +8,8 @@ import {
   SESSION_STATUS_LABELS,
 } from "@/lib/db";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
+import { pickBirthdaySessionIdByStudent } from "@/lib/birthday";
+import { BirthdayEmoji } from "./components/birthday-emoji";
 import { MonthCalendar } from "./components/month-calendar";
 
 export const dynamic = "force-dynamic";
@@ -85,14 +87,22 @@ export default async function DashboardPage({
             Today&apos;s sessions
           </h2>
           <ul className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-            {sessionsToday.map((s) => (
+            {(() => {
+              const birthdaySessionIdToTooltip = pickBirthdaySessionIdByStudent(sessionsToday, 5);
+              return sessionsToday.map((s) => (
               <li
                 key={s.id}
                 className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-4 py-3 last:border-b-0 dark:border-zinc-700"
               >
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    {formatDisplayTime(s.session_time) || "—"}
+                    <span className="inline-flex items-center gap-2">
+                      {formatDisplayTime(s.session_time) || "—"}
+                      {(() => {
+                        const tooltip = birthdaySessionIdToTooltip.get(s.id) ?? null;
+                        return tooltip ? <BirthdayEmoji tooltip={tooltip} /> : null;
+                      })()}
+                    </span>
                   </span>
                   <span className="text-sm text-zinc-600 dark:text-zinc-400">
                     {s.subject}
@@ -111,7 +121,8 @@ export default async function DashboardPage({
                   View session
                 </Link>
               </li>
-            ))}
+            ));
+            })()}
           </ul>
         </section>
       )}

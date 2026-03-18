@@ -578,7 +578,18 @@ export type Session = {
  */
 export async function getSessionsByStudentId(studentId: string): Promise<Session[]> {
   const rows = await sql`
-    SELECT id, student_id, session_date, session_time, subject, status, summary_markdown, feedback_markdown, feedback_sent_at, created_at, updated_at
+    SELECT
+      id,
+      student_id,
+      (session_date::date)::text AS session_date,
+      session_time,
+      subject,
+      status,
+      summary_markdown,
+      feedback_markdown,
+      feedback_sent_at,
+      created_at,
+      updated_at
     FROM sessions
     WHERE student_id = ${studentId}
     ORDER BY session_date ASC, session_time ASC
@@ -607,7 +618,7 @@ export async function getSessionsForMonth(
     SELECT
       s.id,
       s.student_id,
-      s.session_date,
+      (s.session_date::date)::text AS session_date,
       s.session_time,
       s.subject,
       s.status,
@@ -617,7 +628,8 @@ export async function getSessionsForMonth(
       s.created_at,
       s.updated_at,
       st.first_name AS student_first_name,
-      st.last_name AS student_last_name
+      st.last_name AS student_last_name,
+      (st.dob::date)::text AS student_dob
     FROM sessions s
     JOIN students st ON st.id = s.student_id
     WHERE s.session_date >= ${startDate}::date
@@ -637,7 +649,7 @@ export async function getSessionsForDate(
     SELECT
       s.id,
       s.student_id,
-      s.session_date,
+      (s.session_date::date)::text AS session_date,
       s.session_time,
       s.subject,
       s.status,
@@ -647,7 +659,8 @@ export async function getSessionsForDate(
       s.created_at,
       s.updated_at,
       st.first_name AS student_first_name,
-      st.last_name AS student_last_name
+      st.last_name AS student_last_name,
+      (st.dob::date)::text AS student_dob
     FROM sessions s
     JOIN students st ON st.id = s.student_id
     WHERE s.session_date = ${dateStr}
