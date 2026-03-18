@@ -39,7 +39,14 @@ function diffDaysUtc(a: Date, b: Date): number {
   return Math.round((a.getTime() - b.getTime()) / msPerDay);
 }
 
-function getBirthdayTooltip(sessionDateYmd: string, dobYmd: string | null): string | null {
+type BirthdayMatch = {
+  birthdayDate: Date;
+  diffDays: number; // sessionDate - birthdayDate
+  absDiffDays: number;
+  tooltip: string;
+};
+
+function getBirthdayMatch(sessionDateYmd: string, dobYmd: string | null): BirthdayMatch | null {
   if (!dobYmd) return null;
   const session = parseYmd(sessionDateYmd);
   const dob = parseYmd(dobYmd);
@@ -66,11 +73,19 @@ function getBirthdayTooltip(sessionDateYmd: string, dobYmd: string | null): stri
 
   if (closestAbs > 5) return null;
 
+  const diffDays = diffDaysUtc(sessionDate, closest);
   const birthdayLabel = formatWeekdayDay(closest);
-  const isFuture = closest.getTime() > sessionDate.getTime();
-  return isFuture
+  const isFuture = diffDays < 0;
+  const tooltip = isFuture
     ? `The student's birthday is on the ${birthdayLabel}`
     : `The student's birthday was on ${birthdayLabel}`;
+
+  return {
+    birthdayDate: closest,
+    diffDays,
+    absDiffDays: Math.abs(diffDays),
+    tooltip,
+  };
 }
 
 export default async function SessionsPage({
@@ -113,7 +128,48 @@ export default async function SessionsPage({
             <span className="text-sm text-zinc-600 dark:text-zinc-400">Filter by status:</span>
             <SessionStatusFilter currentStatus={statusFilter} />
           </div>
-          <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          {(() => {
+            // For each student, choose ONE closest session within ±5 days of birthday.
+            const bestByStudent = new Map<
+              string,
+              { sessionId: string; match: BirthdayMatch }
+            >();
+
+            for (const s of sessions) {
+              const match = getBirthdayMatch(s.session_date, s.student_dob);
+              if (!match) continue;
+
+              const prev = bestByStudent.get(s.student_id);
+              if (!prev) {
+                bestByStudent.set(s.student_id, { sessionId: s.id, match });
+                continue;
+              }
+
+              if (match.absDiffDays < prev.match.absDiffDays) {
+                bestByStudent.set(s.student_id, { sessionId: s.id, match });
+                continue;
+              }
+
+              if (match.absDiffDays === prev.match.absDiffDays) {
+                // Tie-break: prefer the session BEFORE the birthday (diffDays < 0).
+                const matchBefore = match.diffDays < 0;
+                const prevBefore = prev.match.diffDays < 0;
+                if (matchBefore && !prevBefore) {
+                  bestByStudent.set(s.student_id, { sessionId: s.id, match });
+                } else if (matchBefore === prevBefore) {
+                  // Stable tie-breaker: pick earlier session date/time by keeping existing
+                  // (sessions are already ordered ASC).
+                }
+              }
+            }
+
+            const birthdaySessionIdToTooltip = new Map<string, string>();
+            for (const { sessionId, match } of bestByStudent.values()) {
+              birthdaySessionIdToTooltip.set(sessionId, match.tooltip);
+            }
+
+            return (
+              <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
             <div className="overflow-x-auto overflow-y-visible">
               <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
                 <thead>
@@ -145,7 +201,7 @@ export default async function SessionsPage({
                         <div className="flex items-center gap-2">
                           <span>{formatDisplayDate(session.session_date) || "—"}</span>
                           {(() => {
-                            const tooltip = getBirthdayTooltip(session.session_date, session.student_dob);
+                            const tooltip = birthdaySessionIdToTooltip.get(session.id) ?? null;
                             if (!tooltip) return null;
                             return <BirthdayEmoji tooltip={tooltip} />;
                           })()}
@@ -182,6 +238,8 @@ export default async function SessionsPage({
               </table>
             </div>
           </div>
+            );
+          })()}
         </>
       )}
     </div>
