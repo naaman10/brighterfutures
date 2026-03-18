@@ -592,6 +592,7 @@ export async function getSessionsByStudentId(studentId: string): Promise<Session
 export type SessionWithStudent = Session & {
   student_first_name: string;
   student_last_name: string;
+  student_dob: string | null;
 };
 
 /**
@@ -671,7 +672,7 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
         SELECT
           s.id,
           s.student_id,
-          s.session_date,
+          (s.session_date::date)::text AS session_date,
           s.session_time,
           s.subject,
           s.status,
@@ -681,7 +682,8 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
           s.created_at,
           s.updated_at,
           st.first_name AS student_first_name,
-          st.last_name AS student_last_name
+          st.last_name AS student_last_name,
+          (st.dob::date)::text AS student_dob
         FROM sessions s
         JOIN students st ON st.id = s.student_id
         WHERE s.status = ${filterStatus}
@@ -691,7 +693,7 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
         SELECT
           s.id,
           s.student_id,
-          s.session_date,
+          (s.session_date::date)::text AS session_date,
           s.session_time,
           s.subject,
           s.status,
@@ -701,7 +703,8 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
           s.created_at,
           s.updated_at,
           st.first_name AS student_first_name,
-          st.last_name AS student_last_name
+          st.last_name AS student_last_name,
+          (st.dob::date)::text AS student_dob
         FROM sessions s
         JOIN students st ON st.id = s.student_id
         ORDER BY s.session_date ASC, s.session_time ASC
