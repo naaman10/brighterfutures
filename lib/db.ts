@@ -75,6 +75,16 @@ export type ParentBasic = {
   email: string | null;
   contact_number: string | null;
   session_rate: number | null;
+  relationship: string | null;
+  secondary_contact_number: string | null;
+  address_line_1: string | null;
+  address_line_2: string | null;
+  town: string | null;
+  post_code: string | null;
+  emergency_first_name: string | null;
+  emergency_last_name: string | null;
+  emergency_relation: string | null;
+  emergency_contact: string | null;
 };
 
 /**
@@ -82,12 +92,29 @@ export type ParentBasic = {
  */
 export async function getParentById(id: string): Promise<ParentBasic | null> {
   const rows = await sql`
-    SELECT id, first_name, last_name, email, contact_number, session_rate
+    SELECT
+      id, first_name, last_name, email, contact_number, session_rate,
+      relationship, secondary_contact_number,
+      address_line_1, address_line_2, town, post_code,
+      emergency_first_name, emergency_last_name, emergency_relation, emergency_contact
     FROM parents
     WHERE id = ${id}
   `;
   const row = rows[0];
   return (row as ParentBasic) ?? null;
+}
+
+/**
+ * Fetches all students for a parent (for parent view page).
+ */
+export async function getStudentsByParentId(parentId: string): Promise<StudentSummary[]> {
+  const rows = await sql`
+    SELECT id, first_name, last_name, age, start_date, start_time
+    FROM students
+    WHERE parent_id = ${parentId}
+    ORDER BY last_name ASC NULLS LAST, first_name ASC NULLS LAST
+  `;
+  return rows as StudentSummary[];
 }
 
 export type StudentWithParent = StudentSummary & {
@@ -511,6 +538,15 @@ export type StudentDetail = {
   age: number | null;
   start_date: string | null;
   start_time: string | null;
+  dob: string | null;
+  current_school: string | null;
+  current_year_group: string | null;
+  sen_needs: string | null;
+  exam_board: string | null;
+  medical_conditions: string | null;
+  medication: string | null;
+  collector_name: string | null;
+  leave_independantly: boolean | null;
   welcome: boolean;
   welcome_sent_at: string | Date | null;
   ai_summary: string | null;
@@ -798,6 +834,15 @@ export async function getStudentById(
       s.age,
       s.start_date,
       s.start_time,
+      (s.dob::date)::text AS dob,
+      s.current_school,
+      s.current_year_group,
+      s.sen_needs,
+      s.exam_board,
+      s.medical_conditions,
+      s.medication,
+      s.collector_name,
+      s.leave_independantly,
       s.welcome,
       s.welcome_sent_at,
       s.ai_summary,
@@ -876,6 +921,15 @@ export type UpdateStudentInput = {
   age?: number | null;
   start_date?: string | null;
   start_time?: string | null;
+  dob?: string | null;
+  current_school?: string | null;
+  current_year_group?: string | null;
+  sen_needs?: string | null;
+  exam_board?: string | null;
+  medical_conditions?: string | null;
+  medication?: string | null;
+  collector_name?: string | null;
+  leave_independantly?: boolean | null;
 };
 
 /**
@@ -888,7 +942,22 @@ export async function updateStudent(
   try {
     await sql`
       UPDATE students
-      SET first_name = ${data.first_name}, last_name = ${data.last_name}, age = ${data.age ?? null}, start_date = ${data.start_date ?? null}, start_time = ${data.start_time ?? null}, updated_at = NOW()
+      SET
+        first_name = ${data.first_name},
+        last_name = ${data.last_name},
+        age = ${data.age ?? null},
+        start_date = ${data.start_date ?? null},
+        start_time = ${data.start_time ?? null},
+        dob = ${data.dob ?? null}::date,
+        current_school = ${data.current_school ?? null},
+        current_year_group = ${data.current_year_group ?? null},
+        sen_needs = ${data.sen_needs ?? null},
+        exam_board = ${data.exam_board ?? null},
+        medical_conditions = ${data.medical_conditions ?? null},
+        medication = ${data.medication ?? null},
+        collector_name = ${data.collector_name ?? null},
+        leave_independantly = ${data.leave_independantly ?? null},
+        updated_at = NOW()
       WHERE id = ${id}
     `;
     return { ok: true };
@@ -912,6 +981,16 @@ export type UpdateParentInput = {
   email: string;
   contact_number?: string | null;
   session_rate?: number | null;
+  relationship?: string | null;
+  secondary_contact_number?: string | null;
+  address_line_1?: string | null;
+  address_line_2?: string | null;
+  town?: string | null;
+  post_code?: string | null;
+  emergency_first_name?: string | null;
+  emergency_last_name?: string | null;
+  emergency_relation?: string | null;
+  emergency_contact?: string | null;
 };
 
 export type CreateStudentInput = {
@@ -957,6 +1036,16 @@ export async function updateParent(
         email = ${data.email},
         contact_number = ${data.contact_number ?? null},
         session_rate = ${data.session_rate ?? null},
+        relationship = ${data.relationship ?? null},
+        secondary_contact_number = ${data.secondary_contact_number ?? null},
+        address_line_1 = ${data.address_line_1 ?? null},
+        address_line_2 = ${data.address_line_2 ?? null},
+        town = ${data.town ?? null},
+        post_code = ${data.post_code ?? null},
+        emergency_first_name = ${data.emergency_first_name ?? null},
+        emergency_last_name = ${data.emergency_last_name ?? null},
+        emergency_relation = ${data.emergency_relation ?? null},
+        emergency_contact = ${data.emergency_contact ?? null},
         updated_at = NOW()
       WHERE id = ${id}
     `;

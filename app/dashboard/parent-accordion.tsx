@@ -35,6 +35,13 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href={`/dashboard/parents/${parent.id}`}
+              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              View
+            </Link>
             {hasStudents && (
               <span className="rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-600 dark:text-zinc-300">
                 {students.length} student{students.length !== 1 ? "s" : ""}

@@ -11,6 +11,19 @@ const nationalPark = National_Park({
 export const metadata: Metadata = {
   title: "Brighter Futures",
   description: "Client dashboard for sending emails",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    googleBot: {
+      index: false,
+      follow: false,
+      noimageindex: true,
+      "max-video-preview": -1,
+      "max-image-preview": "none",
+      "max-snippet": -1,
+    },
+  },
   icons: {
     icon: [
       { url: "/favicon/favicon-16x16.png", sizes: "16x16", type: "image/png" },
