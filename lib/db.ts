@@ -30,6 +30,105 @@ export type Parent = {
   students: StudentSummary[];
 };
 
+export type LeadRow = Record<string, unknown>;
+export type LeadStatus = "new" | "in_progress" | "closed";
+
+/**
+ * Fetches all leads.
+ * Uses SELECT * so the UI can adapt to new lead columns.
+ */
+export async function getLeads(): Promise<LeadRow[]> {
+  const rows = await sql`
+    SELECT *
+    FROM leads
+    ORDER BY created_at DESC NULLS LAST
+  `;
+  return rows as LeadRow[];
+}
+
+/**
+ * Fetches a single lead by id (string match on id::text).
+ */
+export async function getLeadById(leadId: string): Promise<LeadRow | null> {
+  const rows = await sql`
+    SELECT *
+    FROM leads
+    WHERE id::text = ${leadId}
+    LIMIT 1
+  `;
+  const row = rows[0];
+  return (row as LeadRow) ?? null;
+}
+
+export type CreateLeadFromContactInput = {
+  first_name: string;
+  last_name: string | null;
+  contact_email: string;
+  message: string | null;
+};
+
+/**
+ * Inserts a lead from the public contact form.
+ * Status is set to "New" to match Kanban / DB conventions.
+ */
+export async function createLeadFromContact(
+  data: CreateLeadFromContactInput
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      INSERT INTO leads (first_name, last_name, contact_email, message, status)
+      VALUES (
+        ${data.first_name},
+        ${data.last_name},
+        ${data.contact_email},
+        ${data.message},
+        'New'
+      )
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+/**
+ * Updates a lead status by id.
+ * Uses id::text so numeric/uuid ids can be handled from string input.
+ */
+export async function updateLeadStatusById(
+  leadId: string,
+  status: LeadStatus
+): Promise<{ ok: true } | { error: string }> {
+  const statusCandidates: string[] =
+    status === "in_progress"
+      ? ["In Progress", "in_progress"]
+      : status === "closed"
+        ? ["Closed", "closed"]
+        : ["New", "new"];
+
+  let lastError: string | null = null;
+  for (const statusValue of statusCandidates) {
+    try {
+      const rows = await sql`
+        UPDATE leads
+        SET status = ${statusValue}
+        WHERE id::text = ${leadId}
+        RETURNING id
+      `;
+      if (rows.length > 0) return { ok: true };
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : "Database error";
+    }
+  }
+
+  return {
+    error:
+      lastError ??
+      "Lead update failed. Check that the lead exists and status values match the leads table.",
+  };
+}
+
 /**
  * Fetches all parents with their students (for accordion display).
  */
