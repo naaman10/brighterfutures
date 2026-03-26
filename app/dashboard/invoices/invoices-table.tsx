@@ -8,6 +8,7 @@ import { InvoiceDownloadButton } from "./invoice-download-button";
 import { formatDisplayDate } from "@/lib/format";
 import {
   sendSelectedInvoices,
+  sendPaymentReminders,
   markSelectedInvoicesAsPaid,
   deleteSelectedInvoices,
   regenerateSelectedInvoices,
@@ -52,6 +53,7 @@ export function InvoicesTable({ invoices }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [sending, setSending] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
   const [markingPaid, setMarkingPaid] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -105,6 +107,23 @@ export function InvoicesTable({ invoices }: Props) {
       toast.success(`Marked ${result.updated} invoice${result.updated !== 1 ? "s" : ""} as paid`);
     } else {
       toast.error(result.error ?? "Failed to mark invoices as paid");
+    }
+  }
+
+  async function handleSendReminder() {
+    if (selected.size === 0) return;
+    setSendingReminder(true);
+    const ids = Array.from(selected);
+    const result = await sendPaymentReminders(ids);
+    setSendingReminder(false);
+    if (result.ok && result.sent != null) {
+      setSelected(new Set());
+      router.refresh();
+      toast.success(
+        `Sent ${result.sent} payment reminder${result.sent !== 1 ? "s" : ""}`
+      );
+    } else {
+      toast.error(result.error ?? "Failed to send payment reminders");
     }
   }
 
@@ -173,6 +192,7 @@ export function InvoicesTable({ invoices }: Props) {
   const selectedInvoices = invoices.filter((i) => selected.has(i.id));
   const canRegenerate = selectedInvoices.some((i) => !LOCKED_STATUSES.includes(i.status));
   const canCancel = selectedInvoices.length > 0;
+  const canSendReminder = selectedInvoices.some((i) => i.status === "issued");
 
   return (
     <div className="space-y-3">
@@ -189,15 +209,24 @@ export function InvoicesTable({ invoices }: Props) {
           <button
             type="button"
             onClick={handleMarkAsPaid}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder}
             className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
           >
             {markingPaid ? "Updating…" : "Mark as paid"}
           </button>
           <button
             type="button"
+            onClick={handleSendReminder}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder || !canSendReminder}
+            title={!canSendReminder ? "Select issued invoices to send reminders" : "Send reminders to issued invoices' parent(s)"}
+            className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-600 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/60"
+          >
+            {sendingReminder ? "Sending…" : "Send payment reminder"}
+          </button>
+          <button
+            type="button"
             onClick={() => setShowRegenerateConfirm(true)}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling || !canRegenerate}
+            disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder || !canRegenerate}
             title={!canRegenerate ? "Select draft invoices to regenerate" : "Recalculate subtotal from current sessions"}
             className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
           >

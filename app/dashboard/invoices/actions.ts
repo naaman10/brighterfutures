@@ -230,6 +230,20 @@ function formatInvoiceMonth(billingMonth: string | Date | null): string {
   return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(d);
 }
 
+function formatInvoiceMonthName(billingMonth: string | Date | null): string {
+  if (!billingMonth) return "";
+  const d =
+    typeof billingMonth === "string"
+      ? new Date(billingMonth.slice(0, 10) + "T12:00:00Z")
+      : new Date(billingMonth);
+  return new Intl.DateTimeFormat("en-GB", {
+    month: "long",
+    timeZone: "Europe/London",
+  }).format(d);
+}
+
+const PAYMENT_REMINDER_TEMPLATE_ID = "d-81d93a6ccb88442eb76b2bacad30aabd";
+
 export async function sendSelectedInvoices(invoiceIds: number[]): Promise<{
   ok?: boolean;
   sent?: number;
@@ -294,6 +308,78 @@ export async function sendSelectedInvoices(invoiceIds: number[]): Promise<{
 
   revalidatePath("/dashboard/invoices");
   return { ok: true, sent };
+}
+
+/**
+ * Sends a payment reminder email for selected invoices, but only for invoices
+ * whose status is exactly "issued".
+ *
+ * Sends at most one email per (parents_id, invoice_month).
+ */
+export async function sendPaymentReminders(invoiceIds: number[]): Promise<{
+  ok?: boolean;
+  sent?: number;
+  skipped?: number;
+  error?: string;
+}> {
+  if (invoiceIds.length === 0) {
+    return { ok: false, error: "No invoices selected." };
+  }
+
+  const sentKeys = new Set<string>();
+  let sent = 0;
+  let skipped = 0;
+
+  for (const invoiceId of invoiceIds) {
+    const invoice = await getInvoiceById(invoiceId);
+    if (!invoice) {
+      return { ok: false, sent, skipped, error: `Invoice ${invoiceId} not found.` };
+    }
+
+    if (invoice.status !== "issued") {
+      skipped++;
+      continue;
+    }
+
+    const email = invoice.parent_email?.trim();
+    if (!email) {
+      skipped++;
+      continue;
+    }
+
+    const parentFirstName =
+      invoice.parent_first_name?.trim() ??
+      invoice.parent_name?.split(" ")[0]?.trim() ??
+      "Parent";
+
+    const invoiceMonth = formatInvoiceMonthName(invoice.billing_month);
+    const key = `${invoice.parents_id}|${invoiceMonth}`;
+    if (sentKeys.has(key)) continue;
+    sentKeys.add(key);
+
+    const templateResult = await sendTemplate({
+      to: email,
+      templateId: PAYMENT_REMINDER_TEMPLATE_ID,
+      dynamicTemplateData: {
+        parent_name: parentFirstName,
+        invoice_month: invoiceMonth,
+      },
+    });
+
+    if (!templateResult.success) {
+      return {
+        ok: false,
+        sent,
+        skipped,
+        error: `Failed to send payment reminder: ${templateResult.error}`,
+      };
+    }
+
+    sent++;
+  }
+
+  revalidatePath("/dashboard/invoices");
+  return { ok: true, sent, skipped };
 }
 
 export async function markSelectedInvoicesAsPaid(invoiceIds: number[]): Promise<{
