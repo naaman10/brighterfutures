@@ -521,8 +521,11 @@ export async function updateInvoiceDiscountAction(
   if (!invoice) {
     return { ok: false, error: "Invoice not found." };
   }
-  if (LOCKED_STATUSES.includes(invoice.status as (typeof LOCKED_STATUSES)[number])) {
-    return { ok: false, error: "Cannot edit discount on an issued or paid invoice." };
+  if (invoice.status !== "draft") {
+    return {
+      ok: false,
+      error: "Discount can only be added or edited on draft invoices.",
+    };
   }
   const result = await updateInvoiceDiscount(invoiceId, {
     discount_amount: discount_amount ?? 0,

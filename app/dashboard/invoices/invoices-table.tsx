@@ -47,6 +47,12 @@ function formatDiscountDisplay(invoice: Invoice): string {
   return parts.join(" / ");
 }
 
+function discountHasValue(invoice: Invoice): boolean {
+  const amount = Number(invoice.discount_amount);
+  const pct = Number(invoice.discount_pct);
+  return (!Number.isNaN(amount) && amount > 0) || (!Number.isNaN(pct) && pct > 0);
+}
+
 const LOCKED_STATUSES = ["issued", "paid"];
 
 export function InvoicesTable({ invoices }: Props) {
@@ -495,14 +501,18 @@ export function InvoicesTable({ invoices }: Props) {
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="flex items-center justify-end gap-2">
-                      {!LOCKED_STATUSES.includes(invoice.status) && (
+                      {invoice.status === "draft" && (
                         <button
                           type="button"
                           onClick={() => setDiscountInvoice(invoice)}
-                          className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                          title="Edit discount"
+                          className="text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50"
+                          title={
+                            discountHasValue(invoice)
+                              ? "Edit discount for this invoice"
+                              : "Add a discount to this invoice"
+                          }
                         >
-                          Edit
+                          {discountHasValue(invoice) ? "Edit discount" : "Add discount"}
                         </button>
                       )}
                       <InvoiceDownloadButton

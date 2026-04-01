@@ -4,6 +4,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import type { Invoice } from "@/lib/db";
 
+function hasDiscount(invoice: Invoice): boolean {
+  const amount = Number(invoice.discount_amount);
+  const pct = Number(invoice.discount_pct);
+  return (!Number.isNaN(amount) && amount > 0) || (!Number.isNaN(pct) && pct > 0);
+}
+
 type Props = {
   invoice: Invoice;
   onClose: () => void;
@@ -58,9 +64,12 @@ export function EditDiscountModal({ invoice, onClose, onSaved, updateDiscount }:
         aria-labelledby="edit-discount-title"
         className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
       >
-        <h2 id="edit-discount-title" className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-          Edit discount — {invoice.invoice_number}
+        <h2 id="edit-discount-title" className="mb-1 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          {hasDiscount(invoice) ? "Edit discount" : "Add discount"}
         </h2>
+        <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+          Invoice {invoice.invoice_number}
+        </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="discount-amount" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
