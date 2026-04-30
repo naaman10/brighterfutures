@@ -7,8 +7,6 @@ type StudentEntry = {
   first_name: string;
   last_name: string;
   age?: number | null;
-  start_date?: string | null;
-  start_time?: string | null;
 };
 
 export async function addParentWithStudents(formData: FormData) {
@@ -44,8 +42,6 @@ export async function addParentWithStudents(formData: FormData) {
       first_name: firstName,
       last_name: lastName,
       age: s?.age ?? null,
-      start_date: s?.start_date?.trim() || null,
-      start_time: s?.start_time?.trim() || null,
     });
     if ("error" in result) {
       return { error: `Parent created but failed to add student: ${result.error}` };

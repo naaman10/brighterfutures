@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { getStudents } from "@/lib/db";
-import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -47,10 +46,7 @@ export default async function StudentsPage() {
                   Age
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Start date
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Start time
+                  Sessions
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Actions
@@ -69,12 +65,7 @@ export default async function StudentsPage() {
                   <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
                     {student.age != null ? student.age : "—"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                    {formatDisplayDate(student.start_date) || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                    {formatDisplayTime(student.start_time) || "—"}
-                  </td>
+                  <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">View for schedule</td>
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/dashboard/students/${student.id}`}

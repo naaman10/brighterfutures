@@ -35,7 +35,7 @@ export function AddStudentForm({ parentId }: Props) {
         </div>
       )}
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
             <label htmlFor="first_name" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
               First name *
@@ -68,28 +68,6 @@ export function AddStudentForm({ parentId }: Props) {
               type="number"
               min={0}
               max={120}
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-            />
-          </div>
-          <div>
-            <label htmlFor="start_date" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Start date
-            </label>
-            <input
-              id="start_date"
-              name="start_date"
-              type="date"
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-            />
-          </div>
-          <div>
-            <label htmlFor="start_time" className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300">
-              Start time
-            </label>
-            <input
-              id="start_time"
-              name="start_time"
-              type="time"
               className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
             />
           </div>

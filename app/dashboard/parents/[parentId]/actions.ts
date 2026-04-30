@@ -15,15 +15,11 @@ export async function addStudentToParent(
 
   const ageStr = (formData.get("age") as string)?.trim();
   const age = ageStr ? parseInt(ageStr, 10) || null : null;
-  const start_date = (formData.get("start_date") as string)?.trim() || null;
-  const start_time = (formData.get("start_time") as string)?.trim() || null;
 
   const result = await createStudent(parentId, {
     first_name,
     last_name,
     age,
-    start_date,
-    start_time,
   });
 
   if ("error" in result) return { error: result.error };

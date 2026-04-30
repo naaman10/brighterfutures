@@ -40,18 +40,22 @@ function formatTime(value: string | Date | null): string {
 }
 
 export async function sendWelcomeEmail(studentId: string): Promise<{ error?: string }> {
-  const student = await getStudentById(studentId);
+  const [student, sessions] = await Promise.all([
+    getStudentById(studentId),
+    getSessionsByStudentId(studentId),
+  ]);
   if (!student) return { error: "Student not found" };
 
-  const hasStartDate = student.start_date != null && formatDate(student.start_date) !== "";
-  const hasStartTime = student.start_time != null && formatTime(student.start_time) !== "";
+  const firstSession = sessions[0] ?? null;
+  const hasStartDate = firstSession?.session_date != null && formatDate(firstSession.session_date) !== "";
+  const hasStartTime = firstSession?.session_time != null && formatTime(firstSession.session_time) !== "";
   const hasFirstName = (student.first_name ?? "").trim() !== "";
   const parentEmail = (student.parent_email ?? "").trim();
   const parentFirstName = (student.parent_first_name ?? "").trim();
   const welcomeNotSent = student.welcome === false;
 
   if (!hasStartDate || !hasStartTime) {
-    return { error: "Student must have a start date and start time to send the welcome email." };
+    return { error: "Student must have at least one scheduled session to send the welcome email." };
   }
   if (!hasFirstName) return { error: "Student must have a first name." };
   if (!parentEmail) return { error: "Parent must have an email address." };
@@ -64,8 +68,8 @@ export async function sendWelcomeEmail(studentId: string): Promise<{ error?: str
     dynamicTemplateData: {
       parent_name: parentFirstName,
       child_name: student.first_name.trim(),
-      start_date: formatDateDDMMYYYY(student.start_date),
-      start_time: formatTime(student.start_time),
+      start_date: formatDateDDMMYYYY(firstSession?.session_date ?? null),
+      start_time: formatTime(firstSession?.session_time ?? null),
     },
   });
 
@@ -80,17 +84,21 @@ export async function sendWelcomeEmail(studentId: string): Promise<{ error?: str
 }
 
 export async function resendWelcomeEmail(studentId: string): Promise<{ error?: string }> {
-  const student = await getStudentById(studentId);
+  const [student, sessions] = await Promise.all([
+    getStudentById(studentId),
+    getSessionsByStudentId(studentId),
+  ]);
   if (!student) return { error: "Student not found" };
 
-  const hasStartDate = student.start_date != null && formatDate(student.start_date) !== "";
-  const hasStartTime = student.start_time != null && formatTime(student.start_time) !== "";
+  const firstSession = sessions[0] ?? null;
+  const hasStartDate = firstSession?.session_date != null && formatDate(firstSession.session_date) !== "";
+  const hasStartTime = firstSession?.session_time != null && formatTime(firstSession.session_time) !== "";
   const hasFirstName = (student.first_name ?? "").trim() !== "";
   const parentEmail = (student.parent_email ?? "").trim();
   const parentFirstName = (student.parent_first_name ?? "").trim();
 
   if (!hasStartDate || !hasStartTime) {
-    return { error: "Student must have a start date and start time to send the welcome email." };
+    return { error: "Student must have at least one scheduled session to send the welcome email." };
   }
   if (!hasFirstName) return { error: "Student must have a first name." };
   if (!parentEmail) return { error: "Parent must have an email address." };
@@ -103,8 +111,8 @@ export async function resendWelcomeEmail(studentId: string): Promise<{ error?: s
     dynamicTemplateData: {
       parent_name: parentFirstName,
       child_name: student.first_name.trim(),
-      start_date: formatDateDDMMYYYY(student.start_date),
-      start_time: formatTime(student.start_time),
+      start_date: formatDateDDMMYYYY(firstSession?.session_date ?? null),
+      start_time: formatTime(firstSession?.session_time ?? null),
     },
     attachments,
   });

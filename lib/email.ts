@@ -24,7 +24,6 @@ export type SendTemplateAttachment = {
 };
 
 const WELCOME_EMAIL_ATTACHMENTS: { url: string; filename: string }[] = [
-  { url: "https://res.cloudinary.com/njh101010/raw/upload/v1772834069/brighterfutures/documents/Parent_Form.docx", filename: "Parent_Form.docx" },
   { url: "https://res.cloudinary.com/njh101010/raw/upload/v1772834069/brighterfutures/documents/Terms_and_conditions_2026.docx", filename: "Terms_and_conditions_2026.docx" },
   { url: "https://res.cloudinary.com/njh101010/raw/upload/v1772834069/brighterfutures/documents/Extra_Materials_for_pupils.docx", filename: "Extra_Materials_for_pupils.docx" },
 ];

@@ -17,9 +17,11 @@ export default async function StudentDetailPage({ params }: Props) {
   ]);
   if (!student) notFound();
 
+  const firstSession = sessions[0] ?? null;
   const canSendWelcome =
-    student.start_date != null &&
-    student.start_time != null &&
+    firstSession != null &&
+    firstSession.session_date != null &&
+    firstSession.session_time != null &&
     (student.first_name ?? "").trim() !== "" &&
     (student.parent_email ?? "").trim() !== "" &&
     (student.parent_first_name ?? "").trim() !== "" &&
@@ -29,8 +31,9 @@ export default async function StudentDetailPage({ params }: Props) {
 
   const canResendWelcome =
     student.welcome &&
-    student.start_date != null &&
-    student.start_time != null &&
+    firstSession != null &&
+    firstSession.session_date != null &&
+    firstSession.session_time != null &&
     (student.first_name ?? "").trim() !== "" &&
     (student.parent_email ?? "").trim() !== "" &&
     (student.parent_first_name ?? "").trim() !== "";

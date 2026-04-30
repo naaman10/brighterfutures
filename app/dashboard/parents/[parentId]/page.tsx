@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getParentById, getStudentsByParentId } from "@/lib/db";
-import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -194,8 +193,6 @@ export default async function ViewParentPage({ params }: Props) {
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {[
                     student.age != null && `Age ${student.age}`,
-                    formatDisplayDate(student.start_date) || null,
-                    formatDisplayTime(student.start_time) || null,
                   ]
                     .filter(Boolean)
                     .join(" · ") || "—"}

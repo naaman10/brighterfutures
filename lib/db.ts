@@ -13,8 +13,6 @@ export type StudentSummary = {
   first_name: string;
   last_name: string;
   age: number | null;
-  start_date: string | null;
-  start_time: string | null;
 };
 
 export type Parent = {
@@ -150,7 +148,7 @@ export async function getParents(): Promise<Parent[]> {
       p.updated_at,
       COALESCE(
         (
-          SELECT json_agg(json_build_object('id', s.id, 'first_name', s.first_name, 'last_name', s.last_name, 'age', s.age, 'start_date', s.start_date, 'start_time', s.start_time) ORDER BY s.last_name, s.first_name)
+          SELECT json_agg(json_build_object('id', s.id, 'first_name', s.first_name, 'last_name', s.last_name, 'age', s.age) ORDER BY s.last_name, s.first_name)
           FROM students s
           WHERE s.parent_id = p.id
         ),
@@ -208,7 +206,7 @@ export async function getParentById(id: string): Promise<ParentBasic | null> {
  */
 export async function getStudentsByParentId(parentId: string): Promise<StudentSummary[]> {
   const rows = await sql`
-    SELECT id, first_name, last_name, age, start_date, start_time
+    SELECT id, first_name, last_name, age
     FROM students
     WHERE parent_id = ${parentId}
     ORDER BY last_name ASC NULLS LAST, first_name ASC NULLS LAST
@@ -230,8 +228,6 @@ export async function getStudents(): Promise<StudentWithParent[]> {
       s.first_name,
       s.last_name,
       s.age,
-      s.start_date,
-      s.start_time,
       p.first_name || ' ' || p.last_name AS parent_name
     FROM students s
     LEFT JOIN parents p ON p.id = s.parent_id
@@ -635,8 +631,6 @@ export type StudentDetail = {
   first_name: string;
   last_name: string;
   age: number | null;
-  start_date: string | null;
-  start_time: string | null;
   dob: string | null;
   current_school: string | null;
   current_year_group: string | null;
@@ -947,8 +941,6 @@ export async function getStudentById(
       s.first_name,
       s.last_name,
       s.age,
-      s.start_date,
-      s.start_time,
       (s.dob::date)::text AS dob,
       s.current_school,
       s.current_year_group,
@@ -1034,8 +1026,6 @@ export type UpdateStudentInput = {
   first_name: string;
   last_name: string;
   age?: number | null;
-  start_date?: string | null;
-  start_time?: string | null;
   dob?: string | null;
   current_school?: string | null;
   current_year_group?: string | null;
@@ -1061,8 +1051,6 @@ export async function updateStudent(
         first_name = ${data.first_name},
         last_name = ${data.last_name},
         age = ${data.age ?? null},
-        start_date = ${data.start_date ?? null},
-        start_time = ${data.start_time ?? null},
         dob = ${data.dob ?? null}::date,
         current_school = ${data.current_school ?? null},
         current_year_group = ${data.current_year_group ?? null},
@@ -1112,8 +1100,6 @@ export type CreateStudentInput = {
   first_name: string;
   last_name: string;
   age?: number | null;
-  start_date?: string | null;
-  start_time?: string | null;
 };
 
 /**
@@ -1180,8 +1166,8 @@ export async function createStudent(
 ): Promise<{ ok: true } | { error: string }> {
   try {
     await sql`
-      INSERT INTO students (parent_id, first_name, last_name, age, start_date, start_time)
-      VALUES (${parentId}, ${data.first_name}, ${data.last_name}, ${data.age ?? null}, ${data.start_date ?? null}, ${data.start_time ?? null})
+      INSERT INTO students (parent_id, first_name, last_name, age)
+      VALUES (${parentId}, ${data.first_name}, ${data.last_name}, ${data.age ?? null})
     `;
     return { ok: true };
   } catch (e) {

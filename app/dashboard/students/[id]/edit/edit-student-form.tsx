@@ -16,14 +16,6 @@ function toDateInputValue(val: unknown): string {
   return String(val).slice(0, 10);
 }
 
-/** Normalize for type="time" input (HH:MM). DB may return Date. */
-function toTimeInputValue(val: unknown): string {
-  if (val == null) return "";
-  if (val instanceof Date) return val.toTimeString().slice(0, 5);
-  if (typeof val === "string") return val.slice(0, 5);
-  return "";
-}
-
 export function EditStudentForm({ student, action }: Props) {
   const [error, setError] = useState<string | null>(null);
 
@@ -33,8 +25,6 @@ export function EditStudentForm({ student, action }: Props) {
     if (result.error) setError(result.error);
   }
 
-  const dateValue = toDateInputValue(student.start_date);
-  const timeValue = toTimeInputValue(student.start_time);
   const dobValue = toDateInputValue(student.dob);
 
   const inputClass =
@@ -100,30 +90,6 @@ export function EditStudentForm({ student, action }: Props) {
               name="dob"
               type="date"
               defaultValue={dobValue}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label htmlFor="start_date" className={labelClass}>
-              Start date
-            </label>
-            <input
-              id="start_date"
-              name="start_date"
-              type="date"
-              defaultValue={dateValue}
-              className={inputClass}
-            />
-          </div>
-          <div>
-            <label htmlFor="start_time" className={labelClass}>
-              Start time
-            </label>
-            <input
-              id="start_time"
-              name="start_time"
-              type="time"
-              defaultValue={timeValue}
               className={inputClass}
             />
           </div>

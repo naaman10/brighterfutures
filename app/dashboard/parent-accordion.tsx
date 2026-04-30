@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Parent } from "@/lib/db";
-import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 
 type ParentAccordionProps = {
   parent: Parent;
@@ -93,8 +92,6 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
                     <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                       {[
                         student.age != null && `Age ${student.age}`,
-                        formatDisplayDate(student.start_date) || null,
-                        formatDisplayTime(student.start_time) || null,
                       ]
                         .filter(Boolean)
                         .join(" · ") || "—"}

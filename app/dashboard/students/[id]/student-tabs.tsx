@@ -113,18 +113,12 @@ export function StudentTabs({
               </div>
               <div>
                 <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Start date
+                  First session
                 </dt>
                 <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
-                  {formatDisplayDate(student.start_date) || "—"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Start time
-                </dt>
-                <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
-                  {formatDisplayTime(student.start_time) || "—"}
+                  {sessions.length > 0
+                    ? `${formatDisplayDate(sessions[0].session_date) || "—"} ${formatDisplayTime(sessions[0].session_time) || "—"}`
+                    : "—"}
                 </dd>
               </div>
               <div className="border-t border-zinc-200 pt-4 dark:border-zinc-700">

@@ -8,16 +8,12 @@ type StudentRow = {
   first_name: string;
   last_name: string;
   age: string;
-  start_date: string;
-  start_time: string;
 };
 
 const emptyStudent: StudentRow = {
   first_name: "",
   last_name: "",
   age: "",
-  start_date: "",
-  start_time: "",
 };
 
 export function AddParentForm() {
@@ -51,8 +47,6 @@ export function AddParentForm() {
         first_name: s.first_name.trim(),
         last_name: s.last_name.trim(),
         age: s.age.trim() ? parseInt(s.age, 10) || null : null,
-        start_date: s.start_date.trim() || null,
-        start_time: s.start_time.trim() || null,
       }))
       .filter((s) => s.first_name || s.last_name);
     formData.set("students", JSON.stringify(toSend));
@@ -156,7 +150,7 @@ export function AddParentForm() {
           {students.map((student, index) => (
             <div
               key={index}
-              className="grid gap-4 rounded border border-zinc-200 p-3 dark:border-zinc-700 sm:grid-cols-2 lg:grid-cols-6"
+              className="grid gap-4 rounded border border-zinc-200 p-3 dark:border-zinc-700 sm:grid-cols-2 lg:grid-cols-4"
             >
               <input
                 placeholder="First name"
@@ -177,20 +171,6 @@ export function AddParentForm() {
                 max={120}
                 value={student.age}
                 onChange={(e) => updateStudent(index, "age", e.target.value)}
-                className="rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-              <input
-                placeholder="Start date"
-                type="date"
-                value={student.start_date}
-                onChange={(e) => updateStudent(index, "start_date", e.target.value)}
-                className="rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-              />
-              <input
-                placeholder="Start time"
-                type="time"
-                value={student.start_time}
-                onChange={(e) => updateStudent(index, "start_time", e.target.value)}
                 className="rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               />
               <div className="flex items-center">

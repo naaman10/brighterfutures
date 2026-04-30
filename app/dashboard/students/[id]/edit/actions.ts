@@ -17,8 +17,6 @@ export async function updateStudentAction(
   if (!first_name || !last_name) return { error: "First name and last name are required" };
   const ageRaw = (formData.get("age") as string)?.trim();
   const age = ageRaw ? parseInt(ageRaw, 10) : null;
-  const start_date = trimOrNull(formData.get("start_date"));
-  const start_time = trimOrNull(formData.get("start_time"));
   const dob = trimOrNull(formData.get("dob"));
   const current_school = trimOrNull(formData.get("current_school"));
   const current_year_group = trimOrNull(formData.get("current_year_group"));
@@ -33,8 +31,6 @@ export async function updateStudentAction(
     first_name,
     last_name,
     age: Number.isNaN(age ?? NaN) ? null : age ?? null,
-    start_date,
-    start_time,
     dob,
     current_school,
     current_year_group,
