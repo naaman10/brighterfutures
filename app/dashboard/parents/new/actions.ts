@@ -13,7 +13,12 @@ type StudentEntry = {
 
 export async function addParentWithStudents(formData: FormData) {
   const sessionRateRaw = (formData.get("parent_session_rate") as string)?.trim();
-  const sessionRate = sessionRateRaw ? parseFloat(sessionRateRaw) || null : null;
+  const sessionRate =
+    sessionRateRaw && sessionRateRaw.length > 0
+      ? Number.isNaN(Number(sessionRateRaw))
+        ? null
+        : Number(sessionRateRaw)
+      : null;
 
   const parentResult = await createParent({
     first_name: (formData.get("parent_first_name") as string)?.trim() ?? "",
