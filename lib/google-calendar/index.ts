@@ -15,3 +15,5 @@ export {
 } from "./status";
 export { syncFromGoogleCalendar } from "./sync-inbound";
 export { registerGoogleCalendarWatch, renewGoogleCalendarWatchIfNeeded } from "./watch";
+export { addGoogleMeetToSession, type AddGoogleMeetResult } from "./sync-meet";
+export { getSessionCalendarMeetStatus } from "./meet";

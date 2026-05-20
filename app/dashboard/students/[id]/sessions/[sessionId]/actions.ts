@@ -104,6 +104,23 @@ export async function sendSessionFeedbackEmailAction(
   return {};
 }
 
+export async function addGoogleMeetAction(
+  sessionId: string,
+  studentId: string
+): Promise<{ error?: string; meetLink?: string; alreadyConfigured?: boolean }> {
+  const { addGoogleMeetToSession } = await import("@/lib/google-calendar/sync-meet");
+  const result = await addGoogleMeetToSession(sessionId, studentId);
+  if ("error" in result) return { error: result.error };
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+  revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);
+  revalidatePath("/dashboard");
+  return {
+    meetLink: result.meetLink,
+    alreadyConfigured: result.alreadyConfigured,
+  };
+}
+
 export async function rescheduleSessionAction(
   sessionId: string,
   studentId: string,

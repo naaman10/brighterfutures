@@ -8,6 +8,12 @@ import type { EditableSessionStatus } from "@/lib/session-status";
 import { SessionStatusSelect } from "./session-status-select";
 import { SessionSummaryEditor } from "./session-summary-editor";
 import { DeleteSessionButton } from "@/app/dashboard/components/delete-session-button";
+import { AddGoogleMeetButton } from "./add-google-meet-button";
+import {
+  getGoogleCalendarIntegrationStatus,
+  getSessionCalendarMeetStatus,
+} from "@/lib/google-calendar";
+import { isDeleted } from "@/lib/session-status";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +28,27 @@ export default async function SessionViewPage({ params }: Props) {
   if (!session || !student || session.student_id !== studentId) notFound();
 
   const feedbackSentAtDisplay = formatDisplayDateTime(session.feedback_sent_at);
+  const parentEmail = (student.parent_email ?? "").trim();
+  const calendarStatus = await getGoogleCalendarIntegrationStatus();
+  const canAddGoogleMeet =
+    calendarStatus.canSync &&
+    !!parentEmail &&
+    !isDeleted(session.status) &&
+    session.status !== "cancelled";
+
+  let showAddGoogleMeet = canAddGoogleMeet;
+  let meetLink: string | undefined;
+  if (canAddGoogleMeet && session.google_event_id) {
+    const meetStatus = await getSessionCalendarMeetStatus(
+      session.google_event_id,
+      parentEmail
+    );
+    if (meetStatus) {
+      meetLink = meetStatus.meetLink;
+      showAddGoogleMeet =
+        !meetStatus.hasMeet || !meetStatus.parentInvited;
+    }
+  }
 
   return (
     <div>
@@ -50,14 +77,31 @@ export default async function SessionViewPage({ params }: Props) {
           <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
             Session details
           </h1>
-          <DeleteSessionButton
-            sessionId={sessionId}
-            studentId={studentId}
-            redirectTo={{ type: "student", studentId }}
-            sessionLabel={`${session.subject} on ${formatDisplayDate(session.session_date) || "—"} at ${formatDisplayTime(session.session_time) || "—"}`}
-            variant="button"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            {showAddGoogleMeet ? (
+              <AddGoogleMeetButton sessionId={sessionId} studentId={studentId} />
+            ) : null}
+            <DeleteSessionButton
+              sessionId={sessionId}
+              studentId={studentId}
+              redirectTo={{ type: "student", studentId }}
+              sessionLabel={`${session.subject} on ${formatDisplayDate(session.session_date) || "—"} at ${formatDisplayTime(session.session_time) || "—"}`}
+              variant="button"
+            />
+          </div>
         </div>
+        {meetLink ? (
+          <p className="mb-4 text-sm">
+            <a
+              href={meetLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            >
+              Google Meet link →
+            </a>
+          </p>
+        ) : null}
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
