@@ -18,6 +18,7 @@ import {
   type CalendarView,
 } from "@/lib/calendar-utils";
 import { BirthdayEmoji } from "./birthday-emoji";
+import { GoogleMeetCalendarIcon } from "./google-meet-calendar-icon";
 
 type Props = {
   year: number;
@@ -159,6 +160,11 @@ export function MonthCalendar({ year, month, monthParam, view, sessions }: Props
                               >
                                 {formatDisplayTime(s.session_time)}
                               </span>{" "}
+                              {s.google_meet_added ? (
+                                <span className="mr-0.5 inline-flex align-middle">
+                                  <GoogleMeetCalendarIcon />
+                                </span>
+                              ) : null}
                               {s.student_first_name} {s.student_last_name}
                               {(() => {
                                 const tooltip = birthdaySessionIdToTooltip.get(s.id) ?? null;

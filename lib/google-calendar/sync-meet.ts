@@ -1,11 +1,14 @@
 import {
   getSessionById,
   getStudentById,
+  getSessionWithStudentNames,
   markSessionSyncSource,
+  setSessionGoogleMeetAdded,
 } from "@/lib/db";
 import { isDeleted } from "@/lib/session-status";
 import { getAuthenticatedCalendarClient, isGoogleCalendarConfigured } from "./client";
 import { getGoogleCalendarIntegrationStatus } from "./status";
+import { isEventParentVisible } from "./events";
 import {
   addGoogleMeetAndParentAttendee,
   eventHasGoogleMeet,
@@ -29,11 +32,12 @@ export async function addGoogleMeetToSession(
     };
   }
 
-  const [session, student] = await Promise.all([
+  const [session, sessionWithNames, student] = await Promise.all([
     getSessionById(sessionId),
+    getSessionWithStudentNames(sessionId),
     getStudentById(studentId),
   ]);
-  if (!session || !student || session.student_id !== studentId) {
+  if (!session || !sessionWithNames || !student || session.student_id !== studentId) {
     return { error: "Session or student not found." };
   }
   if (isDeleted(session.status) || session.status === "cancelled") {
@@ -81,8 +85,10 @@ export async function addGoogleMeetToSession(
     if (
       existing &&
       eventHasGoogleMeet(existing) &&
-      parentIsEventAttendee(existing, parentEmail)
+      parentIsEventAttendee(existing, parentEmail) &&
+      isEventParentVisible(existing)
     ) {
+      await setSessionGoogleMeetAdded(sessionId, true);
       return { ok: true, alreadyConfigured: true };
     }
 
@@ -90,9 +96,12 @@ export async function addGoogleMeetToSession(
     const result = await addGoogleMeetAndParentAttendee(
       client.calendar,
       eventId,
+      sessionWithNames,
+      studentId,
       parentEmail,
       parentName
     );
+    await setSessionGoogleMeetAdded(sessionId, true);
     return { ok: true, meetLink: result.meetLink };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Google Calendar error";

@@ -115,6 +115,7 @@ export async function addGoogleMeetAction(
   revalidatePath(`/dashboard/students/${studentId}`);
   revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);
   revalidatePath("/dashboard");
+  revalidatePath("/dashboard/sessions");
   return {
     meetLink: result.meetLink,
     alreadyConfigured: result.alreadyConfigured,

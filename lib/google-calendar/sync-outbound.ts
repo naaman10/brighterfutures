@@ -149,6 +149,7 @@ export async function syncRescheduleToGoogle(
       google_calendar_id: calendarId,
       rescheduled_from_session_id: originalSessionId,
       sync_source: "app",
+      google_meet_added: !!original.google_meet_added,
     });
 
     await patchCalendarEvent(

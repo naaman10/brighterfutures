@@ -1,7 +1,14 @@
 import { randomUUID } from "crypto";
 import type { calendar_v3 } from "googleapis";
+import type { SessionWithStudentNames } from "@/lib/db";
 import { getAuthenticatedCalendarClient } from "./client";
 import { getGoogleCalendarId } from "./config";
+import {
+  buildParentVisibleEventDescription,
+  buildSessionEventTitle,
+  getCalendarEvent,
+  PARENT_VISIBLE_EXT_PROP,
+} from "./events";
 
 export function eventHasGoogleMeet(event: calendar_v3.Schema$Event): boolean {
   if (event.hangoutLink) return true;
@@ -32,19 +39,7 @@ export function getMeetLinkFromEvent(
   return video?.uri ?? undefined;
 }
 
-export async function getCalendarEvent(
-  calendar: calendar_v3.Calendar,
-  eventId: string
-): Promise<calendar_v3.Schema$Event | null> {
-  const calendarId = getGoogleCalendarId();
-  if (!calendarId) return null;
-
-  const res = await calendar.events.get({
-    calendarId,
-    eventId,
-  });
-  return res.data;
-}
+export { getCalendarEvent } from "./events";
 
 export async function getSessionCalendarMeetStatus(
   googleEventId: string,
@@ -69,6 +64,8 @@ export async function getSessionCalendarMeetStatus(
 export async function addGoogleMeetAndParentAttendee(
   calendar: calendar_v3.Calendar,
   eventId: string,
+  session: SessionWithStudentNames,
+  studentId: string,
   parentEmail: string,
   parentDisplayName?: string | null
 ): Promise<{ meetLink?: string; parentInvited: boolean; meetAdded: boolean }> {
@@ -97,7 +94,20 @@ export async function addGoogleMeetAndParentAttendee(
     });
   }
 
-  const requestBody: calendar_v3.Schema$Event = { attendees };
+  const requestBody: calendar_v3.Schema$Event = {
+    attendees,
+    summary: buildSessionEventTitle(session, { withMeetEmoji: true }),
+    description: buildParentVisibleEventDescription(session),
+    extendedProperties: {
+      private: {
+        ...existing.extendedProperties?.private,
+        sessionId: session.id,
+        studentId,
+        appStatus: session.status,
+        [PARENT_VISIBLE_EXT_PROP]: "1",
+      },
+    },
+  };
 
   let conferenceDataVersion: number | undefined;
   if (!hasMeet) {

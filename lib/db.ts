@@ -667,6 +667,7 @@ export type Session = {
   feedback_sent_at: string | Date | null;
   google_event_id?: string | null;
   google_calendar_id?: string | null;
+  google_meet_added?: boolean;
   rescheduled_from_session_id?: string | null;
   sync_source?: string | null;
   last_synced_at?: string | Date | null;
@@ -727,6 +728,7 @@ export async function getSessionsForMonth(
       s.summary_markdown,
       s.feedback_markdown,
       s.feedback_sent_at,
+      s.google_meet_added,
       s.created_at,
       s.updated_at,
       st.first_name AS student_first_name,
@@ -759,6 +761,7 @@ export async function getSessionsForDate(
       s.summary_markdown,
       s.feedback_markdown,
       s.feedback_sent_at,
+      s.google_meet_added,
       s.created_at,
       s.updated_at,
       st.first_name AS student_first_name,
@@ -803,6 +806,7 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
           s.summary_markdown,
           s.feedback_markdown,
           s.feedback_sent_at,
+          s.google_meet_added,
           s.created_at,
           s.updated_at,
           st.first_name AS student_first_name,
@@ -825,6 +829,7 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
           s.summary_markdown,
           s.feedback_markdown,
           s.feedback_sent_at,
+          s.google_meet_added,
           s.created_at,
           s.updated_at,
           st.first_name AS student_first_name,
@@ -855,6 +860,7 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
       feedback_sent_at,
       google_event_id,
       google_calendar_id,
+      google_meet_added,
       rescheduled_from_session_id,
       sync_source,
       last_synced_at,
@@ -1074,6 +1080,7 @@ export async function setSessionGoogleEvent(
     google_calendar_id?: string | null;
     rescheduled_from_session_id?: string | null;
     sync_source?: string | null;
+    google_meet_added?: boolean | null;
   }
 ): Promise<{ ok: true } | { error: string }> {
   try {
@@ -1087,8 +1094,29 @@ export async function setSessionGoogleEvent(
           rescheduled_from_session_id
         ),
         sync_source = ${data.sync_source ?? null},
+        google_meet_added = COALESCE(
+          ${data.google_meet_added ?? null},
+          google_meet_added
+        ),
         last_synced_at = NOW(),
         updated_at = NOW()
+      WHERE id = ${sessionId}
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export async function setSessionGoogleMeetAdded(
+  sessionId: string,
+  google_meet_added: boolean
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE sessions
+      SET google_meet_added = ${google_meet_added}, updated_at = NOW()
       WHERE id = ${sessionId}
     `;
     return { ok: true };
