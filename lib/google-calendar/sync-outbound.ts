@@ -12,26 +12,50 @@ import {
 } from "./events";
 import { getGoogleCalendarId } from "./config";
 
+export type SyncResult =
+  | { ok: true; eventId?: string }
+  | { skipped: string }
+  | { error: string };
+
 function logSyncError(context: string, err: unknown): void {
   console.error(`[google-calendar] ${context}:`, err);
+}
+
+function formatSyncError(e: unknown): string {
+  if (e instanceof Error) return e.message;
+  return "Unknown Google Calendar error";
 }
 
 /** Create a Google event for a new session. */
 export async function syncSessionCreatedToGoogle(
   sessionId: string
-): Promise<void> {
-  if (!isGoogleCalendarConfigured()) return;
+): Promise<SyncResult> {
+  if (!isGoogleCalendarConfigured()) {
+    return {
+      skipped:
+        "Google Calendar env not configured (GOOGLE_CALENDAR_ID and OAuth credentials).",
+    };
+  }
 
   const session = await getSessionWithStudentNames(sessionId);
-  if (!session) return;
-  if (session.status === "rescheduled" || session.status === "cancelled") return;
-  if (session.google_event_id) return;
+  if (!session) return { skipped: "Session not found." };
+  if (session.status === "rescheduled" || session.status === "cancelled") {
+    return { skipped: `Session status is ${session.status}.` };
+  }
+  if (session.google_event_id) {
+    return { ok: true, eventId: session.google_event_id };
+  }
 
   const client = await getAuthenticatedCalendarClient();
-  if (!client) return;
+  if (!client) {
+    return {
+      skipped:
+        "Google Calendar not connected — connect in Dashboard → Settings.",
+    };
+  }
 
   const calendarId = getGoogleCalendarId();
-  if (!calendarId) return;
+  if (!calendarId) return { skipped: "GOOGLE_CALENDAR_ID is not set." };
 
   try {
     await markSessionSyncSource(sessionId, "app");
@@ -40,16 +64,48 @@ export async function syncSessionCreatedToGoogle(
       session,
       session.student_id
     );
-    if (!eventId) return;
+    if (!eventId) return { error: "Google did not return an event id." };
 
     await setSessionGoogleEvent(sessionId, {
       google_event_id: eventId,
       google_calendar_id: calendarId,
       sync_source: "app",
     });
+    return { ok: true, eventId };
   } catch (e) {
+    const message = formatSyncError(e);
     logSyncError(`syncSessionCreatedToGoogle(${sessionId})`, e);
+    return { error: message };
   }
+}
+
+/** Sync all sessions that have no google_event_id (e.g. created before connect). */
+export async function backfillSessionsToGoogle(): Promise<{
+  synced: number;
+  skipped: number;
+  errors: string[];
+}> {
+  const { neon } = await import("@neondatabase/serverless");
+  const sql = neon(process.env.DATABASE_URL!);
+  const rows = await sql`
+    SELECT id FROM sessions
+    WHERE google_event_id IS NULL
+      AND status NOT IN ('rescheduled', 'cancelled')
+    ORDER BY session_date ASC, session_time ASC
+  `;
+
+  let synced = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  for (const row of rows as { id: string }[]) {
+    const result = await syncSessionCreatedToGoogle(row.id);
+    if ("ok" in result && result.ok) synced++;
+    else if ("skipped" in result) skipped++;
+    else if ("error" in result) errors.push(`${row.id}: ${result.error}`);
+  }
+
+  return { synced, skipped, errors };
 }
 
 /** After standard reschedule: move event to new session, update time/colour. */

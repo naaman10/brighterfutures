@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { SESSION_STATUSES, SESSION_STATUS_LABELS } from "@/lib/session-status";
 import { addSessions } from "./actions";
 
@@ -40,6 +41,9 @@ export function AddSessionForm({ studentId }: Props) {
       setError(result.error);
       setIsSubmitting(false);
       return;
+    }
+    if (result.calendarWarning) {
+      toast.warning(result.calendarWarning);
     }
     router.refresh();
     setIsSubmitting(false);

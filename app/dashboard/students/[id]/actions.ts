@@ -225,7 +225,7 @@ function getRecurringDates(
 export async function addSessions(
   studentId: string,
   formData: FormData
-): Promise<{ error?: string }> {
+): Promise<{ error?: string; calendarWarning?: string }> {
   const mode = formData.get("mode") as string;
   const subject = (formData.get("subject") as string)?.trim();
   if (!subject) return { error: "Subject is required" };
@@ -249,9 +249,17 @@ export async function addSessions(
     });
     if ("error" in result) return { error: result.error };
     const { syncSessionCreatedToGoogle } = await import("@/lib/google-calendar");
-    await syncSessionCreatedToGoogle(result.id);
+    const syncResult = await syncSessionCreatedToGoogle(result.id);
     revalidatePath(`/dashboard/students/${studentId}`);
     revalidatePath("/dashboard");
+    if ("error" in syncResult) {
+      return {
+        calendarWarning: `Session saved, but Google Calendar: ${syncResult.error}`,
+      };
+    }
+    if ("skipped" in syncResult) {
+      return { calendarWarning: `Session saved, but Google Calendar: ${syncResult.skipped}` };
+    }
     return {};
   }
 
@@ -285,7 +293,17 @@ export async function addSessions(
       return { error: result.error };
     }
     const { syncSessionCreatedToGoogle } = await import("@/lib/google-calendar");
-    await syncSessionCreatedToGoogle(result.id);
+    const syncResult = await syncSessionCreatedToGoogle(result.id);
+    if ("error" in syncResult) {
+      return {
+        error: `Some sessions saved, but Google Calendar failed: ${syncResult.error}`,
+      };
+    }
+    if ("skipped" in syncResult) {
+      return {
+        calendarWarning: `Sessions saved, but Google Calendar: ${syncResult.skipped}`,
+      };
+    }
   }
   revalidatePath(`/dashboard/students/${studentId}`);
   revalidatePath("/dashboard");
