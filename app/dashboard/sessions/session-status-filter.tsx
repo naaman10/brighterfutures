@@ -7,6 +7,7 @@ const FILTER_STATUSES = [
   "planned",
   "in_progress",
   "completed",
+  "cancelled",
   "rescheduled",
   "planned_reschedule",
 ] as const;

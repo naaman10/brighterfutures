@@ -3,7 +3,6 @@
 import { revalidatePath } from "next/cache";
 import type { SessionStatus } from "@/lib/db";
 import {
-  createSession,
   getSessionById,
   getStudentById,
   updateSessionFeedback,
@@ -11,6 +10,7 @@ import {
   updateSessionStatus,
   updateSessionSummary,
 } from "@/lib/db";
+import { performRescheduleSession } from "@/lib/reschedule-session";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { sendTemplate } from "@/lib/email";
 
@@ -35,7 +35,14 @@ export async function updateSessionStatusAction(
 ): Promise<{ error?: string }> {
   const result = await updateSessionStatus(sessionId, status);
   if ("error" in result) return { error: result.error };
+
+  if (status === "cancelled") {
+    const { syncSessionCancelledToGoogle } = await import("@/lib/google-calendar");
+    await syncSessionCancelledToGoogle(sessionId);
+  }
+
   revalidatePath(`/dashboard/students/${studentId}`);
+  revalidatePath("/dashboard");
   revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);
   return {};
 }
@@ -102,33 +109,27 @@ export async function rescheduleSessionAction(
   if (!session || session.student_id !== studentId) {
     return { error: "Session not found." };
   }
-  if (session.status === "rescheduled" || session.status === "planned_reschedule") {
-    return { error: "This session is already rescheduled." };
-  }
 
   const session_date = (formData.get("session_date") as string)?.trim();
   const session_time = (formData.get("session_time") as string)?.trim();
   const subject = (formData.get("subject") as string)?.trim() || session.subject;
 
-  if (!session_date || !session_time) {
-    return { error: "Date and time are required for the new session." };
-  }
-
-  const updateResult = await updateSessionStatus(sessionId, "rescheduled");
-  if ("error" in updateResult) return { error: updateResult.error };
-
-  const createResult = await createSession({
-    student_id: studentId,
+  const result = await performRescheduleSession({
+    sessionId,
+    studentId,
     session_date,
     session_time,
     subject,
-    status: "planned_reschedule",
   });
-  if ("error" in createResult) {
-    return { error: "Original session marked rescheduled but failed to create new session." };
+  if (result.error) return result;
+
+  if (result.newSessionId) {
+    const { syncRescheduleToGoogle } = await import("@/lib/google-calendar");
+    await syncRescheduleToGoogle(sessionId, result.newSessionId);
   }
 
   revalidatePath(`/dashboard/students/${studentId}`);
   revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);
+  revalidatePath("/dashboard");
   return {};
 }

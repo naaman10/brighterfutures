@@ -93,7 +93,9 @@ export function DashboardShell({ children, headerRight }: Props) {
         >
           <DashboardSidebar />
         </div>
-        <main className="min-w-0 flex-1 px-4 py-8 lg:px-8">{children}</main>
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-8 lg:px-8">
+          {children}
+        </main>
       </div>
     </div>
   );

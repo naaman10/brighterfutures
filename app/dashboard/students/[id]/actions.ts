@@ -231,7 +231,7 @@ export async function addSessions(
   if (!subject) return { error: "Subject is required" };
 
   const statusRaw = (formData.get("session_status") as string)?.trim();
-  const validStatuses = ["planned", "in_progress", "completed", "rescheduled", "planned_reschedule"] as const;
+  const validStatuses = ["planned", "in_progress", "completed", "cancelled", "rescheduled", "planned_reschedule"] as const;
   const status = statusRaw && validStatuses.includes(statusRaw as (typeof validStatuses)[number])
     ? (statusRaw as (typeof validStatuses)[number])
     : "planned";
@@ -248,7 +248,10 @@ export async function addSessions(
       status,
     });
     if ("error" in result) return { error: result.error };
+    const { syncSessionCreatedToGoogle } = await import("@/lib/google-calendar");
+    await syncSessionCreatedToGoogle(result.id);
     revalidatePath(`/dashboard/students/${studentId}`);
+    revalidatePath("/dashboard");
     return {};
   }
 
@@ -281,8 +284,11 @@ export async function addSessions(
     if ("error" in result) {
       return { error: result.error };
     }
+    const { syncSessionCreatedToGoogle } = await import("@/lib/google-calendar");
+    await syncSessionCreatedToGoogle(result.id);
   }
   revalidatePath(`/dashboard/students/${studentId}`);
+  revalidatePath("/dashboard");
   return {};
 }
 

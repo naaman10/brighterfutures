@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard/leads", label: "Leads" },
   { href: "/dashboard/invoices", label: "Invoices" },
   { href: "/dashboard/email-logs", label: "Email logs" },
+  { href: "/dashboard/settings", label: "Settings" },
 ];
 
 export function DashboardSidebar() {

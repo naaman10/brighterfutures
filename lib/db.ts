@@ -662,6 +662,11 @@ export type Session = {
   summary_markdown: string | null;
   feedback_markdown: string | null;
   feedback_sent_at: string | Date | null;
+  google_event_id?: string | null;
+  google_calendar_id?: string | null;
+  rescheduled_from_session_id?: string | null;
+  sync_source?: string | null;
+  last_synced_at?: string | Date | null;
   created_at: string | Date | null;
   updated_at: string | Date | null;
 };
@@ -767,7 +772,7 @@ export async function getSessionsForDate(
  * Optional status filter: only sessions with this status are returned.
  */
 export async function getSessions(status?: string | null): Promise<SessionWithStudent[]> {
-  const validStatuses = ["planned", "in_progress", "completed", "rescheduled", "planned_reschedule"] as const;
+  const validStatuses = ["planned", "in_progress", "completed", "cancelled", "rescheduled", "planned_reschedule"] as const;
   const filterStatus =
     status && validStatuses.includes(status as (typeof validStatuses)[number])
       ? status
@@ -823,12 +828,94 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
  */
 export async function getSessionById(sessionId: string): Promise<Session | null> {
   const rows = await sql`
-    SELECT id, student_id, session_date, session_time, subject, status, summary_markdown, feedback_markdown, feedback_sent_at, created_at, updated_at
+    SELECT
+      id,
+      student_id,
+      (session_date::date)::text AS session_date,
+      session_time,
+      subject,
+      status,
+      summary_markdown,
+      feedback_markdown,
+      feedback_sent_at,
+      google_event_id,
+      google_calendar_id,
+      rescheduled_from_session_id,
+      sync_source,
+      last_synced_at,
+      created_at,
+      updated_at
     FROM sessions
     WHERE id = ${sessionId}
   `;
   const row = rows[0];
   return (row as Session) ?? null;
+}
+
+export async function getSessionByGoogleEventId(
+  googleEventId: string
+): Promise<Session | null> {
+  const rows = await sql`
+    SELECT
+      id,
+      student_id,
+      (session_date::date)::text AS session_date,
+      session_time,
+      subject,
+      status,
+      summary_markdown,
+      feedback_markdown,
+      feedback_sent_at,
+      google_event_id,
+      google_calendar_id,
+      rescheduled_from_session_id,
+      sync_source,
+      last_synced_at,
+      created_at,
+      updated_at
+    FROM sessions
+    WHERE google_event_id = ${googleEventId}
+    ORDER BY updated_at DESC
+    LIMIT 1
+  `;
+  const row = rows[0];
+  return (row as Session) ?? null;
+}
+
+export type SessionWithStudentNames = Session & {
+  student_first_name: string;
+  student_last_name: string;
+};
+
+export async function getSessionWithStudentNames(
+  sessionId: string
+): Promise<SessionWithStudentNames | null> {
+  const rows = await sql`
+    SELECT
+      s.id,
+      s.student_id,
+      (s.session_date::date)::text AS session_date,
+      s.session_time,
+      s.subject,
+      s.status,
+      s.summary_markdown,
+      s.feedback_markdown,
+      s.feedback_sent_at,
+      s.google_event_id,
+      s.google_calendar_id,
+      s.rescheduled_from_session_id,
+      s.sync_source,
+      s.last_synced_at,
+      s.created_at,
+      s.updated_at,
+      st.first_name AS student_first_name,
+      st.last_name AS student_last_name
+    FROM sessions s
+    JOIN students st ON st.id = s.student_id
+    WHERE s.id = ${sessionId}
+  `;
+  const row = rows[0];
+  return (row as SessionWithStudentNames) ?? null;
 }
 
 /**
@@ -859,6 +946,29 @@ export async function updateSessionFeedback(
   try {
     await sql`
       UPDATE sessions SET feedback_markdown = ${feedback_markdown}, updated_at = NOW() WHERE id = ${sessionId}
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+/**
+ * Updates a session's date and time.
+ */
+export async function updateSessionDateTime(
+  sessionId: string,
+  session_date: string,
+  session_time: string
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE sessions
+      SET session_date = ${session_date}::date,
+          session_time = ${session_time},
+          updated_at = NOW()
+      WHERE id = ${sessionId}
     `;
     return { ok: true };
   } catch (e) {
@@ -915,18 +1025,189 @@ export type CreateSessionInput = {
  */
 export async function createSession(
   data: CreateSessionInput
-): Promise<{ ok: true } | { error: string }> {
+): Promise<{ ok: true; id: string } | { error: string }> {
   const status = data.status ?? "planned";
   try {
-    await sql`
+    const rows = await sql`
       INSERT INTO sessions (student_id, session_date, session_time, subject, status)
       VALUES (${data.student_id}, ${data.session_date}, ${data.session_time}, ${data.subject}, ${status})
+      RETURNING id
+    `;
+    const id = (rows[0] as { id: string })?.id;
+    if (!id) return { error: "Failed to create session." };
+    return { ok: true, id };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export async function setSessionGoogleEvent(
+  sessionId: string,
+  data: {
+    google_event_id: string | null;
+    google_calendar_id?: string | null;
+    rescheduled_from_session_id?: string | null;
+    sync_source?: string | null;
+  }
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE sessions
+      SET
+        google_event_id = ${data.google_event_id},
+        google_calendar_id = COALESCE(${data.google_calendar_id ?? null}, google_calendar_id),
+        rescheduled_from_session_id = COALESCE(
+          ${data.rescheduled_from_session_id ?? null},
+          rescheduled_from_session_id
+        ),
+        sync_source = ${data.sync_source ?? null},
+        last_synced_at = NOW(),
+        updated_at = NOW()
+      WHERE id = ${sessionId}
     `;
     return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Database error";
     return { error: message };
   }
+}
+
+export async function markSessionSyncSource(
+  sessionId: string,
+  sync_source: "app" | "google" | null
+): Promise<void> {
+  await sql`
+    UPDATE sessions
+    SET sync_source = ${sync_source}, updated_at = NOW()
+    WHERE id = ${sessionId}
+  `;
+}
+
+export type GoogleCalendarConnection = {
+  id: string;
+  user_email: string;
+  calendar_id: string;
+  access_token: string | null;
+  refresh_token: string;
+  token_expiry: string | Date | null;
+};
+
+export async function getGoogleCalendarConnection(): Promise<GoogleCalendarConnection | null> {
+  const rows = await sql`
+    SELECT id, user_email, calendar_id, access_token, refresh_token, token_expiry
+    FROM google_calendar_connections
+    ORDER BY updated_at DESC
+    LIMIT 1
+  `;
+  return (rows[0] as GoogleCalendarConnection) ?? null;
+}
+
+export async function upsertGoogleCalendarConnection(data: {
+  user_email: string;
+  calendar_id: string;
+  access_token: string | null;
+  refresh_token: string;
+  token_expiry: Date | null;
+}): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      INSERT INTO google_calendar_connections (
+        user_email,
+        calendar_id,
+        access_token,
+        refresh_token,
+        token_expiry,
+        updated_at
+      )
+      VALUES (
+        ${data.user_email},
+        ${data.calendar_id},
+        ${data.access_token},
+        ${data.refresh_token},
+        ${data.token_expiry},
+        NOW()
+      )
+      ON CONFLICT (user_email) DO UPDATE SET
+        calendar_id = EXCLUDED.calendar_id,
+        access_token = EXCLUDED.access_token,
+        refresh_token = EXCLUDED.refresh_token,
+        token_expiry = EXCLUDED.token_expiry,
+        updated_at = NOW()
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export type GoogleCalendarWatchChannel = {
+  id: string;
+  channel_id: string;
+  resource_id: string;
+  calendar_id: string;
+  expiration: string | Date;
+  sync_token: string | null;
+};
+
+export async function getGoogleCalendarWatchChannel(): Promise<GoogleCalendarWatchChannel | null> {
+  const rows = await sql`
+    SELECT id, channel_id, resource_id, calendar_id, expiration, sync_token
+    FROM google_calendar_watch_channels
+    ORDER BY expiration DESC
+    LIMIT 1
+  `;
+  return (rows[0] as GoogleCalendarWatchChannel) ?? null;
+}
+
+export async function upsertGoogleCalendarWatchChannel(data: {
+  channel_id: string;
+  resource_id: string;
+  calendar_id: string;
+  expiration: Date;
+  sync_token?: string | null;
+}): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      DELETE FROM google_calendar_watch_channels
+      WHERE calendar_id = ${data.calendar_id}
+    `;
+    await sql`
+      INSERT INTO google_calendar_watch_channels (
+        channel_id,
+        resource_id,
+        calendar_id,
+        expiration,
+        sync_token
+      )
+      VALUES (
+        ${data.channel_id},
+        ${data.resource_id},
+        ${data.calendar_id},
+        ${data.expiration},
+        ${data.sync_token ?? null}
+      )
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export async function setGoogleCalendarWatchSyncToken(
+  sync_token: string | null
+): Promise<void> {
+  await sql`
+    UPDATE google_calendar_watch_channels
+    SET sync_token = ${sync_token}
+    WHERE id = (
+      SELECT id FROM google_calendar_watch_channels
+      ORDER BY expiration DESC
+      LIMIT 1
+    )
+  `;
 }
 
 /**

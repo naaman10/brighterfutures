@@ -9,39 +9,36 @@ import {
 import { formatDisplayTime } from "@/lib/format";
 import { pickBirthdaySessionIdByStudent } from "@/lib/birthday";
 import { BirthdayEmoji } from "./components/birthday-emoji";
-import { MonthCalendar } from "./components/month-calendar";
+import { DashboardCalendar } from "./components/dashboard-calendar";
+import {
+  addDaysToDateKey,
+  getMonthRange,
+  getWeekRange,
+  parseMonthParam,
+  parseViewParam,
+  parseWeekParam,
+  todayDateStr,
+} from "@/lib/calendar-utils";
 
 export const dynamic = "force-dynamic";
-
-function todayDateStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function getMonthRange(year: number, month: number): { start: string; end: string } {
-  const start = `${year}-${String(month).padStart(2, "0")}-01`;
-  const lastDay = new Date(year, month, 0).getDate();
-  const end = `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`;
-  return { start, end };
-}
-
-function parseMonthParam(param: string | undefined): { year: number; month: number } | null {
-  if (!param || !/^\d{4}-\d{2}$/.test(param)) return null;
-  const [y, m] = param.split("-").map(Number);
-  if (m < 1 || m > 12) return null;
-  return { year: y, month: m };
-}
 
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }> | { month?: string };
+  searchParams: Promise<{ month?: string; view?: string; week?: string }> | {
+    month?: string;
+    view?: string;
+    week?: string;
+  };
 }) {
   const params = searchParams instanceof Promise ? await searchParams : searchParams;
   const parsed = parseMonthParam(params?.month);
   const now = new Date();
   const year = parsed?.year ?? now.getFullYear();
   const month = parsed?.month ?? now.getMonth() + 1;
+  const monthParam = `${year}-${String(month).padStart(2, "0")}`;
+  const view = parseViewParam(params?.view);
+  const weekParam = parseWeekParam(params?.week) ?? todayDateStr();
   const session = await auth();
   let sessionsToday: Awaited<ReturnType<typeof getSessionsForDate>> = [];
   let sessionsMonth: Awaited<ReturnType<typeof getSessionsForMonth>> = [];
@@ -49,7 +46,12 @@ export default async function DashboardPage({
   let dbErrorHint: React.ReactNode = null;
 
   try {
-    const { start, end } = getMonthRange(year, month);
+    const monthRange = getMonthRange(year, month);
+    const weekRange = getWeekRange(weekParam);
+    const calendarPadStart = addDaysToDateKey(weekRange.start, -7);
+    const calendarPadEnd = addDaysToDateKey(weekRange.end, 7);
+    const start = [monthRange.start, calendarPadStart].sort()[0]!;
+    const end = [monthRange.end, calendarPadEnd].sort().reverse()[0]!;
     [sessionsToday, sessionsMonth] = await Promise.all([
       getSessionsForDate(todayDateStr()),
       getSessionsForMonth(start, end),
@@ -68,8 +70,23 @@ export default async function DashboardPage({
     );
   }
 
+  const usesWeekFillLayout = view === "week" || view == null;
+
   return (
-    <div>
+    <div
+      className={
+        usesWeekFillLayout
+          ? "flex max-h-[calc(100dvh-7.5rem)] min-h-0 flex-1 flex-col overflow-hidden max-md:h-[calc(100dvh-7.5rem)] md:max-h-none md:overflow-visible"
+          : "flex min-h-0 flex-1 flex-col"
+      }
+    >
+      <div
+        className={
+          usesWeekFillLayout
+            ? "max-md:max-h-[38%] max-md:shrink-0 max-md:overflow-y-auto"
+            : "shrink-0"
+        }
+      >
       <h1 className="mb-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
         Dashboard
       </h1>
@@ -129,9 +146,24 @@ export default async function DashboardPage({
           {dbErrorHint && <p className="mt-2">{dbErrorHint}</p>}
         </div>
       )}
+      </div>
 
-      <section>
-        <MonthCalendar year={year} month={month} sessions={sessionsMonth} />
+      <section
+        className={
+          usesWeekFillLayout
+            ? "flex min-h-0 flex-1 flex-col"
+            : undefined
+        }
+      >
+        <DashboardCalendar
+          view={view}
+          year={year}
+          month={month}
+          monthParam={monthParam}
+          weekParam={weekParam}
+          sessions={sessionsMonth}
+          fillHeight={usesWeekFillLayout}
+        />
       </section>
     </div>
   );
