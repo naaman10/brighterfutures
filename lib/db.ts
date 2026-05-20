@@ -468,6 +468,7 @@ export async function getSessionsForInvoice(
     WHERE st.parent_id = ${parentsId}
       AND (s.session_date::date) >= (${billingMonthStart}::date)
       AND (s.session_date::date) < (${billingMonthStart}::date + INTERVAL '1 month')
+      AND s.status != 'deleted'
     ORDER BY s.session_date ASC, s.session_time ASC
   `;
   return rows as SessionForInvoice[];
@@ -503,6 +504,7 @@ export async function getSessionsByParentForMonth(
       AND (s.session_date::date) >= (${billingMonthStart}::date)
       AND (s.session_date::date) < (${billingMonthStart}::date + INTERVAL '1 month')
       AND s.status != 'planned_reschedule'
+      AND s.status != 'deleted'
     GROUP BY st.parent_id, p.first_name, p.last_name, p.session_rate
   `;
   const row = rows[0];
@@ -580,6 +582,7 @@ export async function getSessionsByParentForNextMonth(
     WHERE (s.session_date::date) >= (${billingMonthStart}::date)
       AND (s.session_date::date) < (${billingMonthStart}::date + INTERVAL '1 month')
       AND s.status != 'planned_reschedule'
+      AND s.status != 'deleted'
     GROUP BY st.parent_id, p.first_name, p.last_name, p.session_rate
   `;
   return rows as SessionsByParentForInvoice[];
@@ -690,6 +693,7 @@ export async function getSessionsByStudentId(studentId: string): Promise<Session
       updated_at
     FROM sessions
     WHERE student_id = ${studentId}
+      AND status != 'deleted'
     ORDER BY session_date ASC, session_time ASC
   `;
   return rows as Session[];
@@ -732,6 +736,7 @@ export async function getSessionsForMonth(
     JOIN students st ON st.id = s.student_id
     WHERE s.session_date >= ${startDate}::date
       AND s.session_date <= ${endDate}::date
+      AND s.status != 'deleted'
     ORDER BY s.session_date ASC, s.session_time ASC
   `;
   return rows as SessionWithStudent[];
@@ -762,6 +767,7 @@ export async function getSessionsForDate(
     FROM sessions s
     JOIN students st ON st.id = s.student_id
     WHERE s.session_date = ${dateStr}
+      AND s.status != 'deleted'
     ORDER BY s.session_time ASC
   `;
   return rows as SessionWithStudent[];
@@ -772,7 +778,14 @@ export async function getSessionsForDate(
  * Optional status filter: only sessions with this status are returned.
  */
 export async function getSessions(status?: string | null): Promise<SessionWithStudent[]> {
-  const validStatuses = ["planned", "in_progress", "completed", "cancelled", "rescheduled", "planned_reschedule"] as const;
+  const validStatuses = [
+    "planned",
+    "in_progress",
+    "completed",
+    "cancelled",
+    "rescheduled",
+    "planned_reschedule",
+  ] as const;
   const filterStatus =
     status && validStatuses.includes(status as (typeof validStatuses)[number])
       ? status
@@ -798,6 +811,7 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
         FROM sessions s
         JOIN students st ON st.id = s.student_id
         WHERE s.status = ${filterStatus}
+          AND s.status != 'deleted'
         ORDER BY s.session_date ASC, s.session_time ASC
       `
     : await sql`
@@ -818,6 +832,7 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
           (st.dob::date)::text AS student_dob
         FROM sessions s
         JOIN students st ON st.id = s.student_id
+        WHERE s.status != 'deleted'
         ORDER BY s.session_date ASC, s.session_time ASC
       `;
   return rows as SessionWithStudent[];
@@ -847,6 +862,7 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
       updated_at
     FROM sessions
     WHERE id = ${sessionId}
+      AND status != 'deleted'
   `;
   const row = rows[0];
   return (row as Session) ?? null;
@@ -1040,6 +1056,15 @@ export async function createSession(
     const message = e instanceof Error ? e.message : "Database error";
     return { error: message };
   }
+}
+
+/**
+ * Soft-delete: sets status to `deleted` (row kept for records).
+ */
+export async function markSessionAsDeleted(
+  sessionId: string
+): Promise<{ ok: true } | { error: string }> {
+  return updateSessionStatus(sessionId, "deleted");
 }
 
 export async function setSessionGoogleEvent(

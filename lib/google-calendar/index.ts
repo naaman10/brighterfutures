@@ -5,6 +5,7 @@ export {
   syncRescheduleToGoogle,
   syncSessionMovedToGoogle,
   syncSessionCancelledToGoogle,
+  syncSessionDeletedFromGoogle,
   backfillSessionsToGoogle,
   type SyncResult,
 } from "./sync-outbound";

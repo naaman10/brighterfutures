@@ -1,0 +1,2 @@
+-- Soft-delete uses status = 'deleted' (no schema change required if status is TEXT).
+-- Deleted sessions are excluded from the dashboard UI but kept in the database.

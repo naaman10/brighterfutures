@@ -209,7 +209,11 @@ export function clampScheduleMinutes(
 }
 
 export function canDragSession(status: string | null | undefined): boolean {
-  return status !== "rescheduled" && status !== "cancelled";
+  return (
+    status !== "rescheduled" &&
+    status !== "cancelled" &&
+    status !== "deleted"
+  );
 }
 
 /** Drag updates date/time in place (no new session). */

@@ -4,8 +4,10 @@ import { getSessionById, getStudentById } from "@/lib/db";
 import { formatDisplayDate, formatDisplayDateTime, formatDisplayTime } from "@/lib/format";
 import { SendFeedbackButton } from "./send-feedback-button";
 import { SessionFeedbackEditor } from "./session-feedback-editor";
+import type { EditableSessionStatus } from "@/lib/session-status";
 import { SessionStatusSelect } from "./session-status-select";
 import { SessionSummaryEditor } from "./session-summary-editor";
+import { DeleteSessionButton } from "@/app/dashboard/components/delete-session-button";
 
 export const dynamic = "force-dynamic";
 
@@ -44,9 +46,18 @@ export default async function SessionViewPage({ params }: Props) {
       </div>
 
       <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-        <h1 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-          Session details
-        </h1>
+        <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
+          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+            Session details
+          </h1>
+          <DeleteSessionButton
+            sessionId={sessionId}
+            studentId={studentId}
+            redirectTo={{ type: "student", studentId }}
+            sessionLabel={`${session.subject} on ${formatDisplayDate(session.session_date) || "—"} at ${formatDisplayTime(session.session_time) || "—"}`}
+            variant="button"
+          />
+        </div>
         <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -80,7 +91,7 @@ export default async function SessionViewPage({ params }: Props) {
               <SessionStatusSelect
                 sessionId={sessionId}
                 studentId={studentId}
-                currentStatus={session.status ?? "planned"}
+                currentStatus={(session.status ?? "planned") as EditableSessionStatus}
               />
             </dd>
           </div>

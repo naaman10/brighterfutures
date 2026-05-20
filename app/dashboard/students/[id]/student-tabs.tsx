@@ -7,6 +7,7 @@ import { SESSION_STATUS_LABELS } from "@/lib/session-status";
 import { pickBirthdaySessionIdForStudent } from "@/lib/birthday";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { BirthdayEmoji } from "../../components/birthday-emoji";
+import { DeleteSessionButton } from "../../components/delete-session-button";
 import { AddSessionForm } from "./add-session-form";
 import { StudentAISummary } from "./student-ai-summary";
 
@@ -313,12 +314,20 @@ export function StudentTabs({
                           {SESSION_STATUS_LABELS[session.status ?? "planned"]}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Link
-                            href={`/dashboard/students/${studentId}/sessions/${session.id}`}
-                            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                          >
-                            View
-                          </Link>
+                          <div className="flex items-center justify-end gap-3">
+                            <Link
+                              href={`/dashboard/students/${studentId}/sessions/${session.id}`}
+                              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                            >
+                              View
+                            </Link>
+                            <DeleteSessionButton
+                              sessionId={session.id}
+                              studentId={studentId}
+                              redirectTo={{ type: "student", studentId }}
+                              sessionLabel={`${session.subject} on ${formatDisplayDate(session.session_date) || "—"} at ${formatDisplayTime(session.session_time) || "—"}`}
+                            />
+                          </div>
                         </td>
                       </tr>
                     ))}

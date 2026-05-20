@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { SessionStatus } from "@/lib/db";
+import { isDeleted } from "@/lib/session-status";
 import {
   getSessionById,
   getStudentById,
@@ -33,6 +34,9 @@ export async function updateSessionStatusAction(
   studentId: string,
   status: SessionStatus
 ): Promise<{ error?: string }> {
+  if (isDeleted(status)) {
+    return { error: "Invalid status." };
+  }
   const result = await updateSessionStatus(sessionId, status);
   if ("error" in result) return { error: result.error };
 

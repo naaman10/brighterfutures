@@ -95,6 +95,19 @@ export async function cancelCalendarEvent(
   });
 }
 
+export async function deleteCalendarEvent(
+  calendar: calendar_v3.Calendar,
+  eventId: string
+): Promise<void> {
+  const calendarId = getGoogleCalendarId();
+  if (!calendarId) return;
+
+  await calendar.events.delete({
+    calendarId,
+    eventId,
+  });
+}
+
 export function parseEventDateTime(
   dt: calendar_v3.Schema$EventDateTime | null | undefined
 ): { date: string; time: string } | null {

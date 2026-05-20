@@ -3,6 +3,7 @@ import { getSessions, SESSION_STATUS_LABELS } from "@/lib/db";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { pickBirthdaySessionIdByStudent } from "@/lib/birthday";
 import { BirthdayEmoji } from "../components/birthday-emoji";
+import { DeleteSessionButton } from "../components/delete-session-button";
 import { SessionStatusFilter } from "./session-status-filter";
 
 const VALID_STATUSES = ["planned", "in_progress", "completed", "rescheduled", "planned_reschedule"] as const;
@@ -113,12 +114,20 @@ export default async function SessionsPage({
                         {SESSION_STATUS_LABELS[session.status ?? "planned"]}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <Link
-                          href={`/dashboard/students/${session.student_id}/sessions/${session.id}`}
-                          className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                        >
-                          View
-                        </Link>
+                        <div className="flex items-center justify-end gap-3">
+                          <Link
+                            href={`/dashboard/students/${session.student_id}/sessions/${session.id}`}
+                            className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                          >
+                            View
+                          </Link>
+                          <DeleteSessionButton
+                            sessionId={session.id}
+                            studentId={session.student_id}
+                            redirectTo={{ type: "sessions" }}
+                            sessionLabel={`${session.subject} on ${formatDisplayDate(session.session_date) || "—"} at ${formatDisplayTime(session.session_time) || "—"}`}
+                          />
+                        </div>
                       </td>
                     </tr>
                   ))}

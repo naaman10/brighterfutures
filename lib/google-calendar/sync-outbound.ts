@@ -7,6 +7,7 @@ import {
 import { getAuthenticatedCalendarClient, isGoogleCalendarConfigured } from "./client";
 import {
   cancelCalendarEvent,
+  deleteCalendarEvent,
   insertCalendarEvent,
   patchCalendarEvent,
 } from "./events";
@@ -39,7 +40,11 @@ export async function syncSessionCreatedToGoogle(
 
   const session = await getSessionWithStudentNames(sessionId);
   if (!session) return { skipped: "Session not found." };
-  if (session.status === "rescheduled" || session.status === "cancelled") {
+  if (
+    session.status === "rescheduled" ||
+    session.status === "cancelled" ||
+    session.status === "deleted"
+  ) {
     return { skipped: `Session status is ${session.status}.` };
   }
   if (session.google_event_id) {
@@ -90,7 +95,7 @@ export async function backfillSessionsToGoogle(): Promise<{
   const rows = await sql`
     SELECT id FROM sessions
     WHERE google_event_id IS NULL
-      AND status NOT IN ('rescheduled', 'cancelled')
+      AND status NOT IN ('rescheduled', 'cancelled', 'deleted')
     ORDER BY session_date ASC, session_time ASC
   `;
 
@@ -184,6 +189,33 @@ export async function syncSessionMovedToGoogle(sessionId: string): Promise<void>
     });
   } catch (e) {
     logSyncError(`syncSessionMovedToGoogle(${sessionId})`, e);
+  }
+}
+
+/** Remove Google event when session is deleted from the app. */
+export async function syncSessionDeletedFromGoogle(
+  sessionId: string,
+  googleEventId: string
+): Promise<SyncResult> {
+  if (!isGoogleCalendarConfigured()) {
+    return { skipped: "Google Calendar is not configured." };
+  }
+
+  const client = await getAuthenticatedCalendarClient();
+  if (!client) {
+    return { skipped: "Google Calendar is not connected." };
+  }
+
+  try {
+    await deleteCalendarEvent(client.calendar, googleEventId);
+    return { ok: true };
+  } catch (e) {
+    const message = formatSyncError(e);
+    if (message.includes("404") || message.toLowerCase().includes("not found")) {
+      return { ok: true };
+    }
+    logSyncError(`syncSessionDeletedFromGoogle(${sessionId})`, e);
+    return { error: message };
   }
 }
 

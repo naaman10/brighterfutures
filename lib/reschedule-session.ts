@@ -3,6 +3,7 @@ import {
   getSessionById,
   updateSessionStatus,
 } from "@/lib/db";
+import { isDeleted } from "@/lib/session-status";
 
 export type RescheduleSessionInput = {
   sessionId: string;
@@ -31,6 +32,9 @@ export async function performRescheduleSession(
   const session = await getSessionById(input.sessionId);
   if (!session || session.student_id !== input.studentId) {
     return { error: "Session not found." };
+  }
+  if (isDeleted(session.status)) {
+    return { error: "This session has been deleted." };
   }
   if (session.status === "rescheduled" || session.status === "planned_reschedule") {
     return { error: "This session is already rescheduled." };

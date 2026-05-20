@@ -3,13 +3,21 @@
  * components can import them without pulling in the database connection.
  */
 
-export const SESSION_STATUSES = [
+/** Statuses users can set manually (excludes system-only `deleted`). */
+export const EDITABLE_SESSION_STATUSES = [
   "planned",
   "in_progress",
   "completed",
   "cancelled",
   "rescheduled",
   "planned_reschedule",
+] as const;
+
+export type EditableSessionStatus = (typeof EDITABLE_SESSION_STATUSES)[number];
+
+export const SESSION_STATUSES = [
+  ...EDITABLE_SESSION_STATUSES,
+  "deleted",
 ] as const;
 
 export type SessionStatus = (typeof SESSION_STATUSES)[number];
@@ -21,6 +29,7 @@ export const SESSION_STATUS_LABELS: Record<SessionStatus, string> = {
   cancelled: "Cancelled",
   rescheduled: "Rescheduled",
   planned_reschedule: "Planned reschedule",
+  deleted: "Deleted",
 };
 
 export function isPlannedReschedule(status: string | null | undefined): boolean {
@@ -36,8 +45,21 @@ export function isCancelled(status: string | null | undefined): boolean {
   return status === "cancelled";
 }
 
+export function isDeleted(status: string | null | undefined): boolean {
+  return status === "deleted";
+}
+
 export function isVisibleOnCalendar(status: string | null | undefined): boolean {
-  return !isRescheduledOriginal(status) && !isCancelled(status);
+  return (
+    !isRescheduledOriginal(status) &&
+    !isCancelled(status) &&
+    !isDeleted(status)
+  );
+}
+
+/** Shown in sessions lists, student tabs, and session detail routes. */
+export function isVisibleInApp(status: string | null | undefined): boolean {
+  return !isDeleted(status);
 }
 
 export function filterSessionsForCalendar<T extends { status?: string | null }>(
