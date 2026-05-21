@@ -9,6 +9,7 @@ import {
 import { formatDisplayTime } from "@/lib/format";
 import { pickBirthdaySessionIdByStudent } from "@/lib/birthday";
 import { BirthdayEmoji } from "./components/birthday-emoji";
+import { SessionGoogleMeetIcon } from "./components/session-google-meet-icon";
 import { DashboardCalendar } from "./components/dashboard-calendar";
 import {
   addDaysToDateKey,
@@ -117,8 +118,9 @@ export default async function DashboardPage({
                       })()}
                     </span>
                   </span>
-                  <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                  <span className="inline-flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
                     {s.subject}
+                    <SessionGoogleMeetIcon googleMeetAdded={s.google_meet_added} />
                   </span>
                   <span className="text-sm text-zinc-500 dark:text-zinc-500">
                     {s.student_first_name} {s.student_last_name}

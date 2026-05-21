@@ -16,7 +16,7 @@ import {
   rescheduleSessionFromCalendarAction,
 } from "@/app/dashboard/calendar-actions";
 import { BirthdayEmoji } from "./birthday-emoji";
-import { GoogleMeetCalendarIcon } from "./google-meet-calendar-icon";
+import { SessionGoogleMeetIcon } from "./session-google-meet-icon";
 import { WeekCalendarScrollArea } from "./week-calendar-scroll";
 import {
   WEEKDAYS_SHORT,
@@ -594,9 +594,10 @@ export function WeekCalendarGrid({
                               : "text-zinc-600 dark:text-zinc-400"
                           }`}
                         >
-                          {s.google_meet_added ? (
-                            <GoogleMeetCalendarIcon className="text-[9px] md:text-[11px]" />
-                          ) : null}
+                          <SessionGoogleMeetIcon
+                            googleMeetAdded={s.google_meet_added}
+                            className="text-[9px] md:text-[11px]"
+                          />
                           <span className="min-w-0 truncate md:hidden">
                             {s.student_first_name} {s.student_last_name.charAt(0)}.
                           </span>

@@ -690,6 +690,7 @@ export async function getSessionsByStudentId(studentId: string): Promise<Session
       summary_markdown,
       feedback_markdown,
       feedback_sent_at,
+      google_meet_added,
       created_at,
       updated_at
     FROM sessions

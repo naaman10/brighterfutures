@@ -4,6 +4,7 @@ import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { pickBirthdaySessionIdByStudent } from "@/lib/birthday";
 import { BirthdayEmoji } from "../components/birthday-emoji";
 import { DeleteSessionButton } from "../components/delete-session-button";
+import { SessionGoogleMeetIcon } from "../components/session-google-meet-icon";
 import { SessionStatusFilter } from "./session-status-filter";
 
 const VALID_STATUSES = ["planned", "in_progress", "completed", "rescheduled", "planned_reschedule"] as const;
@@ -108,7 +109,12 @@ export default async function SessionsPage({
                         </Link>
                       </td>
                       <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                        {session.subject}
+                        <span className="inline-flex items-center gap-1.5">
+                          {session.subject}
+                          <SessionGoogleMeetIcon
+                            googleMeetAdded={session.google_meet_added}
+                          />
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                         {SESSION_STATUS_LABELS[session.status ?? "planned"]}

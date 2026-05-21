@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getSessionById, getStudentById } from "@/lib/db";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
+import { SessionGoogleMeetIcon } from "@/app/dashboard/components/session-google-meet-icon";
 import { RescheduleSessionForm } from "./reschedule-session-form";
 
 export const dynamic = "force-dynamic";
@@ -52,9 +53,10 @@ export default async function RescheduleSessionPage({ params }: Props) {
         <h1 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
           Reschedule session
         </h1>
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="mb-6 inline-flex flex-wrap items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400">
           Original: {formatDisplayDate(session.session_date)} at{" "}
           {formatDisplayTime(session.session_time)} — {session.subject}
+          <SessionGoogleMeetIcon googleMeetAdded={session.google_meet_added} />
         </p>
         <RescheduleSessionForm
           sessionId={sessionId}

@@ -7,6 +7,7 @@ import { SESSION_STATUS_LABELS } from "@/lib/session-status";
 import { pickBirthdaySessionIdForStudent } from "@/lib/birthday";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { BirthdayEmoji } from "../../components/birthday-emoji";
+import { SessionGoogleMeetIcon } from "../../components/session-google-meet-icon";
 import { DeleteSessionButton } from "../../components/delete-session-button";
 import { AddSessionForm } from "./add-session-form";
 import { StudentAISummary } from "./student-ai-summary";
@@ -308,7 +309,12 @@ export function StudentTabs({
                           {formatDisplayTime(session.session_time) || "—"}
                         </td>
                         <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                          {session.subject}
+                          <span className="inline-flex items-center gap-1.5">
+                            {session.subject}
+                            <SessionGoogleMeetIcon
+                              googleMeetAdded={session.google_meet_added}
+                            />
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                           {SESSION_STATUS_LABELS[session.status ?? "planned"]}

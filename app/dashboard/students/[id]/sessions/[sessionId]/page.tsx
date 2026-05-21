@@ -8,6 +8,7 @@ import type { EditableSessionStatus } from "@/lib/session-status";
 import { SessionStatusSelect } from "./session-status-select";
 import { SessionSummaryEditor } from "./session-summary-editor";
 import { DeleteSessionButton } from "@/app/dashboard/components/delete-session-button";
+import { SessionGoogleMeetIcon } from "@/app/dashboard/components/session-google-meet-icon";
 import { AddGoogleMeetButton } from "./add-google-meet-button";
 import {
   getGoogleCalendarIntegrationStatus,
@@ -123,8 +124,11 @@ export default async function SessionViewPage({ params }: Props) {
             <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Subject
             </dt>
-            <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
+            <dd className="mt-0.5 inline-flex items-center gap-1.5 text-zinc-900 dark:text-zinc-50">
               {session.subject}
+              <SessionGoogleMeetIcon
+                googleMeetAdded={session.google_meet_added || !!meetLink}
+              />
             </dd>
           </div>
           <div>
