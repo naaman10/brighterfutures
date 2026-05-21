@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getParentById, getStudentsByParentId } from "@/lib/db";
+import { RecordStatusBadge } from "@/app/dashboard/components/record-status-badge";
+import { parseRecordStatus } from "@/lib/record-status";
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +39,12 @@ export default async function ViewParentPage({ params }: Props) {
         </Link>
       </div>
 
-      <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-        {parentName}
-      </h1>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+          {parentName}
+        </h1>
+        <RecordStatusBadge status={parseRecordStatus(parent.status)} />
+      </div>
 
       <div className="mb-8 space-y-6">
         <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
@@ -187,8 +192,9 @@ export default async function ViewParentPage({ params }: Props) {
               className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-4 py-3 last:border-b-0 dark:border-zinc-700"
             >
               <div>
-                <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                <p className="flex flex-wrap items-center gap-2 font-medium text-zinc-900 dark:text-zinc-50">
                   {student.first_name} {student.last_name}
+                  <RecordStatusBadge status={parseRecordStatus(student.status)} />
                 </p>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
                   {[

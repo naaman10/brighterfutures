@@ -1,5 +1,6 @@
 import { neon } from "@neondatabase/serverless";
 
+import type { RecordStatus } from "./record-status";
 import type { SessionStatus } from "./session-status";
 import { SESSION_STATUS_LABELS, SESSION_STATUSES } from "./session-status";
 
@@ -13,6 +14,7 @@ export type StudentSummary = {
   first_name: string;
   last_name: string;
   age: number | null;
+  status?: RecordStatus;
 };
 
 export type Parent = {
@@ -22,6 +24,7 @@ export type Parent = {
   email: string | null;
   contact_number: string | null;
   session_rate: number | null;
+  status?: RecordStatus;
   child_name: string | null;
   created_at: string | Date | null;
   updated_at: string | Date | null;
@@ -139,6 +142,7 @@ export async function getParents(): Promise<Parent[]> {
       p.email,
       p.contact_number,
       p.session_rate,
+      p.status,
       (
         SELECT string_agg(s.first_name || ' ' || s.last_name, ', ' ORDER BY s.last_name, s.first_name)
         FROM students s
@@ -148,7 +152,7 @@ export async function getParents(): Promise<Parent[]> {
       p.updated_at,
       COALESCE(
         (
-          SELECT json_agg(json_build_object('id', s.id, 'first_name', s.first_name, 'last_name', s.last_name, 'age', s.age) ORDER BY s.last_name, s.first_name)
+          SELECT json_agg(json_build_object('id', s.id, 'first_name', s.first_name, 'last_name', s.last_name, 'age', s.age, 'status', s.status) ORDER BY s.last_name, s.first_name)
           FROM students s
           WHERE s.parent_id = p.id
         ),
@@ -182,6 +186,7 @@ export type ParentBasic = {
   emergency_last_name: string | null;
   emergency_relation: string | null;
   emergency_contact: string | null;
+  status?: RecordStatus;
 };
 
 /**
@@ -190,7 +195,7 @@ export type ParentBasic = {
 export async function getParentById(id: string): Promise<ParentBasic | null> {
   const rows = await sql`
     SELECT
-      id, first_name, last_name, email, contact_number, session_rate,
+      id, first_name, last_name, email, contact_number, session_rate, status,
       relationship, secondary_contact_number,
       address_line_1, address_line_2, town, post_code,
       emergency_first_name, emergency_last_name, emergency_relation, emergency_contact
@@ -206,7 +211,7 @@ export async function getParentById(id: string): Promise<ParentBasic | null> {
  */
 export async function getStudentsByParentId(parentId: string): Promise<StudentSummary[]> {
   const rows = await sql`
-    SELECT id, first_name, last_name, age
+    SELECT id, first_name, last_name, age, status
     FROM students
     WHERE parent_id = ${parentId}
     ORDER BY last_name ASC NULLS LAST, first_name ASC NULLS LAST
@@ -228,6 +233,7 @@ export async function getStudents(): Promise<StudentWithParent[]> {
       s.first_name,
       s.last_name,
       s.age,
+      s.status,
       p.first_name || ' ' || p.last_name AS parent_name
     FROM students s
     LEFT JOIN parents p ON p.id = s.parent_id
@@ -653,6 +659,7 @@ export type StudentDetail = {
   parent_name: string | null;
   parent_first_name: string | null;
   parent_email: string | null;
+  status?: RecordStatus;
 };
 
 export type Session = {
@@ -1289,6 +1296,7 @@ export async function getStudentById(
       s.welcome_sent_at,
       s.ai_summary,
       s.ai_summary_updated,
+      s.status,
       s.created_at,
       s.updated_at,
       s.parent_id,
@@ -1370,6 +1378,7 @@ export type UpdateStudentInput = {
   medication?: string | null;
   collector_name?: string | null;
   leave_independantly?: boolean | null;
+  status?: RecordStatus;
 };
 
 /**
@@ -1395,6 +1404,7 @@ export async function updateStudent(
         medication = ${data.medication ?? null},
         collector_name = ${data.collector_name ?? null},
         leave_independantly = ${data.leave_independantly ?? null},
+        status = ${data.status ?? "active"},
         updated_at = NOW()
       WHERE id = ${id}
     `;
@@ -1429,6 +1439,7 @@ export type UpdateParentInput = {
   emergency_last_name?: string | null;
   emergency_relation?: string | null;
   emergency_contact?: string | null;
+  status?: RecordStatus;
 };
 
 export type CreateStudentInput = {
@@ -1482,6 +1493,7 @@ export async function updateParent(
         emergency_last_name = ${data.emergency_last_name ?? null},
         emergency_relation = ${data.emergency_relation ?? null},
         emergency_contact = ${data.emergency_contact ?? null},
+        status = ${data.status ?? "active"},
         updated_at = NOW()
       WHERE id = ${id}
     `;

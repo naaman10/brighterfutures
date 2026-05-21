@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { Parent } from "@/lib/db";
+import { RecordStatusBadge } from "./components/record-status-badge";
+import { parseRecordStatus } from "@/lib/record-status";
 
 type ParentAccordionProps = {
   parent: Parent;
@@ -24,8 +26,9 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
           aria-expanded={open}
         >
           <div className="min-w-0 flex-1">
-            <p className="font-medium text-zinc-900 dark:text-zinc-50">
+            <p className="flex flex-wrap items-center gap-2 font-medium text-zinc-900 dark:text-zinc-50">
               {[parent.first_name, parent.last_name].filter(Boolean).join(" ") || "—"}
+              <RecordStatusBadge status={parseRecordStatus(parent.status)} />
             </p>
             <p className="text-sm text-zinc-600 dark:text-zinc-400">
               {parent.email ?? "—"}
@@ -86,8 +89,9 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
                   className="flex flex-wrap items-center justify-between gap-2 rounded border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900"
                 >
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-50">
+                    <p className="flex flex-wrap items-center gap-2 font-medium text-zinc-900 dark:text-zinc-50">
                       {student.first_name} {student.last_name}
+                      <RecordStatusBadge status={parseRecordStatus(student.status)} />
                     </p>
                     <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                       {[

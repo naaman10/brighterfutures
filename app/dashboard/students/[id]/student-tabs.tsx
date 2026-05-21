@@ -7,6 +7,8 @@ import { SESSION_STATUS_LABELS } from "@/lib/session-status";
 import { pickBirthdaySessionIdForStudent } from "@/lib/birthday";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { BirthdayEmoji } from "../../components/birthday-emoji";
+import { RecordStatusBadge } from "../../components/record-status-badge";
+import { parseRecordStatus } from "@/lib/record-status";
 import { SessionGoogleMeetIcon } from "../../components/session-google-meet-icon";
 import { DeleteSessionButton } from "../../components/delete-session-button";
 import { AddSessionForm } from "./add-session-form";
@@ -97,6 +99,14 @@ export function StudentTabs({
               Basic details
             </h2>
             <dl className="space-y-4">
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Status
+                </dt>
+                <dd className="mt-0.5">
+                  <RecordStatusBadge status={parseRecordStatus(student.status)} />
+                </dd>
+              </div>
               <div>
                 <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Age

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createStudent, updateParent } from "@/lib/db";
+import { parseRecordStatus } from "@/lib/record-status";
 
 export async function addStudentToParent(
   parentId: string,
@@ -55,6 +56,7 @@ export async function updateParentAction(
   const emergency_last_name = trimOrNull(formData.get("emergency_last_name"));
   const emergency_relation = trimOrNull(formData.get("emergency_relation"));
   const emergency_contact = trimOrNull(formData.get("emergency_contact"));
+  const status = parseRecordStatus(formData.get("status") as string);
 
   if (!first_name || !last_name || !email) {
     return { error: "First name, last name, and email are required." };
@@ -76,6 +78,7 @@ export async function updateParentAction(
     emergency_last_name,
     emergency_relation,
     emergency_contact,
+    status,
   });
 
   if ("error" in result) return { error: result.error };

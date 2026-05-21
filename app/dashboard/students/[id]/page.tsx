@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { getStudentById, getSessionsByStudentId } from "@/lib/db";
 import { formatDisplayDateTime } from "@/lib/format";
 import { SendWelcomeEmailButton } from "./send-welcome-email-button";
+import { RecordStatusBadge } from "@/app/dashboard/components/record-status-badge";
+import { parseRecordStatus } from "@/lib/record-status";
 import { StudentTabs } from "./student-tabs";
 
 export const dynamic = "force-dynamic";
@@ -48,9 +50,12 @@ export default async function StudentDetailPage({ params }: Props) {
           ← Dashboard
         </Link>
       </div>
-      <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
-        {student.first_name} {student.last_name}
-      </h1>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+          {student.first_name} {student.last_name}
+        </h1>
+        <RecordStatusBadge status={parseRecordStatus(student.status)} />
+      </div>
       <StudentTabs
         studentId={id}
         student={student}

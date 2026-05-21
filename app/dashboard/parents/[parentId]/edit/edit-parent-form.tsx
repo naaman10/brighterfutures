@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { ParentBasic } from "@/lib/db";
+import { RecordStatusField } from "@/app/dashboard/components/record-status-field";
+import { parseRecordStatus } from "@/lib/record-status";
 import { updateParentAction } from "../actions";
 
 type EditParentFormProps = {
@@ -73,6 +75,11 @@ export function EditParentForm({ parent }: EditParentFormProps) {
             className={inputClass}
           />
         </div>
+        <RecordStatusField
+          value={parseRecordStatus(parent.status)}
+          labelClassName={labelClass}
+          selectClassName={inputClass}
+        />
       </div>
 
       <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">

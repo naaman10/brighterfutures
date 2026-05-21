@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { updateStudent } from "@/lib/db";
+import { parseRecordStatus } from "@/lib/record-status";
 
 function trimOrNull(value: FormDataEntryValue | null): string | null {
   const s = (value as string)?.trim();
@@ -26,6 +27,7 @@ export async function updateStudentAction(
   const medication = trimOrNull(formData.get("medication"));
   const collector_name = trimOrNull(formData.get("collector_name"));
   const leave_independantly = formData.get("leave_independantly") === "on";
+  const status = parseRecordStatus(formData.get("status") as string);
 
   const result = await updateStudent(studentId, {
     first_name,
@@ -40,6 +42,7 @@ export async function updateStudentAction(
     medication,
     collector_name,
     leave_independantly,
+    status,
   });
   if ("error" in result) return { error: result.error };
   redirect(`/dashboard/students/${studentId}`);

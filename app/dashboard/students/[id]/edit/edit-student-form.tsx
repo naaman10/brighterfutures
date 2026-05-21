@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { StudentDetail } from "@/lib/db";
+import { RecordStatusField } from "@/app/dashboard/components/record-status-field";
+import { parseRecordStatus } from "@/lib/record-status";
 
 type Props = {
   student: StudentDetail;
@@ -93,6 +95,11 @@ export function EditStudentForm({ student, action }: Props) {
               className={inputClass}
             />
           </div>
+          <RecordStatusField
+            value={parseRecordStatus(student.status)}
+            labelClassName={labelClass}
+            selectClassName={inputClass}
+          />
         </div>
       </section>
 

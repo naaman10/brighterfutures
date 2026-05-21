@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { getStudents } from "@/lib/db";
+import { RecordStatusBadge } from "../components/record-status-badge";
+import { parseRecordStatus } from "@/lib/record-status";
 
 export const dynamic = "force-dynamic";
 
@@ -43,6 +45,9 @@ export default async function StudentsPage() {
                   Parent
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Status
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                   Age
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -61,6 +66,9 @@ export default async function StudentsPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                     {student.parent_name?.trim() || "—"}
+                  </td>
+                  <td className="px-4 py-3 text-sm">
+                    <RecordStatusBadge status={parseRecordStatus(student.status)} />
                   </td>
                   <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
                     {student.age != null ? student.age : "—"}
