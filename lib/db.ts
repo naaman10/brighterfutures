@@ -187,6 +187,8 @@ export type ParentBasic = {
   emergency_relation: string | null;
   emergency_contact: string | null;
   status?: RecordStatus;
+  terms_text: string | null;
+  terms: string | Date | null;
 };
 
 /**
@@ -198,7 +200,8 @@ export async function getParentById(id: string): Promise<ParentBasic | null> {
       id, first_name, last_name, email, contact_number, session_rate, status,
       relationship, secondary_contact_number,
       address_line_1, address_line_2, town, post_code,
-      emergency_first_name, emergency_last_name, emergency_relation, emergency_contact
+      emergency_first_name, emergency_last_name, emergency_relation, emergency_contact,
+      terms_text, terms
     FROM parents
     WHERE id = ${id}
   `;
