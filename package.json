@@ -19,7 +19,7 @@
     "@tiptap/starter-kit": "^3.20.0",
     "googleapis": "^171.4.0",
     "marked": "^17.0.3",
-    "material-symbols": "^0.44.8",
+    "material-symbols": "^0.44.12",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
     "react": "19.2.3",

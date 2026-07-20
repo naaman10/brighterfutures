@@ -1,5 +1,3 @@
-import { materialSymbolsOutlined } from "@/lib/material-symbols-font";
-
 type Props = {
   /** Material Symbols icon name (e.g. `delete`, `menu`). */
   name: string;
@@ -15,7 +13,7 @@ export function MaterialSymbol({
 }: Props) {
   return (
     <span
-      className={`${materialSymbolsOutlined.className} inline-block whitespace-nowrap leading-none ${className}`.trim()}
+      className={`material-symbols-outlined inline-block whitespace-nowrap leading-none ${className}`.trim()}
       style={{
         fontFeatureSettings: '"liga"',
         fontVariationSettings: fill

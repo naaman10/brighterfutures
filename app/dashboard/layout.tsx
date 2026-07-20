@@ -1,3 +1,5 @@
+import "material-symbols/outlined.css";
+
 import { signOut } from "@/auth";
 import { DashboardShell } from "./components/dashboard-shell";
 
