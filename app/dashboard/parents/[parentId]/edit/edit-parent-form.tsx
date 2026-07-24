@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import type { ParentBasic } from "@/lib/db";
 import { RecordStatusField } from "@/app/dashboard/components/record-status-field";
 import { parseRecordStatus } from "@/lib/record-status";
@@ -14,16 +15,51 @@ type EditParentFormProps = {
 
 export function EditParentForm({ parent }: EditParentFormProps) {
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
     setError(null);
-    const result = await updateParentAction(parent.id, formData);
-    if (result?.error) {
-      setError(result.error);
-      return;
+
+    const newStatus = parseRecordStatus(formData.get("status") as string);
+    const wasActive = parseRecordStatus(parent.status) === "active";
+    const isDeactivating = wasActive && newStatus === "inactive";
+
+    setPending(true);
+    const toastId = toast.loading(
+      isDeactivating
+        ? "Saving parent and updating students & sessions…"
+        : "Saving parent…"
+    );
+
+    try {
+      const result = await updateParentAction(parent.id, formData);
+      if (result?.error) {
+        setError(result.error);
+        toast.error(result.error, { id: toastId });
+        return;
+      }
+
+      if (result.deactivated) {
+        const { studentsUpdated, sessionsCancelled } = result.deactivated;
+        toast.success(
+          `Parent saved. ${studentsUpdated} student${studentsUpdated !== 1 ? "s" : ""} set inactive and ${sessionsCancelled} upcoming session${sessionsCancelled !== 1 ? "s" : ""} cancelled.`,
+          { id: toastId }
+        );
+      } else if (newStatus === "active" && parseRecordStatus(parent.status) === "inactive") {
+        toast.success("Parent saved and set to active.", { id: toastId });
+      } else {
+        toast.success("Parent saved.", { id: toastId });
+      }
+
+      router.push("/dashboard/parents");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : "Failed to save parent.";
+      setError(message);
+      toast.error(message, { id: toastId });
+    } finally {
+      setPending(false);
     }
-    router.push("/dashboard/parents");
   }
 
   const inputClass =
@@ -250,13 +286,15 @@ export function EditParentForm({ parent }: EditParentFormProps) {
       <div className="flex gap-3">
         <button
           type="submit"
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:bg-zinc-200"
+          disabled={pending}
+          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
         >
-          Save changes
+          {pending ? "Saving…" : "Save changes"}
         </button>
         <Link
           href="/dashboard/parents"
-          className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          aria-disabled={pending}
+          className={`rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 ${pending ? "pointer-events-none opacity-50" : ""}`}
         >
           Cancel
         </Link>

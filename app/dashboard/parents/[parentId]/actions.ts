@@ -40,7 +40,11 @@ function trimOrNull(value: FormDataEntryValue | null): string | null {
 export async function updateParentAction(
   parentId: string,
   formData: FormData
-): Promise<{ error?: string }> {
+): Promise<{
+  error?: string;
+  ok?: true;
+  deactivated?: { studentsUpdated: number; sessionsCancelled: number };
+}> {
   const first_name = (formData.get("first_name") as string)?.trim() ?? "";
   const last_name = (formData.get("last_name") as string)?.trim() ?? "";
   const email = (formData.get("email") as string)?.trim() ?? "";
@@ -93,12 +97,14 @@ export async function updateParentAction(
   if ("error" in result) return { error: result.error };
 
   let cascadeStudentIds: string[] = [];
+  let sessionsCancelled = 0;
   if (becomingInactive && wasActive) {
     const cascade = await deactivateParentCascade(parentId);
     if ("error" in cascade) {
       return { error: cascade.error };
     }
     cascadeStudentIds = cascade.studentIds;
+    sessionsCancelled = cascade.sessionsCancelled;
   }
 
   revalidatePath("/dashboard");
@@ -110,5 +116,16 @@ export async function updateParentAction(
   for (const studentId of cascadeStudentIds) {
     revalidatePath(`/dashboard/students/${studentId}`);
   }
-  return {};
+
+  if (becomingInactive && wasActive) {
+    return {
+      ok: true,
+      deactivated: {
+        studentsUpdated: cascadeStudentIds.length,
+        sessionsCancelled,
+      },
+    };
+  }
+
+  return { ok: true };
 }
