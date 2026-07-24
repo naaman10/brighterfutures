@@ -3,16 +3,12 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Session, StudentDetail } from "@/lib/db";
-import { SESSION_STATUS_LABELS } from "@/lib/session-status";
-import { pickBirthdaySessionIdForStudent } from "@/lib/birthday";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
-import { BirthdayEmoji } from "../../components/birthday-emoji";
 import { RecordStatusBadge } from "../../components/record-status-badge";
 import { parseRecordStatus } from "@/lib/record-status";
-import { SessionGoogleMeetIcon } from "../../components/session-google-meet-icon";
-import { DeleteSessionButton } from "../../components/delete-session-button";
 import { AddSessionForm } from "./add-session-form";
 import { StudentAISummary } from "./student-ai-summary";
+import { StudentSessionsTable } from "./student-sessions-table";
 
 type TabKey = "details" | "sessions";
 
@@ -64,7 +60,6 @@ export function StudentTabs({
   welcomeActions,
 }: Props) {
   const [tab, setTab] = useState<TabKey>(defaultTab);
-  const birthdayPick = pickBirthdaySessionIdForStudent(sessions, student.dob, 5);
 
   const tabs = useMemo(
     () => [
@@ -278,79 +273,11 @@ export function StudentTabs({
             <div className="mb-6">
               <AddSessionForm studentId={studentId} />
             </div>
-            {sessions.length === 0 ? (
-              <p className="rounded-lg border border-zinc-200 bg-white p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
-                No sessions yet.
-              </p>
-            ) : (
-              <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-                <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
-                  <thead>
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Date
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Time
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Subject
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Status
-                      </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-                    {sessions.map((session) => (
-                      <tr key={session.id}>
-                        <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                          <div className="flex items-center gap-2">
-                            <span>{formatDisplayDate(session.session_date) || "—"}</span>
-                            {birthdayPick?.sessionId === session.id && (
-                              <BirthdayEmoji tooltip={birthdayPick.tooltip} />
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                          {formatDisplayTime(session.session_time) || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                          <span className="inline-flex items-center gap-1.5">
-                            {session.subject}
-                            <SessionGoogleMeetIcon
-                              googleMeetAdded={session.google_meet_added}
-                            />
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                          {SESSION_STATUS_LABELS[session.status ?? "planned"]}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-3">
-                            <Link
-                              href={`/dashboard/students/${studentId}/sessions/${session.id}`}
-                              className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                            >
-                              View
-                            </Link>
-                            <DeleteSessionButton
-                              sessionId={session.id}
-                              studentId={studentId}
-                              redirectTo={{ type: "student", studentId }}
-                              sessionLabel={`${session.subject} on ${formatDisplayDate(session.session_date) || "—"} at ${formatDisplayTime(session.session_time) || "—"}`}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <StudentSessionsTable
+              studentId={studentId}
+              sessions={sessions}
+              studentDob={student.dob}
+            />
           </section>
         </div>
       )}

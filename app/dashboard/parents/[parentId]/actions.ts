@@ -1,7 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createStudent, updateParent } from "@/lib/db";
+import { createStudent, getParentById, updateParent } from "@/lib/db";
+import { deactivateParentCascade } from "@/lib/deactivate-parent";
 import { parseRecordStatus } from "@/lib/record-status";
 
 export async function addStudentToParent(
@@ -62,6 +63,14 @@ export async function updateParentAction(
     return { error: "First name, last name, and email are required." };
   }
 
+  const existing = await getParentById(parentId);
+  if (!existing) {
+    return { error: "Parent not found." };
+  }
+
+  const wasActive = parseRecordStatus(existing.status) === "active";
+  const becomingInactive = status === "inactive";
+
   const result = await updateParent(parentId, {
     first_name,
     last_name,
@@ -83,9 +92,23 @@ export async function updateParentAction(
 
   if ("error" in result) return { error: result.error };
 
+  let cascadeStudentIds: string[] = [];
+  if (becomingInactive && wasActive) {
+    const cascade = await deactivateParentCascade(parentId);
+    if ("error" in cascade) {
+      return { error: cascade.error };
+    }
+    cascadeStudentIds = cascade.studentIds;
+  }
+
   revalidatePath("/dashboard");
   revalidatePath("/dashboard/parents");
   revalidatePath(`/dashboard/parents/${parentId}`);
   revalidatePath("/dashboard/invoices");
+  revalidatePath("/dashboard/sessions");
+  revalidatePath("/dashboard/students");
+  for (const studentId of cascadeStudentIds) {
+    revalidatePath(`/dashboard/students/${studentId}`);
+  }
   return {};
 }

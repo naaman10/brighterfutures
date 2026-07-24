@@ -222,6 +222,60 @@ export async function getStudentsByParentId(parentId: string): Promise<StudentSu
   return rows as StudentSummary[];
 }
 
+export type SessionForParentDeactivation = {
+  id: string;
+  student_id: string;
+  session_date: string;
+  session_time: string;
+  status: SessionStatus;
+};
+
+/**
+ * Sessions for a parent's students that may be cancelled when the parent is deactivated.
+ * Excludes deleted, completed, cancelled, and rescheduled originals.
+ */
+export async function getUpcomingCancellableSessionsByParentId(
+  parentId: string
+): Promise<SessionForParentDeactivation[]> {
+  const rows = await sql`
+    SELECT
+      s.id,
+      s.student_id,
+      (s.session_date::date)::text AS session_date,
+      s.session_time::text AS session_time,
+      s.status
+    FROM sessions s
+    JOIN students st ON st.id = s.student_id
+    WHERE st.parent_id = ${parentId}
+      AND s.status IN ('planned', 'in_progress', 'planned_reschedule')
+  `;
+  return rows as SessionForParentDeactivation[];
+}
+
+/**
+ * Marks all students for a parent as inactive. Returns updated student ids.
+ */
+export async function setStudentsInactiveByParentId(
+  parentId: string
+): Promise<{ ok: true; studentIds: string[] } | { error: string }> {
+  try {
+    const rows = await sql`
+      UPDATE students
+      SET status = 'inactive', updated_at = NOW()
+      WHERE parent_id = ${parentId}
+        AND status IS DISTINCT FROM 'inactive'
+      RETURNING id
+    `;
+    return {
+      ok: true,
+      studentIds: (rows as { id: string }[]).map((r) => r.id),
+    };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
 export type StudentWithParent = StudentSummary & {
   parent_name: string | null;
 };
