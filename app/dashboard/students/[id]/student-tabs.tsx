@@ -3,14 +3,16 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Session, StudentDetail } from "@/lib/db";
-import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
+import { formatDisplayDate, formatDisplayDateTime, formatDisplayTime } from "@/lib/format";
 import { RecordStatusBadge } from "../../components/record-status-badge";
 import { parseRecordStatus } from "@/lib/record-status";
 import { AddSessionForm } from "./add-session-form";
 import { StudentAISummary } from "./student-ai-summary";
 import { StudentSessionsTable } from "./student-sessions-table";
+import { CreateBftLearnAccountForm } from "./create-bft-learn-account-form";
+import { BftLearnContentSection } from "./bft-learn-content-section";
 
-type TabKey = "details" | "sessions";
+type TabKey = "details" | "sessions" | "bft-learn";
 
 type Props = {
   studentId: string;
@@ -65,6 +67,7 @@ export function StudentTabs({
     () => [
       { key: "details" as const, label: "Details" },
       { key: "sessions" as const, label: "Sessions" },
+      { key: "bft-learn" as const, label: "BFT Learn" },
     ],
     []
   );
@@ -87,7 +90,7 @@ export function StudentTabs({
         </Link>
       </div>
 
-      {tab === "details" ? (
+      {tab === "details" && (
         <div className="space-y-6">
           <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
@@ -252,7 +255,9 @@ export function StudentTabs({
             </section>
           )}
         </div>
-      ) : (
+      )}
+
+      {tab === "sessions" && (
         <div className="space-y-8">
           <div className="rounded-xl bg-black p-6 text-white">
             <h2 className="mb-3 text-lg font-medium text-white">
@@ -280,6 +285,71 @@ export function StudentTabs({
             />
           </section>
         </div>
+      )}
+
+      {tab === "bft-learn" && (
+        <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+          <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+            BFT Learn
+          </h2>
+          {student.neon_user_id ? (
+            <div className="space-y-0">
+              <dl className="space-y-4">
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Email
+                </dt>
+                <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
+                  {student.email ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Name
+                </dt>
+                <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
+                  {student.name ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Neon user ID
+                </dt>
+                <dd className="mt-0.5 font-mono text-sm text-zinc-900 dark:text-zinc-50">
+                  {student.neon_user_id}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Invited at
+                </dt>
+                <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
+                  {formatDisplayDateTime(student.invited_at) || "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  Created at
+                </dt>
+                <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
+                  {formatDisplayDateTime(student.created_at) || "—"}
+                </dd>
+              </div>
+            </dl>
+              <BftLearnContentSection studentId={studentId} />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                This student does not have a BFT Learn account yet.
+              </p>
+              <CreateBftLearnAccountForm
+                studentId={studentId}
+                defaultName={`${student.first_name} ${student.last_name}`.trim()}
+              />
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

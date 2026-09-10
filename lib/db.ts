@@ -710,6 +710,10 @@ export type StudentDetail = {
   welcome_sent_at: string | Date | null;
   ai_summary: string | null;
   ai_summary_updated: string | Date | null;
+  neon_user_id: string | null;
+  email: string | null;
+  name: string | null;
+  invited_at: string | Date | null;
   created_at: string | Date | null;
   updated_at: string | Date | null;
   parent_id: string;
@@ -1331,6 +1335,56 @@ export async function setGoogleCalendarWatchSyncToken(
 /**
  * Fetches a single student by id with parent info for the detail view.
  */
+function isMissingColumnError(e: unknown): boolean {
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    "code" in e &&
+    (e as { code: string }).code === "42703"
+  );
+}
+
+const emptyStudentBftLearnFields = {
+  neon_user_id: null,
+  email: null,
+  name: null,
+  invited_at: null,
+} as const;
+
+async function getStudentBftLearnFields(studentId: string): Promise<{
+  neon_user_id: string | null;
+  email: string | null;
+  name: string | null;
+  invited_at: string | Date | null;
+}> {
+  try {
+    const rows = await sql`
+      SELECT neon_user_id, email, name, invited_at
+      FROM students
+      WHERE id = ${studentId}
+      LIMIT 1
+    `;
+    const row = rows[0] as
+      | {
+          neon_user_id?: string | null;
+          email?: string | null;
+          name?: string | null;
+          invited_at?: string | Date | null;
+        }
+      | undefined;
+    if (!row) return { ...emptyStudentBftLearnFields };
+    return {
+      neon_user_id: row.neon_user_id ?? null,
+      email: row.email ?? null,
+      name: row.name ?? null,
+      invited_at: row.invited_at ?? null,
+    };
+  } catch (e) {
+    if (isMissingColumnError(e)) return { ...emptyStudentBftLearnFields };
+    throw e;
+  }
+}
+
 export async function getStudentById(
   id: string
 ): Promise<StudentDetail | null> {
@@ -1365,11 +1419,14 @@ export async function getStudentById(
     WHERE s.id = ${id}
   `;
   const row = rows[0];
-  return (row as StudentDetail) ?? null;
+  if (!row) return null;
+
+  const bftLearn = await getStudentBftLearnFields(id);
+  return { ...(row as Omit<StudentDetail, keyof typeof bftLearn>), ...bftLearn };
 }
 
 /**
- * Updates a student's ai_summary (e.g. after generating from Claude).
+ * Updates a student's ai_summary (e.g. after generating with OpenAI).
  */
 export async function updateStudentAISummary(
   id: string,

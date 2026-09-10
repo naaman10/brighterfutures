@@ -9,7 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.78.0",
     "@neondatabase/serverless": "^1.0.2",
     "@react-pdf/renderer": "^4.3.2",
     "@sendgrid/mail": "^8.1.6",
@@ -22,6 +21,7 @@
     "material-symbols": "^0.44.12",
     "next": "16.1.6",
     "next-auth": "^5.0.0-beta.30",
+    "openai": "^7.13.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import {
   createSession,
   getSessionsByStudentId,
@@ -319,13 +319,13 @@ function stripHtml(html: string | null): string {
     .trim();
 }
 
-const CLAUDE_SONNET_MODEL = "claude-sonnet-4-5-20250929";
+const DEFAULT_OPENAI_MODEL = "gpt-5.6-terra";
 
 export async function generateStudentAISummary(
   studentId: string
 ): Promise<{ summary?: string; error?: string }> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { error: "ANTHROPIC_API_KEY is not set. Add it in environment variables." };
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return { error: "OPENAI_API_KEY is not set. Add it in environment variables." };
 
   const [student, sessions] = await Promise.all([
     getStudentById(studentId),
@@ -358,22 +358,25 @@ export async function generateStudentAISummary(
 
   const userMessage = `Student: ${studentName}\n\nBelow are the session summaries and feedback (oldest to newest):\n\n${sessionData}`;
 
-  const anthropic = new Anthropic({ apiKey });
+  // Keep retries in the existing loop rather than also retrying in the SDK.
+  const openai = new OpenAI({ apiKey, maxRetries: 0 });
   const maxRetries = 3;
   const baseDelayMs = 2000;
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const message = await anthropic.messages.create({
-        model: CLAUDE_SONNET_MODEL,
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: [{ role: "user", content: userMessage }],
+      const response = await openai.responses.create({
+        model: process.env.OPENAI_MODEL || DEFAULT_OPENAI_MODEL,
+        max_output_tokens: 1024,
+        reasoning: { effort: "none" },
+        instructions: systemPrompt,
+        input: [{ role: "user", content: userMessage }],
+        store: false,
       });
-      const textParts = message.content
-        .filter((b) => b.type === "text")
-        .map((b) => (b as { type: "text"; text: string }).text);
-      const summary = textParts.length ? textParts.join("\n").trim() : null;
+      if (response.status !== "completed") {
+        return { error: "AI summary was not completed. Please try again." };
+      }
+      const summary = response.output_text.trim();
       if (!summary) return { error: "No response from AI." };
 
       const updateResult = await updateStudentAISummary(studentId, summary);
@@ -395,14 +398,14 @@ export async function generateStudentAISummary(
       if (is429 && isLastAttempt) {
         return {
           error:
-            "Anthropic rate limit exceeded. Check usage at https://console.anthropic.com/ or wait a minute and try again.",
+            "OpenAI rate limit or quota exceeded. Check usage and billing at https://platform.openai.com/ or wait a minute and try again.",
         };
       }
 
-      const message = err instanceof Error ? err.message : "Claude API request failed";
+      const message = err instanceof Error ? err.message : "OpenAI API request failed";
       return { error: message };
     }
   }
 
-  return { error: "Claude API request failed after retries." };
+  return { error: "OpenAI API request failed after retries." };
 }
