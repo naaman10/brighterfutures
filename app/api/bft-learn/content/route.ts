@@ -11,11 +11,13 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = req.nextUrl;
+  const studentId = searchParams.get("studentId")?.trim();
   const type = searchParams.get("type")?.trim();
   const subject = searchParams.get("subject")?.trim();
   const ageGroup = searchParams.get("ageGroup")?.trim();
 
   const result = await getBftLearnContent({
+    ...(studentId ? { studentId } : {}),
     ...(type ? { type } : {}),
     ...(subject ? { subject } : {}),
     ...(ageGroup ? { ageGroup } : {}),

@@ -18,12 +18,29 @@ function buildBftAdminUrl(path: string): string {
   return `${base}${path}`;
 }
 
+export type BftLearnProgressStatus =
+  | "not_started"
+  | "in_progress"
+  | "to_assess"
+  | "completed"
+  | "assessed";
+
 export type BftLearnContentItem = {
   name: string;
   entryId: string;
   type: string;
   subject: string;
   ageGroup: string;
+};
+
+export type BftLearnEnrollment = {
+  entryId: string;
+  name: string;
+  type: string;
+  subject: string;
+  ageGroup: string;
+  status: string;
+  progressStatus: string;
 };
 
 export type BftLearnContentResponse = {
@@ -33,6 +50,7 @@ export type BftLearnContentResponse = {
     ageGroup: string[];
   };
   items: BftLearnContentItem[];
+  enrollments: BftLearnEnrollment[];
 };
 
 export type BftLearnContentFilters = {
@@ -40,6 +58,54 @@ export type BftLearnContentFilters = {
   subject?: string;
   ageGroup?: string;
 };
+
+export type BftLearnContentQuery = BftLearnContentFilters & {
+  studentId?: string;
+};
+
+export const BFT_LEARN_PROGRESS_STATUS_LABELS: Record<BftLearnProgressStatus, string> = {
+  not_started: "Not started",
+  in_progress: "In progress",
+  to_assess: "To assess",
+  completed: "Completed",
+  assessed: "Assessed",
+};
+
+export function bftLearnProgressStatusLabel(status: string): string {
+  return (
+    BFT_LEARN_PROGRESS_STATUS_LABELS[status as BftLearnProgressStatus] ??
+    status.replaceAll("_", " ")
+  );
+}
+
+function asString(value: unknown): string {
+  return typeof value === "string" ? value : "";
+}
+
+function parseEnrollment(value: unknown): BftLearnEnrollment | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  const entryId = asString(raw.entryId).trim();
+  if (!entryId) return null;
+
+  return {
+    entryId,
+    name: asString(raw.name),
+    type: asString(raw.type),
+    subject: asString(raw.subject),
+    ageGroup: asString(raw.ageGroup),
+    status: asString(raw.status) || "enrolled",
+    progressStatus: asString(raw.progressStatus) || "not_started",
+  };
+}
+
+export function parseBftLearnEnrollments(value: unknown): BftLearnEnrollment[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const enrollment = parseEnrollment(item);
+    return enrollment ? [enrollment] : [];
+  });
+}
 
 function getAdminApiKey(): { apiKey: string } | { error: string } {
   const apiKey = process.env.ADMIN_API_KEY;
@@ -152,18 +218,19 @@ export async function enrollStudentInContent(params: {
 }
 
 export async function getBftLearnContent(
-  filters: BftLearnContentFilters = {}
+  query: BftLearnContentQuery = {}
 ): Promise<{ data: BftLearnContentResponse } | { error: string; status?: number; url?: string }> {
   const keyResult = getAdminApiKey();
   if ("error" in keyResult) return keyResult;
 
   const params = new URLSearchParams();
-  if (filters.type?.trim()) params.set("type", filters.type.trim());
-  if (filters.subject?.trim()) params.set("subject", filters.subject.trim());
-  if (filters.ageGroup?.trim()) params.set("ageGroup", filters.ageGroup.trim());
+  if (query.studentId?.trim()) params.set("studentId", query.studentId.trim());
+  if (query.type?.trim()) params.set("type", query.type.trim());
+  if (query.subject?.trim()) params.set("subject", query.subject.trim());
+  if (query.ageGroup?.trim()) params.set("ageGroup", query.ageGroup.trim());
 
-  const query = params.toString();
-  const url = buildBftContentUrl(query);
+  const search = params.toString();
+  const url = buildBftContentUrl(search);
 
   let response: Response;
   try {
@@ -192,7 +259,7 @@ export async function getBftLearnContent(
   }
 
   try {
-    const data = (await response.json()) as BftLearnContentResponse;
+    const data = (await response.json()) as Partial<BftLearnContentResponse>;
     return {
       data: {
         filters: {
@@ -201,10 +268,29 @@ export async function getBftLearnContent(
           ageGroup: data.filters?.ageGroup ?? [],
         },
         items: data.items ?? [],
+        enrollments: parseBftLearnEnrollments(data.enrollments),
       },
     };
   } catch (e) {
     console.error("[bft-learn] fetch content invalid JSON:", e);
     return { error: "Invalid response from BFT Learn API." };
   }
+}
+
+export async function getBftLearnEnrollment(
+  studentId: string,
+  entryId: string
+): Promise<
+  | { enrollment: BftLearnEnrollment }
+  | { error: string; status?: number }
+  | { notFound: true }
+> {
+  const result = await getBftLearnContent({ studentId });
+  if ("error" in result) {
+    return { error: result.error, status: result.status };
+  }
+
+  const enrollment = result.data.enrollments.find((item) => item.entryId === entryId);
+  if (!enrollment) return { notFound: true };
+  return { enrollment };
 }
