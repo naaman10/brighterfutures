@@ -9,6 +9,7 @@ import {
 } from "@/lib/bft-learn";
 import { EnrollmentIdentity } from "./enrollment-identity";
 import { EnrollmentReviewQuestions } from "./enrollment-review-questions";
+import { EnrollmentAssessment } from "./enrollment-assessment";
 
 export const dynamic = "force-dynamic";
 
@@ -81,6 +82,12 @@ export async function BftLearnEnrollmentPage({
 
       {"error" in reviewResult ? (
         <p className="mt-6 text-sm text-red-600 dark:text-red-400">{reviewResult.error}</p>
+      ) : mode === "assess" ? (
+        <EnrollmentAssessment 
+          review={reviewResult.data} 
+          studentId={studentId}
+          adminUserId={bftLearnReviewAdminUserId(session?.user?.id)}
+        />
       ) : (
         <EnrollmentReviewQuestions review={reviewResult.data} />
       )}
