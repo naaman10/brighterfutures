@@ -145,8 +145,17 @@ function parseEnrollment(value: unknown): BftLearnEnrollment | null {
   const entryId = asString(raw.entryId).trim() || asString(raw.contentId).trim();
   if (!entryId) return null;
 
+  const enrollmentId = asString(raw.id).trim() || asString(raw.enrollmentId).trim();
+  console.log("[bft-learn] Parsing enrollment:", {
+    rawId: raw.id,
+    rawEnrollmentId: raw.enrollmentId,
+    extractedId: enrollmentId,
+    entryId,
+    allKeys: Object.keys(raw),
+  });
+
   return {
-    id: asString(raw.id).trim() || asString(raw.enrollmentId).trim(),
+    id: enrollmentId,
     entryId,
     name: asString(raw.name),
     type: asString(raw.type),
@@ -318,6 +327,12 @@ export async function getBftLearnContent(
 
   try {
     const data = (await response.json()) as Partial<BftLearnContentResponse>;
+    
+    // Debug logging to see raw enrollment data
+    console.log("[bft-learn] Raw enrollments from API:", JSON.stringify(data.enrollments, null, 2));
+    const parsedEnrollments = parseBftLearnEnrollments(data.enrollments);
+    console.log("[bft-learn] Parsed enrollments:", JSON.stringify(parsedEnrollments, null, 2));
+    
     return {
       data: {
         filters: {
@@ -326,7 +341,7 @@ export async function getBftLearnContent(
           ageGroup: data.filters?.ageGroup ?? [],
         },
         items: data.items ?? [],
-        enrollments: parseBftLearnEnrollments(data.enrollments),
+        enrollments: parsedEnrollments,
       },
     };
   } catch (e) {
