@@ -16,8 +16,8 @@ const emptyFilters = {
   ageGroup: [] as string[],
 };
 
-const TO_ASSESS_STATUSES = new Set(["to_assess"]);
-const COMPLETED_STATUSES = new Set(["completed", "assessed"]);
+const ASSESS_STATUSES = new Set(["completed", "to_assess"]);
+const VIEW_STATUSES = new Set(["assessed"]);
 
 function buildContentUrl(studentId: string, filters: BftLearnContentFilters): string {
   const params = new URLSearchParams();
@@ -135,6 +135,7 @@ export function BftLearnContentSection({ studentId }: Props) {
         if (prev.some((enrollment) => enrollment.entryId === entryId)) return prev;
         return [
           {
+            id: "",
             entryId,
             name: assignedItem?.name || contentName,
             type: assignedItem?.type ?? "",
@@ -383,6 +384,17 @@ export function BftLearnContentSection({ studentId }: Props) {
   );
 }
 
+function enrollmentPath(
+  studentId: string,
+  enrollment: BftLearnEnrollment,
+  mode: "assess" | "view"
+): string {
+  const base = `/dashboard/students/${studentId}/bft-learn/${encodeURIComponent(enrollment.entryId)}`;
+  const path = mode === "assess" ? `${base}/assess` : base;
+  if (!enrollment.id) return path;
+  return `${path}?enrollmentId=${encodeURIComponent(enrollment.id)}`;
+}
+
 function EnrollmentAction({
   studentId,
   enrollment,
@@ -390,10 +402,10 @@ function EnrollmentAction({
   studentId: string;
   enrollment: BftLearnEnrollment;
 }) {
-  if (TO_ASSESS_STATUSES.has(enrollment.progressStatus)) {
+  if (ASSESS_STATUSES.has(enrollment.progressStatus)) {
     return (
       <Link
-        href={`/dashboard/students/${studentId}/bft-learn/${encodeURIComponent(enrollment.entryId)}/assess`}
+        href={enrollmentPath(studentId, enrollment, "assess")}
         className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
       >
         Assess
@@ -401,10 +413,10 @@ function EnrollmentAction({
     );
   }
 
-  if (COMPLETED_STATUSES.has(enrollment.progressStatus)) {
+  if (VIEW_STATUSES.has(enrollment.progressStatus)) {
     return (
       <Link
-        href={`/dashboard/students/${studentId}/bft-learn/${encodeURIComponent(enrollment.entryId)}`}
+        href={enrollmentPath(studentId, enrollment, "view")}
         className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
       >
         View

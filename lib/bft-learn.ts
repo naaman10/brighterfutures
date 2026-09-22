@@ -34,6 +34,7 @@ export type BftLearnContentItem = {
 };
 
 export type BftLearnEnrollment = {
+  id: string;
   entryId: string;
   name: string;
   type: string;
@@ -41,6 +42,47 @@ export type BftLearnEnrollment = {
   ageGroup: string;
   status: string;
   progressStatus: string;
+};
+
+export type BftLearnReviewQuestion = {
+  questionId: string;
+  questionContent: Record<string, unknown>;
+  studentAnswer: unknown;
+  correctAnswer: unknown;
+  points: number;
+  status: string;
+  updatedAt?: string;
+  completedAt?: string;
+};
+
+export type BftLearnReview = {
+  enrollment: {
+    id: string;
+    studentId: string;
+    contentId: string;
+    status: string;
+    progressStatus: string;
+    enrolledAt: string;
+    startedAt: string | null;
+    completedAt: string | null;
+    lastActivityAt: string | null;
+  };
+  student: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  content: {
+    entryId: string;
+    name: string;
+    type: string;
+    subject: string;
+    ageGroup: string;
+    stage: string;
+    requiresAssessment: boolean;
+  };
+  sections: unknown[];
+  questions: BftLearnReviewQuestion[];
 };
 
 export type BftLearnContentResponse = {
@@ -78,17 +120,33 @@ export function bftLearnProgressStatusLabel(status: string): string {
   );
 }
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function asString(value: unknown): string {
   return typeof value === "string" ? value : "";
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  return null;
+}
+
+export function bftLearnReviewAdminUserId(userId: string | undefined): string {
+  if (userId && UUID_RE.test(userId)) return userId;
+  return "00000000-0000-4000-8000-000000000001";
 }
 
 function parseEnrollment(value: unknown): BftLearnEnrollment | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
-  const entryId = asString(raw.entryId).trim();
+  const entryId = asString(raw.entryId).trim() || asString(raw.contentId).trim();
   if (!entryId) return null;
 
   return {
+    id: asString(raw.id).trim() || asString(raw.enrollmentId).trim(),
     entryId,
     name: asString(raw.name),
     type: asString(raw.type),
@@ -293,4 +351,221 @@ export async function getBftLearnEnrollment(
   const enrollment = result.data.enrollments.find((item) => item.entryId === entryId);
   if (!enrollment) return { notFound: true };
   return { enrollment };
+}
+
+function parseReviewQuestion(value: unknown): BftLearnReviewQuestion | null {
+  const raw = asRecord(value);
+  if (!raw) return null;
+  const questionId = asString(raw.questionId).trim();
+  if (!questionId) return null;
+
+  return {
+    questionId,
+    questionContent: asRecord(raw.questionContent) ?? {},
+    studentAnswer: raw.studentAnswer,
+    correctAnswer: raw.correctAnswer,
+    points: typeof raw.points === "number" ? raw.points : 0,
+    status: asString(raw.status),
+    updatedAt: asString(raw.updatedAt) || undefined,
+    completedAt: asString(raw.completedAt) || undefined,
+  };
+}
+
+function collectSectionQuestions(value: unknown, seen: Set<string>): BftLearnReviewQuestion[] {
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => collectSectionQuestions(item, seen));
+  }
+
+  const record = asRecord(value);
+  if (!record) return [];
+
+  const contentType = asString(record.contentType);
+  const entryId = asString(record.entryId).trim();
+  const fields = asRecord(record.fields);
+  const collected: BftLearnReviewQuestion[] = [];
+
+  if (
+    fields &&
+    entryId &&
+    !seen.has(entryId) &&
+    (contentType === "question" || contentType === "questionMultipleChoice")
+  ) {
+    seen.add(entryId);
+    collected.push({
+      questionId: entryId,
+      questionContent: fields,
+      studentAnswer: undefined,
+      correctAnswer: fields.answer,
+      points: typeof fields.points === "number" ? fields.points : 0,
+      status: "",
+    });
+  }
+
+  for (const child of Object.values(fields ?? record)) {
+    collected.push(...collectSectionQuestions(child, seen));
+  }
+
+  return collected;
+}
+
+function parseReview(value: unknown): BftLearnReview | null {
+  const raw = asRecord(value);
+  if (!raw) return null;
+
+  const enrollmentRaw = asRecord(raw.enrollment);
+  const contentRaw = asRecord(raw.content);
+  const enrollmentId = asString(enrollmentRaw?.id).trim();
+  const contentId =
+    asString(contentRaw?.entryId).trim() || asString(enrollmentRaw?.contentId).trim();
+  if (!enrollmentId || !contentId) return null;
+
+  const studentRaw = asRecord(raw.student);
+  const questions = Array.isArray(raw.questions)
+    ? raw.questions.flatMap((item) => {
+        const question = parseReviewQuestion(item);
+        return question ? [question] : [];
+      })
+    : [];
+  const seen = new Set(questions.map((question) => question.questionId));
+  const sectionQuestions = collectSectionQuestions(raw.sections, seen);
+
+  return {
+    enrollment: {
+      id: enrollmentId,
+      studentId: asString(enrollmentRaw?.studentId),
+      contentId: asString(enrollmentRaw?.contentId) || contentId,
+      status: asString(enrollmentRaw?.status),
+      progressStatus: asString(enrollmentRaw?.progressStatus),
+      enrolledAt: asString(enrollmentRaw?.enrolledAt),
+      startedAt: enrollmentRaw?.startedAt == null ? null : asString(enrollmentRaw.startedAt),
+      completedAt:
+        enrollmentRaw?.completedAt == null ? null : asString(enrollmentRaw.completedAt),
+      lastActivityAt:
+        enrollmentRaw?.lastActivityAt == null ? null : asString(enrollmentRaw.lastActivityAt),
+    },
+    student: studentRaw
+      ? {
+          id: asString(studentRaw.id),
+          name: asString(studentRaw.name),
+          email: asString(studentRaw.email),
+        }
+      : null,
+    content: {
+      entryId: contentId,
+      name: asString(contentRaw?.name),
+      type: asString(contentRaw?.type),
+      subject: asString(contentRaw?.subject),
+      ageGroup: asString(contentRaw?.ageGroup),
+      stage: asString(contentRaw?.stage),
+      requiresAssessment: contentRaw?.requiresAssessment === true,
+    },
+    sections: Array.isArray(raw.sections) ? raw.sections : [],
+    questions: [...questions, ...sectionQuestions],
+  };
+}
+
+function richTextToPlain(value: unknown): string {
+  const record = asRecord(value);
+  if (!record) return "";
+  if (typeof record.value === "string") return record.value;
+  if (Array.isArray(record.content)) {
+    return record.content.map(richTextToPlain).filter(Boolean).join(" ").trim();
+  }
+  return "";
+}
+
+export function formatBftReviewValue(value: unknown): string {
+  if (value === undefined || value === null || value === "") return "";
+  if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map(formatBftReviewValue).filter(Boolean).join(", ");
+  }
+
+  const record = asRecord(value);
+  if (!record) return "";
+  if (record.nodeType === "document" || Array.isArray(record.content)) {
+    const text = richTextToPlain(record);
+    if (text) return text;
+  }
+  for (const key of ["label", "text", "value", "name", "title", "questionText"]) {
+    const inner = formatBftReviewValue(record[key]);
+    if (inner) return inner;
+  }
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "";
+  }
+}
+
+export function bftLearnQuestionPrompt(fields: Record<string, unknown>): string {
+  for (const key of ["questionText", "question", "prompt", "text", "title", "name"]) {
+    const text = formatBftReviewValue(fields[key]);
+    if (text) return text;
+  }
+  return "";
+}
+
+export async function getBftLearnReview(
+  enrollmentId: string,
+  adminUserId: string
+): Promise<{ data: BftLearnReview } | { error: string; status?: number; url?: string }> {
+  const keyResult = getAdminApiKey();
+  if ("error" in keyResult) return keyResult;
+  const apiKey = keyResult.apiKey;
+
+  const id = enrollmentId.trim();
+  if (!id) return { error: "Enrollment ID is required." };
+  if (!UUID_RE.test(id)) return { error: "Invalid enrollment ID." };
+
+  const reviewerId = UUID_RE.test(adminUserId)
+    ? adminUserId
+    : bftLearnReviewAdminUserId(adminUserId);
+  const url = buildBftAdminUrl(`/admin/review/${encodeURIComponent(id)}`);
+
+  async function request(includeBody: boolean): Promise<Response> {
+    return fetch(url, {
+      method: "GET",
+      headers: {
+        "X-Admin-Api-Key": apiKey,
+        ...(includeBody ? { "Content-Type": "application/json" } : {}),
+      },
+      ...(includeBody ? { body: JSON.stringify({ adminUserId: reviewerId }) } : {}),
+      cache: "no-store",
+    });
+  }
+
+  let response: Response;
+  try {
+    response = await request(true);
+    if (response.status === 400) {
+      const retry = await request(false);
+      if (retry.ok) response = retry;
+    }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Network error";
+    console.error("[bft-learn] fetch review request failed:", e);
+    return { error: message };
+  }
+
+  if (!response.ok) {
+    const message = await parseBftApiError(response);
+    console.error("[bft-learn] fetch review failed:", {
+      status: response.status,
+      url,
+      message,
+    });
+    return { error: message, status: response.status, url };
+  }
+
+  try {
+    const parsed = parseReview(await response.json());
+    if (!parsed) return { error: "Invalid response from BFT Learn API." };
+    return { data: parsed };
+  } catch (e) {
+    console.error("[bft-learn] fetch review invalid JSON:", e);
+    return { error: "Invalid response from BFT Learn API." };
+  }
 }

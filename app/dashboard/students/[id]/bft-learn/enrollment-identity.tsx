@@ -109,6 +109,16 @@ export function EnrollmentIdentity({
               {enrollment.entryId}
             </dd>
           </div>
+          {enrollment.id ? (
+            <div>
+              <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Enrollment ID
+              </dt>
+              <dd className="mt-0.5 font-mono text-sm text-zinc-900 dark:text-zinc-50">
+                {enrollment.id}
+              </dd>
+            </div>
+          ) : null}
         </dl>
       </div>
     </div>
