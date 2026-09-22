@@ -545,6 +545,13 @@ export async function getBftLearnReview(
 
   let response: Response;
   try {
+    console.log("[bft-learn] Calling review endpoint:", {
+      url,
+      method: "POST",
+      enrollmentId: id,
+      adminUserId: reviewerId,
+    });
+    
     response = await fetch(url, {
       method: "POST",
       headers: {
@@ -553,6 +560,12 @@ export async function getBftLearnReview(
       },
       body: JSON.stringify({ adminUserId: reviewerId }),
       cache: "no-store",
+    });
+    
+    console.log("[bft-learn] Review endpoint response:", {
+      status: response.status,
+      ok: response.ok,
+      statusText: response.statusText,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Network error";
