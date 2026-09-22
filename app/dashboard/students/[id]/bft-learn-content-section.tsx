@@ -390,9 +390,7 @@ function enrollmentPath(
   mode: "assess" | "view"
 ): string {
   const base = `/dashboard/students/${studentId}/bft-learn/${encodeURIComponent(enrollment.entryId)}`;
-  const path = mode === "assess" ? `${base}/assess` : base;
-  if (!enrollment.id) return path;
-  return `${path}?enrollmentId=${encodeURIComponent(enrollment.id)}`;
+  return mode === "assess" ? `${base}/assess` : base;
 }
 
 function EnrollmentAction({

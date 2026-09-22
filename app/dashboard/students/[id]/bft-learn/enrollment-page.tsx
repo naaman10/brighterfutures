@@ -15,14 +15,12 @@ export const dynamic = "force-dynamic";
 type Props = {
   studentId: string;
   entryId: string;
-  enrollmentId?: string;
   mode: "view" | "assess";
 };
 
 export async function BftLearnEnrollmentPage({
   studentId,
   entryId,
-  enrollmentId,
   mode,
 }: Props) {
   const student = await getStudentById(studentId);
@@ -47,7 +45,7 @@ export async function BftLearnEnrollmentPage({
     );
   }
 
-  const enrollment = mergeEnrollment(result.enrollment, enrollmentId);
+  const enrollment = result.enrollment;
   const session = await auth();
   const reviewId = enrollment.id.trim();
   const reviewResult = reviewId
@@ -76,14 +74,6 @@ export async function BftLearnEnrollmentPage({
       )}
     </div>
   );
-}
-
-function mergeEnrollment(
-  enrollment: BftLearnEnrollment,
-  enrollmentId: string | undefined
-): BftLearnEnrollment {
-  if (enrollment.id || !enrollmentId?.trim()) return enrollment;
-  return { ...enrollment, id: enrollmentId.trim() };
 }
 
 function enrollmentFromReview(
