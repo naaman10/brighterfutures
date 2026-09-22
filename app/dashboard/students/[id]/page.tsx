@@ -9,10 +9,14 @@ import { StudentTabs } from "./student-tabs";
 
 export const dynamic = "force-dynamic";
 
-type Props = { params: Promise<{ id: string }> };
+type Props = { 
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ tab?: string }>;
+};
 
-export default async function StudentDetailPage({ params }: Props) {
+export default async function StudentDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
+  const { tab } = await searchParams;
   const [student, sessions] = await Promise.all([
     getStudentById(id),
     getSessionsByStudentId(id),
@@ -60,6 +64,7 @@ export default async function StudentDetailPage({ params }: Props) {
         studentId={id}
         student={student}
         sessions={sessions}
+        defaultTab={tab === "bft-learn" || tab === "sessions" ? tab : "details"}
         canSendWelcome={canSendWelcome}
         canResendWelcome={canResendWelcome}
         welcomeSentAtDisplay={welcomeSentAtDisplay}

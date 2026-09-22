@@ -165,7 +165,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
       }
 
       toast.success("Assessment completed! Points have been awarded.");
-      router.push(`/dashboard/students/${studentId}/bft-learn`);
+      router.push(`/dashboard/students/${studentId}?tab=bft-learn`);
       router.refresh();
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to complete assessment";
