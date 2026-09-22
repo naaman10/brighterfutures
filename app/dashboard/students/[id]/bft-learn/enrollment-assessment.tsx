@@ -39,6 +39,18 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
   const [saving, setSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
+  // Debug: Log the entire review data structure
+  useEffect(() => {
+    console.log("[EnrollmentAssessment] Full review data:", {
+      enrollment: review.enrollment,
+      student: review.student,
+      content: review.content,
+      questionsCount: review.questions.length,
+      firstQuestion: review.questions[0],
+      allQuestions: review.questions,
+    });
+  }, [review]);
+
   // Initialize grades with 0 points for each question
   useEffect(() => {
     const initialGrades = new Map<string, QuestionGrade>();

@@ -557,8 +557,21 @@ export async function getBftLearnReview(
   }
 
   try {
-    const parsed = parseReview(await response.json());
-    if (!parsed) return { error: "Invalid response from BFT Learn API." };
+    const rawData = await response.json();
+    console.log("[bft-learn] Raw review response from API:", JSON.stringify(rawData, null, 2));
+    
+    const parsed = parseReview(rawData);
+    if (!parsed) {
+      console.error("[bft-learn] Failed to parse review data");
+      return { error: "Invalid response from BFT Learn API." };
+    }
+    
+    console.log("[bft-learn] Parsed review data:", {
+      enrollmentId: parsed.enrollment.id,
+      questionsCount: parsed.questions.length,
+      firstQuestion: parsed.questions[0],
+    });
+    
     return { data: parsed };
   } catch (e) {
     console.error("[bft-learn] fetch review invalid JSON:", e);
