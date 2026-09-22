@@ -48,9 +48,21 @@ export async function BftLearnEnrollmentPage({
   const enrollment = result.enrollment;
   const session = await auth();
   const reviewId = enrollment.id.trim();
+  
+  // Debug logging
+  console.log("[enrollment-page] Enrollment data:", {
+    id: enrollment.id,
+    entryId: enrollment.entryId,
+    name: enrollment.name,
+    hasId: !!enrollment.id,
+    idLength: enrollment.id.length,
+  });
+  
   const reviewResult = reviewId
     ? await getBftLearnReview(reviewId, bftLearnReviewAdminUserId(session?.user?.id))
-    : { error: "This enrollment does not include an enrollment ID, so it cannot be reviewed yet." };
+    : { 
+        error: `This enrollment does not include an enrollment ID, so it cannot be reviewed yet. (ID: "${enrollment.id}", Entry: ${enrollment.entryId})` 
+      };
 
   return (
     <div>
