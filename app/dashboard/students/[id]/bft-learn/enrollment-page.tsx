@@ -10,6 +10,7 @@ import {
 import { EnrollmentIdentity } from "./enrollment-identity";
 import { EnrollmentReviewQuestions } from "./enrollment-review-questions";
 import { EnrollmentAssessment } from "./enrollment-assessment";
+import { EnrollmentFeedback } from "./enrollment-feedback";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,12 @@ export async function BftLearnEnrollmentPage({
           review={reviewResult.data} 
           studentId={studentId}
           adminUserId={bftLearnReviewAdminUserId(session?.user?.id)}
+        />
+      ) : enrollment.progressStatus === "completed" ? (
+        <EnrollmentFeedback
+          enrollmentId={enrollment.id}
+          adminUserId={bftLearnReviewAdminUserId(session?.user?.id)}
+          studentName={studentName}
         />
       ) : (
         <EnrollmentReviewQuestions review={reviewResult.data} />
