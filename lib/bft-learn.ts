@@ -145,10 +145,13 @@ function parseEnrollment(value: unknown): BftLearnEnrollment | null {
   const entryId = asString(raw.entryId).trim() || asString(raw.contentId).trim();
   if (!entryId) return null;
 
-  const enrollmentId = asString(raw.id).trim() || asString(raw.enrollmentId).trim();
+  const enrollmentId = asString(raw.id).trim() 
+    || asString(raw.enrollmentId).trim() 
+    || asString(raw.enrollmentID).trim();
   console.log("[bft-learn] Parsing enrollment:", {
     rawId: raw.id,
     rawEnrollmentId: raw.enrollmentId,
+    rawEnrollmentID: raw.enrollmentID,
     extractedId: enrollmentId,
     entryId,
     allKeys: Object.keys(raw),
