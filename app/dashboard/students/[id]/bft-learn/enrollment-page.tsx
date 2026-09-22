@@ -49,10 +49,42 @@ export async function BftLearnEnrollmentPage({
 
   const enrollment = result.enrollment;
   const session = await auth();
+  const adminUserId = bftLearnReviewAdminUserId(session?.user?.id);
+
+  // For completed enrollments, only show feedback interface
+  if (enrollment.progressStatus === "completed") {
+    return (
+      <div>
+        <EnrollmentIdentity
+          studentId={studentId}
+          studentName={studentName}
+          enrollment={enrollment}
+          heading="Enrollment Feedback"
+          currentCrumb="Feedback"
+          description="Provide feedback on this student's completed work."
+        />
+        <EnrollmentFeedback
+          enrollmentId={enrollment.id}
+          adminUserId={adminUserId}
+          studentName={studentName}
+        />
+      </div>
+    );
+  }
+
+  // For other statuses, fetch review data
   const reviewId = enrollment.id.trim();
   const reviewResult = reviewId
-    ? await getBftLearnReview(reviewId, bftLearnReviewAdminUserId(session?.user?.id))
+    ? await getBftLearnReview(reviewId, adminUserId)
     : { error: "This enrollment does not include an enrollment ID, so it cannot be reviewed yet." };
+
+  // Determine heading and description based on status
+  const isToAssess = enrollment.progressStatus === "to_assess";
+  const heading = isToAssess && mode === "assess" ? "Assess enrollment" : "Enrollment details";
+  const currentCrumb = isToAssess && mode === "assess" ? "Assess" : "Enrollment";
+  const description = isToAssess && mode === "assess"
+    ? "Review each question, the student's answer, and the correct answer where one is available."
+    : "Read-only details for this student's assigned content.";
 
   return (
     <div>
@@ -60,28 +92,18 @@ export async function BftLearnEnrollmentPage({
         studentId={studentId}
         studentName={studentName}
         enrollment={enrollmentFromReview(enrollment, reviewResult)}
-        heading={mode === "assess" ? "Assess enrollment" : "Enrollment details"}
-        currentCrumb={mode === "assess" ? "Assess" : "Enrollment"}
-        description={
-          mode === "assess"
-            ? "Review each question, the student's answer, and the correct answer where one is available."
-            : "Read-only details for this student's assigned content."
-        }
+        heading={heading}
+        currentCrumb={currentCrumb}
+        description={description}
       />
 
       {"error" in reviewResult ? (
         <p className="mt-6 text-sm text-red-600 dark:text-red-400">{reviewResult.error}</p>
-      ) : mode === "assess" ? (
+      ) : isToAssess && mode === "assess" ? (
         <EnrollmentAssessment 
           review={reviewResult.data} 
           studentId={studentId}
-          adminUserId={bftLearnReviewAdminUserId(session?.user?.id)}
-        />
-      ) : enrollment.progressStatus === "completed" ? (
-        <EnrollmentFeedback
-          enrollmentId={enrollment.id}
-          adminUserId={bftLearnReviewAdminUserId(session?.user?.id)}
-          studentName={studentName}
+          adminUserId={adminUserId}
         />
       ) : (
         <EnrollmentReviewQuestions review={reviewResult.data} />
