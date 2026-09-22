@@ -543,25 +543,15 @@ export async function getBftLearnReview(
     : bftLearnReviewAdminUserId(adminUserId);
   const url = buildBftAdminUrl(`/admin/review/${encodeURIComponent(id)}`);
 
-  async function request(includeBody: boolean): Promise<Response> {
-    return fetch(url, {
+  let response: Response;
+  try {
+    response = await fetch(url, {
       method: "GET",
       headers: {
         "X-Admin-Api-Key": apiKey,
-        ...(includeBody ? { "Content-Type": "application/json" } : {}),
       },
-      ...(includeBody ? { body: JSON.stringify({ adminUserId: reviewerId }) } : {}),
       cache: "no-store",
     });
-  }
-
-  let response: Response;
-  try {
-    response = await request(true);
-    if (response.status === 400) {
-      const retry = await request(false);
-      if (retry.ok) response = retry;
-    }
   } catch (e) {
     const message = e instanceof Error ? e.message : "Network error";
     console.error("[bft-learn] fetch review request failed:", e);
