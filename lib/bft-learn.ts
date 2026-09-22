@@ -546,10 +546,12 @@ export async function getBftLearnReview(
   let response: Response;
   try {
     response = await fetch(url, {
-      method: "GET",
+      method: "POST",
       headers: {
         "X-Admin-Api-Key": apiKey,
+        "Content-Type": "application/json",
       },
+      body: JSON.stringify({ adminUserId: reviewerId }),
       cache: "no-store",
     });
   } catch (e) {
