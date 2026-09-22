@@ -302,6 +302,14 @@ function QuestionGradeCard({
 }: QuestionGradeCardProps) {
   const prompt =
     bftLearnQuestionPrompt(question.questionContent) || `Question ${index + 1}`;
+  
+  // Debug logging
+  console.log(`[Question ${index + 1}] Student answer data:`, {
+    raw: question.studentAnswer,
+    type: typeof question.studentAnswer,
+    formatted: formatBftReviewValue(question.studentAnswer),
+  });
+  
   const studentAnswer = formatBftReviewValue(question.studentAnswer);
   const correctAnswer = formatBftReviewValue(question.correctAnswer);
   const [pointsError, setPointsError] = useState<string | null>(null);
@@ -336,7 +344,7 @@ function QuestionGradeCard({
               Student Answer
             </dt>
             <dd className="whitespace-pre-wrap text-sm text-zinc-900 dark:text-zinc-50">
-              {displayValue(studentAnswer)}
+              {studentAnswer || (question.studentAnswer ? JSON.stringify(question.studentAnswer, null, 2) : "—")}
             </dd>
           </div>
 
