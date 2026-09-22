@@ -148,14 +148,6 @@ function parseEnrollment(value: unknown): BftLearnEnrollment | null {
   const enrollmentId = asString(raw.id).trim() 
     || asString(raw.enrollmentId).trim() 
     || asString(raw.enrollmentID).trim();
-  console.log("[bft-learn] Parsing enrollment:", {
-    rawId: raw.id,
-    rawEnrollmentId: raw.enrollmentId,
-    rawEnrollmentID: raw.enrollmentID,
-    extractedId: enrollmentId,
-    entryId,
-    allKeys: Object.keys(raw),
-  });
 
   return {
     id: enrollmentId,
@@ -330,12 +322,6 @@ export async function getBftLearnContent(
 
   try {
     const data = (await response.json()) as Partial<BftLearnContentResponse>;
-    
-    // Debug logging to see raw enrollment data
-    console.log("[bft-learn] Raw enrollments from API:", JSON.stringify(data.enrollments, null, 2));
-    const parsedEnrollments = parseBftLearnEnrollments(data.enrollments);
-    console.log("[bft-learn] Parsed enrollments:", JSON.stringify(parsedEnrollments, null, 2));
-    
     return {
       data: {
         filters: {
@@ -344,7 +330,7 @@ export async function getBftLearnContent(
           ageGroup: data.filters?.ageGroup ?? [],
         },
         items: data.items ?? [],
-        enrollments: parsedEnrollments,
+        enrollments: parseBftLearnEnrollments(data.enrollments),
       },
     };
   } catch (e) {
@@ -545,13 +531,6 @@ export async function getBftLearnReview(
 
   let response: Response;
   try {
-    console.log("[bft-learn] Calling review endpoint:", {
-      url,
-      method: "POST",
-      enrollmentId: id,
-      adminUserId: reviewerId,
-    });
-    
     response = await fetch(url, {
       method: "POST",
       headers: {
@@ -560,12 +539,6 @@ export async function getBftLearnReview(
       },
       body: JSON.stringify({ adminUserId: reviewerId }),
       cache: "no-store",
-    });
-    
-    console.log("[bft-learn] Review endpoint response:", {
-      status: response.status,
-      ok: response.ok,
-      statusText: response.statusText,
     });
   } catch (e) {
     const message = e instanceof Error ? e.message : "Network error";
