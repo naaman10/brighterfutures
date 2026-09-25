@@ -71,7 +71,7 @@ export function EnrollmentIdentity({
           </div>
           <div>
             <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Age group
+              Year Group
             </dt>
             <dd className="mt-0.5 text-zinc-900 dark:text-zinc-50">
               {displayValue(enrollment.ageGroup)}
