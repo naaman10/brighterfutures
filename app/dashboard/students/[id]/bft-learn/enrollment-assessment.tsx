@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   bftLearnQuestionPrompt,
   formatBftReviewValue,
+  resolveMultipleChoiceAnswer,
   type BftLearnReview,
   type BftLearnReviewQuestion,
 } from "@/lib/bft-learn";
@@ -316,14 +317,16 @@ function QuestionGradeCard({
     bftLearnQuestionPrompt(question.questionContent) || `Question ${index + 1}`;
   
   // Debug logging
-  console.log(`[Question ${index + 1}] Student answer data:`, {
-    raw: question.studentAnswer,
-    type: typeof question.studentAnswer,
-    formatted: formatBftReviewValue(question.studentAnswer),
+  console.log(`[Question ${index + 1}] Full question data:`, {
+    questionContent: question.questionContent,
+    studentAnswerRaw: question.studentAnswer,
+    studentAnswerType: typeof question.studentAnswer,
+    correctAnswerRaw: question.correctAnswer,
+    correctAnswerType: typeof question.correctAnswer,
   });
   
-  const studentAnswer = formatBftReviewValue(question.studentAnswer);
-  const correctAnswer = formatBftReviewValue(question.correctAnswer);
+  const studentAnswer = resolveMultipleChoiceAnswer(question.studentAnswer, question.questionContent);
+  const correctAnswer = resolveMultipleChoiceAnswer(question.correctAnswer, question.questionContent);
   const [pointsError, setPointsError] = useState<string | null>(null);
 
   const handlePointsChange = (value: string) => {
