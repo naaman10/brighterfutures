@@ -200,7 +200,7 @@ export function BftLearnContentSection({ studentId }: Props) {
                       Subject
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                      Age group
+                      Year Group
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Type
@@ -275,7 +275,7 @@ export function BftLearnContentSection({ studentId }: Props) {
               htmlFor="bft-content-age-group"
               className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400"
             >
-              Age group
+              Year Group
             </label>
             <select
               id="bft-content-age-group"
@@ -283,7 +283,7 @@ export function BftLearnContentSection({ studentId }: Props) {
               onChange={(e) => updateFilter("ageGroup", e.target.value)}
               className="w-full rounded border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
             >
-              <option value="">All age groups</option>
+              <option value="">All year groups</option>
               {filterOptions.ageGroup.map((value) => (
                 <option key={value} value={value}>
                   {value}
@@ -334,7 +334,7 @@ export function BftLearnContentSection({ studentId }: Props) {
                     Subject
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                    Age group
+                    Year Group
                   </th>
                   <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Type
