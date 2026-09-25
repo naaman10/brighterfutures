@@ -493,8 +493,27 @@ export function formatBftReviewValue(value: unknown): string {
     const text = richTextToPlain(record);
     if (text) return text;
   }
-  for (const key of ["label", "text", "value", "name", "title", "questionText"]) {
+  // Prioritize human-readable text fields over IDs for multiple choice answers
+  for (const key of ["label", "text", "questionText", "answerText", "choiceText", "optionText", "description", "title", "name"]) {
     const inner = formatBftReviewValue(record[key]);
+    if (inner) return inner;
+  }
+  // For "value" field, only use it if it's not a UUID-like ID
+  const valueField = record.value;
+  if (valueField !== undefined && valueField !== null) {
+    const valueStr = String(valueField);
+    // Check if it looks like a UUID or generic ID (avoid displaying raw IDs)
+    const looksLikeId = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(valueStr) ||
+                       /^[a-z0-9_-]{20,}$/i.test(valueStr);
+    if (!looksLikeId && valueStr.trim()) {
+      return valueStr;
+    }
+  }
+  // Skip the "id" field entirely - never show raw IDs to users
+  // As a last resort, try to extract any other meaningful string field (but not "id")
+  for (const [key, val] of Object.entries(record)) {
+    if (key.toLowerCase() === "id") continue; // Skip ID fields
+    const inner = formatBftReviewValue(val);
     if (inner) return inner;
   }
   try {
