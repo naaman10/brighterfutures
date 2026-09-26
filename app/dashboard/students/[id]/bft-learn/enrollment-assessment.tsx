@@ -52,13 +52,21 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
     });
   }, [review]);
 
-  // Initialize grades with 0 points for each question
+  // Initialize grades with auto-populated points for correct answers
   useEffect(() => {
     const initialGrades = new Map<string, QuestionGrade>();
     review.questions.forEach((q) => {
+      // Resolve answers to compare
+      const studentAnswer = resolveMultipleChoiceAnswer(q.studentAnswer, q.questionContent);
+      const correctAnswer = resolveMultipleChoiceAnswer(q.correctAnswer, q.questionContent);
+      
+      // Check if answer is correct
+      const hasCorrectAnswer = correctAnswer && correctAnswer.trim() !== "";
+      const isCorrect = hasCorrectAnswer && studentAnswer === correctAnswer;
+      
       initialGrades.set(q.questionId, {
         questionId: q.questionId,
-        pointsEarned: 0,
+        pointsEarned: isCorrect ? q.points : 0,
         pointsAvailable: q.points,
       });
     });
@@ -187,6 +195,8 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
     return () => clearTimeout(timer);
   }, [hasUnsavedChanges, grades, feedback, overallFeedback]);
 
+  // Count questions that have been explicitly graded (either have points or have been reviewed)
+  // Auto-populated correct answers should count as graded
   const gradedCount = Array.from(grades.values()).filter(
     (g) => g.pointsEarned > 0
   ).length;
