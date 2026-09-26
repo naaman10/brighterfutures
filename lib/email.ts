@@ -1,6 +1,4 @@
 import { Resend } from "resend";
-import { render } from "@react-email/render";
-import WelcomeEmail from "@/emails/welcome-email";
 
 const apiKey = process.env.RESEND_API_KEY;
 const resend = apiKey ? new Resend(apiKey) : null;
@@ -97,9 +95,9 @@ export async function sendEmail({
 }
 
 /**
- * Sends an email via Resend using a React Email template.
+ * Sends an email via Resend using a template from your Resend dashboard.
  * Requires RESEND_API_KEY and RESEND_FROM_EMAIL in env.
- * Currently supports "welcome-email" template.
+ * References templates by name (e.g., "welcome-email").
  */
 export async function sendTemplate({
   to,
@@ -120,31 +118,11 @@ export async function sendTemplate({
       content: Buffer.from(att.content, "base64"),
     }));
 
-    let emailHtml: string;
-    let subject: string;
-
-    if (templateId === "welcome-email") {
-      subject = "Welcome to Brighter Futures Tuition";
-      emailHtml = await render(
-        WelcomeEmail({
-          parent_name: String(dynamicTemplateData.parent_name || ""),
-          child_name: String(dynamicTemplateData.child_name || ""),
-          start_date: String(dynamicTemplateData.start_date || ""),
-          start_time: String(dynamicTemplateData.start_time || ""),
-        })
-      );
-    } else {
-      return {
-        success: false,
-        error: `Unknown template: ${templateId}. Currently only "welcome-email" is supported.`,
-      };
-    }
-
     const payload: any = {
       from: fromEmail,
       to,
-      subject,
-      html: emailHtml,
+      template: templateId,
+      template_data: dynamicTemplateData,
     };
 
     if (resendAttachments && resendAttachments.length > 0) {
