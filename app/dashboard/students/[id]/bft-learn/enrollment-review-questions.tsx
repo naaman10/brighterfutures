@@ -2,6 +2,7 @@ import {
   bftLearnProgressStatusLabel,
   bftLearnQuestionPrompt,
   formatBftReviewValue,
+  resolveMultipleChoiceAnswer,
   type BftLearnReview,
 } from "@/lib/bft-learn";
 
@@ -32,8 +33,8 @@ export function EnrollmentReviewQuestions({ review }: { review: BftLearnReview }
         {review.questions.map((question, index) => {
           const prompt =
             bftLearnQuestionPrompt(question.questionContent) || `Question ${index + 1}`;
-          const studentAnswer = formatBftReviewValue(question.studentAnswer);
-          const correctAnswer = formatBftReviewValue(question.correctAnswer);
+          const studentAnswer = resolveMultipleChoiceAnswer(question.studentAnswer, question.questionContent);
+          const correctAnswer = resolveMultipleChoiceAnswer(question.correctAnswer, question.questionContent);
 
           return (
             <li
