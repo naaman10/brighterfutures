@@ -329,6 +329,11 @@ function QuestionGradeCard({
   const correctAnswer = resolveMultipleChoiceAnswer(question.correctAnswer, question.questionContent);
   const [pointsError, setPointsError] = useState<string | null>(null);
 
+  // Determine if student answer is correct
+  const hasCorrectAnswer = correctAnswer && correctAnswer.trim() !== "";
+  const isCorrect = hasCorrectAnswer && studentAnswer === correctAnswer;
+  const isIncorrect = hasCorrectAnswer && studentAnswer !== correctAnswer && studentAnswer && studentAnswer.trim() !== "";
+
   const handlePointsChange = (value: string) => {
     const points = parseInt(value) || 0;
     
@@ -354,21 +359,39 @@ function QuestionGradeCard({
       <div className="space-y-4">
         {/* Answers comparison */}
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
-            <dt className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          <div className={`rounded-lg border p-4 ${
+            isCorrect
+              ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
+              : isIncorrect
+              ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30"
+              : "border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-800/50"
+          }`}>
+            <dt className={`mb-2 text-xs font-medium uppercase tracking-wide ${
+              isCorrect
+                ? "text-green-700 dark:text-green-400"
+                : isIncorrect
+                ? "text-red-700 dark:text-red-400"
+                : "text-zinc-500 dark:text-zinc-400"
+            }`}>
               Student Answer
             </dt>
-            <dd className="whitespace-pre-wrap text-sm text-zinc-900 dark:text-zinc-50">
+            <dd className={`whitespace-pre-wrap text-sm ${
+              isCorrect
+                ? "text-green-900 dark:text-green-50"
+                : isIncorrect
+                ? "text-red-900 dark:text-red-50"
+                : "text-zinc-900 dark:text-zinc-50"
+            }`}>
               {studentAnswer || (question.studentAnswer ? JSON.stringify(question.studentAnswer, null, 2) : "—")}
             </dd>
           </div>
 
           {correctAnswer && (
-            <div className="rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/30">
-              <dt className="mb-2 text-xs font-medium uppercase tracking-wide text-green-700 dark:text-green-400">
+            <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
+              <dt className="mb-2 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Correct Answer
               </dt>
-              <dd className="whitespace-pre-wrap text-sm text-green-900 dark:text-green-50">
+              <dd className="whitespace-pre-wrap text-sm text-zinc-900 dark:text-zinc-50">
                 {correctAnswer}
               </dd>
             </div>
