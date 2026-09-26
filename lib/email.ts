@@ -129,13 +129,26 @@ export async function sendTemplate({
       payload.attachments = resendAttachments;
     }
 
-    await resend.emails.send(payload);
+    console.log("[Resend] Attempting to send email with payload:", {
+      from: payload.from,
+      to: payload.to,
+      template: payload.template,
+      hasAttachments: !!payload.attachments,
+      templateDataKeys: Object.keys(dynamicTemplateData),
+    });
+
+    const result = await resend.emails.send(payload);
+    
+    console.log("[Resend] Email send result:", result);
+    
     return { success: true };
   } catch (err: unknown) {
+    console.error("[Resend] Error sending email:", err);
     const message = err instanceof Error ? err.message : "Resend request failed";
+    const errorDetails = err && typeof err === "object" ? JSON.stringify(err, null, 2) : message;
     return {
       success: false,
-      error: message,
+      error: `${message}\nDetails: ${errorDetails}`,
     };
   }
 }
