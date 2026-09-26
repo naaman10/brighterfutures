@@ -13,7 +13,7 @@ import {
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { getWelcomeEmailAttachments, sendTemplate } from "@/lib/email";
 
-const WELCOME_TEMPLATE_ID = "d-ed0dda2b7cf54a348006d3804db1a5ad";
+const WELCOME_TEMPLATE_ID = "welcome-email";
 
 function formatDate(value: string | Date | null): string {
   if (value == null) return "";
@@ -75,7 +75,7 @@ export async function sendWelcomeEmail(studentId: string): Promise<{ error?: str
 
   if (!result.success) return { error: result.error };
 
-  // Only mark welcome sent and set welcome_sent_at when SendGrid succeeded
+  // Only mark welcome sent and set welcome_sent_at when Resend succeeded
   const updateResult = await setStudentWelcomeSent(studentId);
   if ("error" in updateResult) return { error: updateResult.error };
 

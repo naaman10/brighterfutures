@@ -1087,7 +1087,7 @@ export async function updateSessionStatus(
 }
 
 /**
- * Sets feedback_sent_at to NOW() after sending feedback email. Call only after SendGrid success.
+ * Sets feedback_sent_at to NOW() after sending feedback email. Call only after Resend success.
  */
 export async function updateSessionFeedbackSentAt(
   sessionId: string
@@ -1445,7 +1445,7 @@ export async function updateStudentAISummary(
 
 /**
  * Marks a student's welcome email as sent (welcome = TRUE, welcome_sent_at = NOW()).
- * Call only after SendGrid returns success.
+ * Call only after Resend returns success.
  */
 export async function setStudentWelcomeSent(
   id: string
@@ -1463,7 +1463,7 @@ export async function setStudentWelcomeSent(
 
 /**
  * Updates welcome_sent_at to NOW() (e.g. after resending the welcome email).
- * Call only after SendGrid returns success.
+ * Call only after Resend returns success.
  */
 export async function updateStudentWelcomeSentAt(
   id: string

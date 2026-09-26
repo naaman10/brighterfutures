@@ -1,11 +1,9 @@
-import sgMail from "@sendgrid/mail";
+import { Resend } from "resend";
 
-const apiKey = process.env.SENDGRID_API_KEY;
-if (apiKey) {
-  sgMail.setApiKey(apiKey);
-}
+const apiKey = process.env.RESEND_API_KEY;
+const resend = apiKey ? new Resend(apiKey) : null;
 
-const fromEmail = process.env.SENDGRID_FROM_EMAIL ?? "noreply@example.com";
+const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@example.com";
 
 export type SendEmailOptions = {
   to: string;
@@ -55,8 +53,8 @@ export type SendTemplateOptions = {
 };
 
 /**
- * Sends an email via SendGrid.
- * Requires SENDGRID_API_KEY in env. Optionally set SENDGRID_FROM_EMAIL.
+ * Sends an email via Resend.
+ * Requires RESEND_API_KEY in env. Optionally set RESEND_FROM_EMAIL.
  */
 export async function sendEmail({
   to,
@@ -64,47 +62,43 @@ export async function sendEmail({
   text,
   html,
 }: SendEmailOptions): Promise<{ success: true } | { success: false; error: string }> {
-  if (!apiKey) {
+  if (!apiKey || !resend) {
     return {
       success: false,
-      error: "SENDGRID_API_KEY is not set",
+      error: "RESEND_API_KEY is not set",
     };
   }
 
   try {
-    await sgMail.send({
-      to,
+    const payload: any = {
       from: fromEmail,
+      to,
       subject,
-      text: text ?? html?.replace(/<[^>]*>/g, "") ?? "",
-      html: html ?? undefined,
-    });
+    };
+
+    if (html) {
+      payload.html = html;
+    }
+    if (text) {
+      payload.text = text;
+    }
+
+    await resend.emails.send(payload);
     return { success: true };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "SendGrid request failed";
-    const response = err && typeof err === "object" && "response" in err
-      ? (err as { response?: { statusCode?: number; body?: unknown } }).response
-      : undefined;
-    if (response?.statusCode === 403) {
-      return {
-        success: false,
-        error: `SendGrid 403 Forbidden. Verify your sender email (${fromEmail}) at https://app.sendgrid.com/settings/sender_auth/senders — add and verify a Single Sender, then set SENDGRID_FROM_EMAIL to that address.`,
-      };
-    }
-    const body = response?.body;
-    const detail = body && typeof body === "object" && "errors" in body
-      ? (body as { errors?: unknown }).errors
-      : message;
+    const message = err instanceof Error ? err.message : "Resend request failed";
     return {
       success: false,
-      error: typeof detail === "string" ? detail : JSON.stringify(detail ?? message),
+      error: message,
     };
   }
 }
 
 /**
- * Sends an email via a SendGrid dynamic template.
- * Requires SENDGRID_API_KEY and SENDGRID_FROM_EMAIL in env.
+ * Sends an email via Resend using HTML template.
+ * Requires RESEND_API_KEY and RESEND_FROM_EMAIL in env.
+ * Note: Resend uses React components for templates. This function generates HTML
+ * from the template data for now. For production, consider creating React email templates.
  */
 export async function sendTemplate({
   to,
@@ -112,40 +106,97 @@ export async function sendTemplate({
   dynamicTemplateData,
   attachments,
 }: SendTemplateOptions): Promise<{ success: true } | { success: false; error: string }> {
-  if (!apiKey) {
+  if (!apiKey || !resend) {
     return {
       success: false,
-      error: "SENDGRID_API_KEY is not set",
+      error: "RESEND_API_KEY is not set",
     };
   }
 
   try {
-    await sgMail.send({
-      to,
-      from: fromEmail,
-      templateId,
-      dynamicTemplateData,
-      attachments: attachments?.length ? attachments : undefined,
-    });
-    return { success: true };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "SendGrid request failed";
-    const response = err && typeof err === "object" && "response" in err
-      ? (err as { response?: { statusCode?: number; body?: unknown } }).response
-      : undefined;
-    if (response?.statusCode === 403) {
+    const resendAttachments = attachments?.map((att) => ({
+      filename: att.filename,
+      content: Buffer.from(att.content, "base64"),
+    }));
+
+    let html = "";
+    let subject = "";
+
+    if (templateId === "welcome-email") {
+      subject = "Welcome to Brighter Futures Tuition";
+      html = generateWelcomeEmailHtml(dynamicTemplateData);
+    } else {
       return {
         success: false,
-        error: `SendGrid 403 Forbidden. Verify your sender email (${fromEmail}) at https://app.sendgrid.com/settings/sender_auth/senders — add and verify a Single Sender, then set SENDGRID_FROM_EMAIL to that address.`,
+        error: `Unknown template: ${templateId}`,
       };
     }
-    const body = response?.body;
-    const detail = body && typeof body === "object" && "errors" in body
-      ? (body as { errors?: unknown }).errors
-      : message;
+
+    const payload: any = {
+      from: fromEmail,
+      to,
+      subject,
+      html,
+    };
+
+    if (resendAttachments && resendAttachments.length > 0) {
+      payload.attachments = resendAttachments;
+    }
+
+    await resend.emails.send(payload);
+    return { success: true };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Resend request failed";
     return {
       success: false,
-      error: typeof detail === "string" ? detail : JSON.stringify(detail ?? message),
+      error: message,
     };
   }
+}
+
+function generateWelcomeEmailHtml(data: Record<string, string | number | boolean>): string {
+  const parentName = String(data.parent_name || "");
+  const childName = String(data.child_name || "");
+  const startDate = String(data.start_date || "");
+  const startTime = String(data.start_time || "");
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Brighter Futures Tuition</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+  <div style="background-color: #f8f9fa; padding: 30px; border-radius: 10px;">
+    <h1 style="color: #2563eb; margin-top: 0;">Welcome to Brighter Futures Tuition!</h1>
+    
+    <p>Dear ${parentName},</p>
+    
+    <p>Thank you for choosing Brighter Futures Tuition for ${childName}'s educational journey. We're excited to support their learning and development!</p>
+    
+    <div style="background-color: #fff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2563eb;">
+      <h2 style="margin-top: 0; color: #1e40af; font-size: 18px;">First Session Details</h2>
+      <p style="margin: 10px 0;"><strong>Student:</strong> ${childName}</p>
+      <p style="margin: 10px 0;"><strong>Date:</strong> ${startDate}</p>
+      <p style="margin: 10px 0;"><strong>Time:</strong> ${startTime}</p>
+    </div>
+    
+    <p>Please find attached the terms and conditions, as well as extra materials for pupils.</p>
+    
+    <p>If you have any questions or need to reschedule, please don't hesitate to contact us.</p>
+    
+    <p>We look forward to working with ${childName}!</p>
+    
+    <p style="margin-top: 30px;">Best regards,<br>
+    <strong>The Brighter Futures Tuition Team</strong></p>
+  </div>
+  
+  <div style="margin-top: 20px; padding: 20px; text-align: center; color: #6b7280; font-size: 12px;">
+    <p>This email was sent by Brighter Futures Tuition</p>
+  </div>
+</body>
+</html>
+  `.trim();
 }
