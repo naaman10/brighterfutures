@@ -1,11 +1,9 @@
-import sgMail from "@sendgrid/mail";
+import { Resend } from "resend";
 
-const apiKey = process.env.SENDGRID_API_KEY;
-if (apiKey) {
-  sgMail.setApiKey(apiKey);
-}
+const apiKey = process.env.RESEND_API_KEY;
+const resend = apiKey ? new Resend(apiKey) : null;
 
-const fromEmail = process.env.SENDGRID_FROM_EMAIL ?? "noreply@example.com";
+const fromEmail = process.env.RESEND_FROM_EMAIL ?? "noreply@example.com";
 
 export type SendEmailOptions = {
   to: string;
@@ -55,8 +53,8 @@ export type SendTemplateOptions = {
 };
 
 /**
- * Sends an email via SendGrid.
- * Requires SENDGRID_API_KEY in env. Optionally set SENDGRID_FROM_EMAIL.
+ * Sends an email via Resend.
+ * Requires RESEND_API_KEY in env. Optionally set RESEND_FROM_EMAIL.
  */
 export async function sendEmail({
   to,
@@ -64,47 +62,35 @@ export async function sendEmail({
   text,
   html,
 }: SendEmailOptions): Promise<{ success: true } | { success: false; error: string }> {
-  if (!apiKey) {
+  if (!apiKey || !resend) {
     return {
       success: false,
-      error: "SENDGRID_API_KEY is not set",
+      error: "RESEND_API_KEY is not set",
     };
   }
 
   try {
-    await sgMail.send({
-      to,
+    await resend.emails.send({
       from: fromEmail,
+      to,
       subject,
-      text: text ?? html?.replace(/<[^>]*>/g, "") ?? "",
+      text: text ?? undefined,
       html: html ?? undefined,
     });
     return { success: true };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "SendGrid request failed";
-    const response = err && typeof err === "object" && "response" in err
-      ? (err as { response?: { statusCode?: number; body?: unknown } }).response
-      : undefined;
-    if (response?.statusCode === 403) {
-      return {
-        success: false,
-        error: `SendGrid 403 Forbidden. Verify your sender email (${fromEmail}) at https://app.sendgrid.com/settings/sender_auth/senders — add and verify a Single Sender, then set SENDGRID_FROM_EMAIL to that address.`,
-      };
-    }
-    const body = response?.body;
-    const detail = body && typeof body === "object" && "errors" in body
-      ? (body as { errors?: unknown }).errors
-      : message;
+    const message = err instanceof Error ? err.message : "Resend request failed";
     return {
       success: false,
-      error: typeof detail === "string" ? detail : JSON.stringify(detail ?? message),
+      error: message,
     };
   }
 }
 
 /**
- * Sends an email via a SendGrid dynamic template.
- * Requires SENDGRID_API_KEY and SENDGRID_FROM_EMAIL in env.
+ * Sends an email via Resend using a template.
+ * Requires RESEND_API_KEY and RESEND_FROM_EMAIL in env.
+ * For Resend, templateId should be the template name/slug (e.g., "welcome-email").
  */
 export async function sendTemplate({
   to,
@@ -112,40 +98,35 @@ export async function sendTemplate({
   dynamicTemplateData,
   attachments,
 }: SendTemplateOptions): Promise<{ success: true } | { success: false; error: string }> {
-  if (!apiKey) {
+  if (!apiKey || !resend) {
     return {
       success: false,
-      error: "SENDGRID_API_KEY is not set",
+      error: "RESEND_API_KEY is not set",
     };
   }
 
   try {
-    await sgMail.send({
-      to,
+    const resendAttachments = attachments?.map((att) => ({
+      filename: att.filename,
+      content: Buffer.from(att.content, "base64"),
+    }));
+
+    const emailPayload: any = {
       from: fromEmail,
-      templateId,
-      dynamicTemplateData,
-      attachments: attachments?.length ? attachments : undefined,
-    });
+      to,
+      attachments: resendAttachments,
+    };
+
+    emailPayload.template = templateId;
+    emailPayload.templateData = dynamicTemplateData;
+
+    await resend.emails.send(emailPayload);
     return { success: true };
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "SendGrid request failed";
-    const response = err && typeof err === "object" && "response" in err
-      ? (err as { response?: { statusCode?: number; body?: unknown } }).response
-      : undefined;
-    if (response?.statusCode === 403) {
-      return {
-        success: false,
-        error: `SendGrid 403 Forbidden. Verify your sender email (${fromEmail}) at https://app.sendgrid.com/settings/sender_auth/senders — add and verify a Single Sender, then set SENDGRID_FROM_EMAIL to that address.`,
-      };
-    }
-    const body = response?.body;
-    const detail = body && typeof body === "object" && "errors" in body
-      ? (body as { errors?: unknown }).errors
-      : message;
+    const message = err instanceof Error ? err.message : "Resend request failed";
     return {
       success: false,
-      error: typeof detail === "string" ? detail : JSON.stringify(detail ?? message),
+      error: message,
     };
   }
 }
