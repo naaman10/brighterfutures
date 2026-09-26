@@ -119,33 +119,28 @@ export async function sendTemplate({
       content: Buffer.from(att.content, "base64"),
     }));
 
-    let reactComponent: React.ReactElement;
-    let subject: string;
+    const payload: any = {
+      from: fromEmail,
+      to,
+    };
+
+    if (resendAttachments && resendAttachments.length > 0) {
+      payload.attachments = resendAttachments;
+    }
 
     if (templateId === "welcome-email") {
-      subject = "Welcome to Brighter Futures Tuition";
-      reactComponent = WelcomeEmail({
+      payload.react = WelcomeEmail({
         parent_name: String(dynamicTemplateData.parent_name || ""),
         child_name: String(dynamicTemplateData.child_name || ""),
         start_date: String(dynamicTemplateData.start_date || ""),
         start_time: String(dynamicTemplateData.start_time || ""),
       });
+      payload.subject = "Welcome to Brighter Futures Tuition";
     } else {
       return {
         success: false,
         error: `Unknown template: ${templateId}. Currently only "welcome-email" is supported.`,
       };
-    }
-
-    const payload: any = {
-      from: fromEmail,
-      to,
-      subject,
-      react: reactComponent,
-    };
-
-    if (resendAttachments && resendAttachments.length > 0) {
-      payload.attachments = resendAttachments;
     }
 
     await resend.emails.send(payload);
