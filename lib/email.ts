@@ -70,13 +70,7 @@ export async function sendEmail({
   }
 
   try {
-    const payload: {
-      from: string;
-      to: string;
-      subject: string;
-      html?: string;
-      text?: string;
-    } = {
+    const payload: any = {
       from: fromEmail,
       to,
       subject,
@@ -138,13 +132,7 @@ export async function sendTemplate({
       };
     }
 
-    const payload: {
-      from: string;
-      to: string;
-      subject: string;
-      html: string;
-      attachments?: Array<{ filename: string; content: Buffer }>;
-    } = {
+    const payload: any = {
       from: fromEmail,
       to,
       subject,
