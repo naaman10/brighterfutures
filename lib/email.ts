@@ -121,8 +121,10 @@ export async function sendTemplate({
     const payload: any = {
       from: fromEmail,
       to,
-      template: templateId,
-      template_data: dynamicTemplateData,
+      template: {
+        id: templateId,
+        variables: dynamicTemplateData,
+      },
     };
 
     if (resendAttachments && resendAttachments.length > 0) {
