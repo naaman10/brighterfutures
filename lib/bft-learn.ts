@@ -531,6 +531,53 @@ export function bftLearnQuestionPrompt(fields: Record<string, unknown>): string 
   return "";
 }
 
+/**
+ * Resolves a multiple choice answer (which may be a numeric index or ID) to its human-readable text
+ * by looking it up in the question's choices/options.
+ */
+export function resolveMultipleChoiceAnswer(
+  answerValue: unknown,
+  questionContent: Record<string, unknown>
+): string {
+  // If the answer is not a number, try the standard formatting first
+  if (typeof answerValue !== "number" && typeof answerValue !== "string") {
+    return formatBftReviewValue(answerValue);
+  }
+
+  // Look for choices/options arrays in the question content
+  const choicesKeys = ["choices", "options", "answers", "possibleAnswers", "multipleChoiceOptions"];
+  
+  for (const key of choicesKeys) {
+    const choices = questionContent[key];
+    if (!Array.isArray(choices)) continue;
+
+    // Try to find the matching choice
+    for (let i = 0; i < choices.length; i++) {
+      const choice = choices[i];
+      
+      // Check if this choice matches by index (1-based or 0-based)
+      if (answerValue === i + 1 || answerValue === i || answerValue === String(i + 1) || answerValue === String(i)) {
+        // Extract text from this choice
+        const choiceText = formatBftReviewValue(choice);
+        if (choiceText) return choiceText;
+      }
+      
+      // If choice is an object, check for matching id or value
+      const choiceRecord = asRecord(choice);
+      if (choiceRecord) {
+        const choiceId = choiceRecord.id || choiceRecord.value;
+        if (choiceId === answerValue || String(choiceId) === String(answerValue)) {
+          const choiceText = formatBftReviewValue(choice);
+          if (choiceText) return choiceText;
+        }
+      }
+    }
+  }
+
+  // Fall back to standard formatting
+  return formatBftReviewValue(answerValue);
+}
+
 export async function getBftLearnReview(
   enrollmentId: string,
   adminUserId: string
