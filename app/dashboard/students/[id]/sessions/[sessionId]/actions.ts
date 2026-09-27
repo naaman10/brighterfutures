@@ -15,7 +15,7 @@ import { performRescheduleSession } from "@/lib/reschedule-session";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { sendTemplate } from "@/lib/email";
 
-const FEEDBACK_TEMPLATE_ID = "d-21f0024fd59847d48961a61b7ed33c22";
+const FEEDBACK_TEMPLATE_ID = "feedback";
 
 export async function saveSessionSummaryAction(
   sessionId: string,
