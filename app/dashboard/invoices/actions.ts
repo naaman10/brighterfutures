@@ -222,7 +222,7 @@ export async function generateInvoiceForParentAndMonth(
   };
 }
 
-const INVOICE_EMAIL_TEMPLATE_ID = "d-0b61465b24144177bb2cd4f23a0bcb33";
+const INVOICE_EMAIL_TEMPLATE_ID = "invoice";
 
 function formatInvoiceMonth(billingMonth: string | Date | null): string {
   if (!billingMonth) return "";
