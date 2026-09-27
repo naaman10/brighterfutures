@@ -81,20 +81,30 @@ export async function sendSessionFeedbackEmailAction(
   if (!parentEmail) return { error: "Parent has no email address." };
   if (!parentName) return { error: "Parent name is required." };
 
+  const templateData = {
+    parent_name: parentName,
+    student_first_name: student.first_name?.trim() ?? "",
+    student_last_name: student.last_name?.trim() ?? "",
+    session_date: formatDisplayDate(session.session_date),
+    session_time: formatDisplayTime(session.session_time),
+    session_feedback: feedback,
+  };
+
+  console.log("[Feedback Email] Sending with template:", FEEDBACK_TEMPLATE_ID);
+  console.log("[Feedback Email] Template data:", templateData);
+
   const result = await sendTemplate({
     to: parentEmail,
     templateId: FEEDBACK_TEMPLATE_ID,
-    dynamicTemplateData: {
-      parent_name: parentName,
-      student_first_name: student.first_name?.trim() ?? "",
-      student_last_name: student.last_name?.trim() ?? "",
-      session_date: formatDisplayDate(session.session_date),
-      session_time: formatDisplayTime(session.session_time),
-      session_feedback: feedback,
-    },
+    dynamicTemplateData: templateData,
   });
 
-  if (!result.success) return { error: result.error };
+  console.log("[Feedback Email] Send result:", result);
+
+  if (!result.success) {
+    console.error("[Feedback Email] Failed:", result.error);
+    return { error: result.error };
+  }
 
   const updateResult = await updateSessionFeedbackSentAt(sessionId);
   if ("error" in updateResult) return { error: updateResult.error };
