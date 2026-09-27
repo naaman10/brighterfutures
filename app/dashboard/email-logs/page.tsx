@@ -96,15 +96,11 @@ export default async function EmailLogsPage({
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
           <p>{result.error}</p>
           <p className="mt-2">
-            Email logs are unavailable. Check{" "}
+            Email logs are unavailable. Check that{" "}
             <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">
-              SENDGRID_ACTIVITY_API_KEY
+              RESEND_API_KEY
             </code>{" "}
-            or{" "}
-            <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/50">
-              SENDGRID_API_KEY
-            </code>{" "}
-            and ensure your SendGrid plan has access to the Email Activity or Messages API.
+            is set in your environment variables.
           </p>
         </div>
       ) : result.logs.length === 0 ? (

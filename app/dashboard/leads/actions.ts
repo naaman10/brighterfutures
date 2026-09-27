@@ -38,7 +38,7 @@ export async function updateLeadStatusAction(
 }
 
 /**
- * Sends the lead onboarding SendGrid template to the lead's email.
+ * Sends the lead onboarding email using Resend template to the lead's email.
  * Only allowed when the lead's status is In Progress.
  */
 export async function sendLeadOnboardingAction(leadId: string): Promise<{ error?: string }> {
