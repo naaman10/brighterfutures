@@ -242,7 +242,7 @@ function formatInvoiceMonthName(billingMonth: string | Date | null): string {
   }).format(d);
 }
 
-const PAYMENT_REMINDER_TEMPLATE_ID = "d-81d93a6ccb88442eb76b2bacad30aabd";
+const PAYMENT_REMINDER_TEMPLATE_ID = "invoice-reminder";
 
 export async function sendSelectedInvoices(invoiceIds: number[]): Promise<{
   ok?: boolean;
