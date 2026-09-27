@@ -141,8 +141,27 @@ export async function sendTemplate({
 
     const result = await resend.emails.send(payload);
     
-    console.log("[Resend] Email send result:", result);
+    console.log("[Resend] Email send result:", JSON.stringify(result, null, 2));
     
+    // Check if the result contains an error
+    if (result.error) {
+      console.error("[Resend] API returned error:", result.error);
+      return {
+        success: false,
+        error: `Resend API error: ${JSON.stringify(result.error)}`,
+      };
+    }
+    
+    // Check if we got an ID back (successful send)
+    if (!result.data?.id) {
+      console.error("[Resend] No email ID returned:", result);
+      return {
+        success: false,
+        error: `Resend did not return an email ID. Response: ${JSON.stringify(result)}`,
+      };
+    }
+    
+    console.log("[Resend] Email sent successfully with ID:", result.data.id);
     return { success: true };
   } catch (err: unknown) {
     console.error("[Resend] Error sending email:", err);
