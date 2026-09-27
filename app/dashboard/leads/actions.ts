@@ -6,7 +6,7 @@ import { getLeadById, updateLeadStatusById, type LeadStatus } from "@/lib/db";
 
 const VALID_STATUSES: LeadStatus[] = ["new", "in_progress", "closed"];
 
-const LEAD_ONBOARDING_TEMPLATE_ID = "d-ecb07c503ac942cca3bc3a245ef7c859";
+const LEAD_ONBOARDING_TEMPLATE_ID = "onboarding";
 
 function isLeadInProgressStatus(value: unknown): boolean {
   const raw = String(value ?? "").trim().toLowerCase();
