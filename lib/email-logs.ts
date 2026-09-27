@@ -43,14 +43,16 @@ export async function getEmailLogs(
   try {
     const response = await resend.emails.list({ limit });
 
-    if (!response.data) {
+    if (!response.data || !response.data.data) {
       return {
         ok: false,
         error: "No data returned from Resend API",
       };
     }
 
-    const logs: EmailLogEntry[] = response.data.map((email: any) => {
+    const emails = response.data.data;
+    
+    const logs: EmailLogEntry[] = emails.map((email: any) => {
       const to = Array.isArray(email.to) ? email.to[0] : email.to || "";
       const subject = email.subject || "";
       
