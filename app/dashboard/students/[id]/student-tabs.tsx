@@ -2,13 +2,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { Session, StudentDetail } from "@/lib/db";
+import type { Session, SessionRecurrence, StudentDetail } from "@/lib/db";
 import { formatDisplayDate, formatDisplayDateTime, formatDisplayTime } from "@/lib/format";
 import { pickNextSession } from "@/lib/next-session";
 import { RecordStatusBadge } from "../../components/record-status-badge";
 import { parseRecordStatus } from "@/lib/record-status";
 import { AddSessionForm } from "./add-session-form";
 import { NextSessionCard } from "./next-session-card";
+import { SessionRecurrences } from "./session-recurrences";
 import { StudentAISummary } from "./student-ai-summary";
 import { StudentSessionsTable } from "./student-sessions-table";
 import { CreateBftLearnAccountForm } from "./create-bft-learn-account-form";
@@ -20,6 +21,7 @@ type Props = {
   studentId: string;
   student: StudentDetail;
   sessions: Session[];
+  recurrences: SessionRecurrence[];
   defaultTab?: TabKey;
   canSendWelcome: boolean;
   canResendWelcome: boolean;
@@ -57,6 +59,7 @@ export function StudentTabs({
   studentId,
   student,
   sessions,
+  recurrences,
   defaultTab = "sessions",
   canSendWelcome,
   canResendWelcome,
@@ -272,6 +275,7 @@ export function StudentTabs({
             <div className="mb-6 space-y-6">
               <NextSessionCard studentId={studentId} session={nextSession} />
               <AddSessionForm studentId={studentId} />
+              <SessionRecurrences studentId={studentId} recurrences={recurrences} />
             </div>
             <StudentSessionsTable
               studentId={studentId}

@@ -4,12 +4,18 @@ import { revalidatePath } from "next/cache";
 import OpenAI from "openai";
 import {
   createSession,
+  createSessionRecurrence,
   getSessionsByStudentId,
   getStudentById,
   setStudentWelcomeSent,
   updateStudentAISummary,
   updateStudentWelcomeSentAt,
 } from "@/lib/db";
+import {
+  formIntervalToRecurrence,
+  recurrenceDates,
+  weekdayOccurrenceInMonth,
+} from "@/lib/session-recurrence";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { getWelcomeEmailAttachments, sendTemplate } from "@/lib/email";
 
@@ -126,100 +132,17 @@ export async function resendWelcomeEmail(studentId: string): Promise<{ error?: s
   return {};
 }
 
-/**
- * Get the first date on or after start that has the given day of week.
- */
-function getFirstMatchingWeekday(startDate: Date, dayOfWeek: number): Date {
-  const cur = new Date(startDate);
-  cur.setHours(0, 0, 0, 0);
-  while (cur.getDay() !== dayOfWeek) {
-    cur.setDate(cur.getDate() + 1);
-  }
-  return cur;
+function todayYmd(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
-/** 1-based: which occurrence of this weekday in the month (e.g. 2 = second Monday). */
-function getWeekdayOccurrenceInMonth(d: Date): number {
-  const dayOfWeek = d.getDay();
-  let count = 0;
-  const first = new Date(d.getFullYear(), d.getMonth(), 1);
-  for (let i = 1; i <= d.getDate(); i++) {
-    first.setDate(i);
-    if (first.getDay() === dayOfWeek) count++;
-  }
-  return count;
-}
-
-/** Get the nth occurrence of weekday in the given month (1-based). If month has fewer, returns the last occurrence. */
-function getNthWeekdayInMonth(
-  year: number,
-  month: number,
-  dayOfWeek: number,
-  n: number
-): Date {
-  const month0 = month - 1; // JS Date uses 0-based month
-  const d = new Date(year, month0, 1);
-  let count = 0;
-  let last: Date | null = null;
-  while (d.getMonth() === month0) {
-    if (d.getDay() === dayOfWeek) {
-      count++;
-      last = new Date(d);
-      if (count === n) return last;
-    }
-    d.setDate(d.getDate() + 1);
-  }
-  return last ?? new Date(year, month0, 1);
-}
-
-/** Format date as YYYY-MM-DD using local timezone (avoids toISOString UTC shift). */
-function toLocalDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-/**
- * Get dates for recurring sessions based on interval.
- * dayOfWeek: 0 = Sunday, 1 = Monday, ..., 6 = Saturday.
- * interval: "1" = every week, "2" = every two weeks, "3" = every three weeks, "monthly" = same day of month each month.
- */
-function getRecurringDates(
-  startDate: Date,
-  endDate: Date,
-  dayOfWeek: number,
-  interval: string
-): string[] {
-  const out: string[] = [];
-  const end = new Date(endDate);
-  end.setHours(23, 59, 59, 999);
-
-  if (interval === "monthly") {
-    const first = getFirstMatchingWeekday(startDate, dayOfWeek);
-    const occurrenceN = getWeekdayOccurrenceInMonth(first);
-    let cur = new Date(first);
-    while (cur <= end) {
-      out.push(toLocalDateString(cur));
-      cur = getNthWeekdayInMonth(
-        cur.getFullYear(),
-        cur.getMonth() + 1,
-        dayOfWeek,
-        occurrenceN
-      );
-    }
-    return out;
-  }
-
-  const weeks = interval === "1" ? 1 : interval === "2" ? 2 : 3;
-  const stepDays = weeks * 7;
-
-  let cur = getFirstMatchingWeekday(startDate, dayOfWeek);
-  while (cur <= end) {
-    out.push(toLocalDateString(cur));
-    cur.setDate(cur.getDate() + stepDays);
-  }
-  return out;
+function occurrenceFromYmd(ymd: string): number {
+  const [year, month, day] = ymd.slice(0, 10).split("-").map(Number);
+  return weekdayOccurrenceInMonth(new Date(Date.UTC(year, (month ?? 1) - 1, day ?? 1)));
 }
 
 export async function addSessions(
@@ -276,11 +199,34 @@ export async function addSessions(
   }
   const dayOfWeek = parseInt(dayOfWeekStr, 10);
   if (dayOfWeek < 0 || dayOfWeek > 6) return { error: "Invalid day of week" };
-  const endDate = new Date(endDateStr);
-  const startDate = startDateStr ? new Date(startDateStr) : new Date();
-  if (endDate < startDate) return { error: "End date must be on or after start date" };
+  const startYmd = startDateStr || todayYmd();
+  const endYmd = endDateStr;
+  if (endYmd < startYmd) return { error: "End date must be on or after start date" };
 
-  const dates = getRecurringDates(startDate, endDate, dayOfWeek, recurringInterval);
+  const intervalName = formIntervalToRecurrence(recurringInterval);
+  const dates = recurrenceDates({
+    startDate: startYmd,
+    endDate: endYmd,
+    dayOfWeek,
+    interval: intervalName,
+  });
+  if (dates.length === 0) {
+    return { error: "No sessions fall in that date range" };
+  }
+
+  const recurrence = await createSessionRecurrence({
+    student_id: studentId,
+    subject,
+    interval: intervalName,
+    day_of_week: dayOfWeek,
+    month_weekday_occurrence:
+      intervalName === "monthly" ? occurrenceFromYmd(dates[0]!) : null,
+    session_time,
+    start_date: startYmd,
+    end_date: endYmd,
+  });
+  if ("error" in recurrence) return { error: recurrence.error };
+
   for (const session_date of dates) {
     const result = await createSession({
       student_id: studentId,
@@ -288,6 +234,7 @@ export async function addSessions(
       session_time,
       subject,
       status,
+      recurrence_id: recurrence.id,
     });
     if ("error" in result) {
       return { error: result.error };

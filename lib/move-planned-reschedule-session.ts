@@ -1,4 +1,8 @@
-import { getSessionById, updateSessionDateTime } from "@/lib/db";
+import {
+  getSessionById,
+  setSessionRecurrenceLink,
+  updateSessionDateTime,
+} from "@/lib/db";
 import { isSessionDateTimeBeforeNow } from "@/lib/reschedule-session";
 
 export type MovePlannedRescheduleInput = {
@@ -37,6 +41,15 @@ export async function performMovePlannedRescheduleSession(
     session_time
   );
   if ("error" in updateResult) return { error: updateResult.error };
+
+  if (session.recurrence_id) {
+    const detachResult = await setSessionRecurrenceLink(
+      input.sessionId,
+      session.recurrence_id,
+      true
+    );
+    if ("error" in detachResult) return { error: detachResult.error };
+  }
 
   return {};
 }

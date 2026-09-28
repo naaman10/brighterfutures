@@ -1,6 +1,7 @@
 import {
   createSession,
   getSessionById,
+  setSessionRecurrenceLink,
   updateSessionStatus,
 } from "@/lib/db";
 import { isDeleted } from "@/lib/session-status";
@@ -55,12 +56,24 @@ export async function performRescheduleSession(
   const updateResult = await updateSessionStatus(input.sessionId, "rescheduled");
   if ("error" in updateResult) return { error: updateResult.error };
 
+  const recurrenceId = session.recurrence_id ?? null;
+  if (recurrenceId) {
+    const detachResult = await setSessionRecurrenceLink(
+      input.sessionId,
+      recurrenceId,
+      true
+    );
+    if ("error" in detachResult) return { error: detachResult.error };
+  }
+
   const createResult = await createSession({
     student_id: input.studentId,
     session_date,
     session_time,
     subject,
     status: "planned_reschedule",
+    recurrence_id: recurrenceId,
+    recurrence_detached: recurrenceId != null,
   });
   if ("error" in createResult) {
     return { error: "Original session marked rescheduled but failed to create new session." };

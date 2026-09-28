@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getStudentById, getSessionsByStudentId } from "@/lib/db";
+import { getRecurrencesByStudentId, getStudentById, getSessionsByStudentId } from "@/lib/db";
 import { formatDisplayDateTime } from "@/lib/format";
 import { SendWelcomeEmailButton } from "./send-welcome-email-button";
 import { RecordStatusBadge } from "@/app/dashboard/components/record-status-badge";
@@ -17,9 +17,10 @@ type Props = {
 export default async function StudentDetailPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { tab } = await searchParams;
-  const [student, sessions] = await Promise.all([
+  const [student, sessions, recurrences] = await Promise.all([
     getStudentById(id),
     getSessionsByStudentId(id),
+    getRecurrencesByStudentId(id),
   ]);
   if (!student) notFound();
 
@@ -64,6 +65,7 @@ export default async function StudentDetailPage({ params, searchParams }: Props)
         studentId={id}
         student={student}
         sessions={sessions}
+        recurrences={recurrences}
         defaultTab={
           tab === "sessions" ||
           tab === "bft-learn" ||

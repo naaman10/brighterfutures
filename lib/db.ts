@@ -3,6 +3,7 @@ import { neon } from "@neondatabase/serverless";
 import type { RecordStatus } from "./record-status";
 import type { SessionStatus } from "./session-status";
 import { SESSION_STATUS_LABELS, SESSION_STATUSES } from "./session-status";
+import type { RecurrenceInterval, SessionRecurrence } from "./session-recurrence";
 
 export type { SessionStatus };
 export { SESSION_STATUS_LABELS, SESSION_STATUSES };
@@ -742,9 +743,13 @@ export type Session = {
   rescheduled_from_session_id?: string | null;
   sync_source?: string | null;
   last_synced_at?: string | Date | null;
+  recurrence_id?: string | null;
+  recurrence_detached?: boolean;
   created_at: string | Date | null;
   updated_at: string | Date | null;
 };
+
+export type { SessionRecurrence };
 
 /**
  * Fetches all sessions for a student, newest first.
@@ -762,6 +767,8 @@ export async function getSessionsByStudentId(studentId: string): Promise<Session
       feedback_markdown,
       feedback_sent_at,
       google_meet_added,
+      recurrence_id,
+      recurrence_detached,
       created_at,
       updated_at
     FROM sessions
@@ -936,6 +943,8 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
       rescheduled_from_session_id,
       sync_source,
       last_synced_at,
+      recurrence_id,
+      recurrence_detached,
       created_at,
       updated_at
     FROM sessions
@@ -965,6 +974,8 @@ export async function getSessionByGoogleEventId(
       rescheduled_from_session_id,
       sync_source,
       last_synced_at,
+      recurrence_id,
+      recurrence_detached,
       created_at,
       updated_at
     FROM sessions
@@ -1112,6 +1123,8 @@ export type CreateSessionInput = {
   session_time: string;
   subject: string;
   status?: SessionStatus;
+  recurrence_id?: string | null;
+  recurrence_detached?: boolean;
 };
 
 /**
@@ -1123,13 +1136,214 @@ export async function createSession(
   const status = data.status ?? "planned";
   try {
     const rows = await sql`
-      INSERT INTO sessions (student_id, session_date, session_time, subject, status)
-      VALUES (${data.student_id}, ${data.session_date}, ${data.session_time}, ${data.subject}, ${status})
+      INSERT INTO sessions (
+        student_id,
+        session_date,
+        session_time,
+        subject,
+        status,
+        recurrence_id,
+        recurrence_detached
+      )
+      VALUES (
+        ${data.student_id},
+        ${data.session_date},
+        ${data.session_time},
+        ${data.subject},
+        ${status},
+        ${data.recurrence_id ?? null},
+        ${data.recurrence_detached ?? false}
+      )
       RETURNING id
     `;
     const id = (rows[0] as { id: string })?.id;
     if (!id) return { error: "Failed to create session." };
     return { ok: true, id };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export type CreateSessionRecurrenceInput = {
+  student_id: string;
+  subject: string;
+  interval: RecurrenceInterval;
+  day_of_week: number;
+  month_weekday_occurrence?: number | null;
+  session_time: string;
+  start_date: string;
+  end_date: string;
+};
+
+export async function createSessionRecurrence(
+  data: CreateSessionRecurrenceInput
+): Promise<{ ok: true; id: string } | { error: string }> {
+  try {
+    const rows = await sql`
+      INSERT INTO session_recurrences (
+        student_id,
+        subject,
+        interval,
+        day_of_week,
+        month_weekday_occurrence,
+        session_time,
+        start_date,
+        end_date
+      )
+      VALUES (
+        ${data.student_id},
+        ${data.subject},
+        ${data.interval},
+        ${data.day_of_week},
+        ${data.month_weekday_occurrence ?? null},
+        ${data.session_time},
+        ${data.start_date}::date,
+        ${data.end_date}::date
+      )
+      RETURNING id
+    `;
+    const id = (rows[0] as { id: string })?.id;
+    if (!id) return { error: "Failed to create recurrence." };
+    return { ok: true, id };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export async function getRecurrencesByStudentId(
+  studentId: string
+): Promise<SessionRecurrence[]> {
+  const rows = await sql`
+    SELECT
+      id,
+      student_id,
+      subject,
+      interval,
+      day_of_week::int AS day_of_week,
+      month_weekday_occurrence::int AS month_weekday_occurrence,
+      session_time::text AS session_time,
+      (start_date::date)::text AS start_date,
+      (end_date::date)::text AS end_date
+    FROM session_recurrences
+    WHERE student_id = ${studentId}
+    ORDER BY start_date ASC, session_time ASC
+  `;
+  return rows as SessionRecurrence[];
+}
+
+export async function getRecurrenceById(
+  recurrenceId: string
+): Promise<SessionRecurrence | null> {
+  const rows = await sql`
+    SELECT
+      id,
+      student_id,
+      subject,
+      interval,
+      day_of_week::int AS day_of_week,
+      month_weekday_occurrence::int AS month_weekday_occurrence,
+      session_time::text AS session_time,
+      (start_date::date)::text AS start_date,
+      (end_date::date)::text AS end_date
+    FROM session_recurrences
+    WHERE id = ${recurrenceId}
+  `;
+  return (rows[0] as SessionRecurrence) ?? null;
+}
+
+export async function updateSessionRecurrence(
+  recurrenceId: string,
+  data: {
+    subject: string;
+    interval: RecurrenceInterval;
+    day_of_week: number;
+    month_weekday_occurrence: number | null;
+    session_time: string;
+    end_date: string;
+  }
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE session_recurrences
+      SET subject = ${data.subject},
+          interval = ${data.interval},
+          day_of_week = ${data.day_of_week},
+          month_weekday_occurrence = ${data.month_weekday_occurrence},
+          session_time = ${data.session_time},
+          end_date = ${data.end_date}::date,
+          updated_at = NOW()
+      WHERE id = ${recurrenceId}
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export type RecurrenceMemberSession = {
+  id: string;
+  session_date: string;
+  session_time: string;
+  subject: string;
+  status: string;
+  recurrence_detached: boolean;
+};
+
+export async function getSessionsByRecurrenceId(
+  recurrenceId: string
+): Promise<RecurrenceMemberSession[]> {
+  const rows = await sql`
+    SELECT
+      id,
+      (session_date::date)::text AS session_date,
+      session_time::text AS session_time,
+      subject,
+      status,
+      recurrence_detached
+    FROM sessions
+    WHERE recurrence_id = ${recurrenceId}
+    ORDER BY session_date ASC, session_time ASC
+  `;
+  return rows as RecurrenceMemberSession[];
+}
+
+export async function updateSessionSchedule(
+  sessionId: string,
+  data: { session_date: string; session_time: string; subject: string }
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE sessions
+      SET session_date = ${data.session_date}::date,
+          session_time = ${data.session_time},
+          subject = ${data.subject},
+          updated_at = NOW()
+      WHERE id = ${sessionId}
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
+}
+
+export async function setSessionRecurrenceLink(
+  sessionId: string,
+  recurrenceId: string | null,
+  detached: boolean
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE sessions
+      SET recurrence_id = ${recurrenceId},
+          recurrence_detached = ${detached},
+          updated_at = NOW()
+      WHERE id = ${sessionId}
+    `;
+    return { ok: true };
   } catch (e) {
     const message = e instanceof Error ? e.message : "Database error";
     return { error: message };
