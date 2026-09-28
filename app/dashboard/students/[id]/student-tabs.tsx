@@ -4,9 +4,11 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { Session, StudentDetail } from "@/lib/db";
 import { formatDisplayDate, formatDisplayDateTime, formatDisplayTime } from "@/lib/format";
+import { pickNextSession } from "@/lib/next-session";
 import { RecordStatusBadge } from "../../components/record-status-badge";
 import { parseRecordStatus } from "@/lib/record-status";
 import { AddSessionForm } from "./add-session-form";
+import { NextSessionCard } from "./next-session-card";
 import { StudentAISummary } from "./student-ai-summary";
 import { StudentSessionsTable } from "./student-sessions-table";
 import { CreateBftLearnAccountForm } from "./create-bft-learn-account-form";
@@ -62,6 +64,7 @@ export function StudentTabs({
   welcomeActions,
 }: Props) {
   const [tab, setTab] = useState<TabKey>(defaultTab);
+  const nextSession = useMemo(() => pickNextSession(sessions), [sessions]);
 
   const tabs = useMemo(
     () => [
@@ -266,7 +269,8 @@ export function StudentTabs({
                 Sessions
               </h2>
             </div>
-            <div className="mb-6">
+            <div className="mb-6 space-y-6">
+              <NextSessionCard studentId={studentId} session={nextSession} />
               <AddSessionForm studentId={studentId} />
             </div>
             <StudentSessionsTable

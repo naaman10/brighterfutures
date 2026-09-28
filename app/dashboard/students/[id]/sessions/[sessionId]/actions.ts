@@ -17,6 +17,15 @@ import { sendTemplate } from "@/lib/email";
 
 const FEEDBACK_TEMPLATE_ID = "feedback";
 
+/** True when feedback has visible text, ignoring empty editor markup. */
+function hasFeedbackContent(feedback: string): boolean {
+  const text = feedback
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .trim();
+  return text.length > 0;
+}
+
 export async function saveSessionSummaryAction(
   sessionId: string,
   studentId: string,
@@ -77,7 +86,7 @@ export async function sendSessionFeedbackEmailAction(
   const feedback = (session.feedback_markdown ?? "").trim();
   const parentEmail = (student.parent_email ?? "").trim();
   const parentName = (student.parent_first_name ?? "").trim() || (student.parent_name ?? "").trim();
-  if (!feedback) return { error: "Add feedback before sending." };
+  if (!hasFeedbackContent(feedback)) return { error: "Add feedback before sending." };
   if (!parentEmail) return { error: "Parent has no email address." };
   if (!parentName) return { error: "Parent name is required." };
 
@@ -101,6 +110,54 @@ export async function sendSessionFeedbackEmailAction(
 
   revalidatePath(`/dashboard/students/${studentId}`);
   revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);
+  return {};
+}
+
+export async function completeSessionAction(
+  sessionId: string,
+  studentId: string
+): Promise<{ error?: string }> {
+  return updateSessionStatusAction(sessionId, studentId, "completed");
+}
+
+export async function completeSessionAndSendFeedbackAction(
+  sessionId: string,
+  studentId: string
+): Promise<{ error?: string }> {
+  const [session, student] = await Promise.all([
+    getSessionById(sessionId),
+    getStudentById(studentId),
+  ]);
+  if (!session || !student || session.student_id !== studentId) {
+    return { error: "Session or student not found" };
+  }
+  if (isDeleted(session.status)) {
+    return { error: "This session has been deleted." };
+  }
+
+  const feedback = (session.feedback_markdown ?? "").trim();
+  const parentEmail = (student.parent_email ?? "").trim();
+  const parentName =
+    (student.parent_first_name ?? "").trim() || (student.parent_name ?? "").trim();
+  if (!hasFeedbackContent(feedback)) return { error: "Add feedback before sending." };
+  if (!parentEmail) return { error: "Parent has no email address." };
+  if (!parentName) return { error: "Parent name is required." };
+
+  const previousStatus = session.status;
+  const statusResult = await updateSessionStatusAction(
+    sessionId,
+    studentId,
+    "completed"
+  );
+  if (statusResult.error) return statusResult;
+
+  const emailResult = await sendSessionFeedbackEmailAction(sessionId, studentId);
+  if (emailResult.error) {
+    if (previousStatus !== "completed") {
+      await updateSessionStatusAction(sessionId, studentId, previousStatus);
+    }
+    return { error: emailResult.error };
+  }
   return {};
 }
 

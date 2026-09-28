@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import Placeholder from "@tiptap/extension-placeholder";
 import StarterKit from "@tiptap/starter-kit";
@@ -26,6 +26,11 @@ type Props = {
   sessionId: string;
   studentId: string;
   initialFeedback: string | null;
+};
+
+export type SessionFeedbackEditorHandle = {
+  /** Persist current editor contents when they differ from the last save. */
+  saveNow: () => Promise<{ error?: string }>;
 };
 
 function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> | null }) {
@@ -76,24 +81,27 @@ function Toolbar({ editor }: { editor: ReturnType<typeof useEditor> | null }) {
   );
 }
 
-export function SessionFeedbackEditor({ sessionId, studentId, initialFeedback }: Props) {
+export const SessionFeedbackEditor = forwardRef<SessionFeedbackEditorHandle, Props>(
+  function SessionFeedbackEditor({ sessionId, studentId, initialFeedback }, ref) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const lastSavedHtml = useRef(initialFeedback ?? "");
+  const initialHtml = contentToHtml(initialFeedback);
+  const lastSavedHtml = useRef(initialHtml);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const save = useCallback(
-    async (html: string) => {
+    async (html: string): Promise<{ error?: string }> => {
       setSaving(true);
       const result = await saveSessionFeedbackAction(sessionId, studentId, html || null);
       setSaving(false);
       if (result.error) {
         toast.error(result.error);
-      } else {
-        lastSavedHtml.current = html;
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2000);
+        return { error: result.error };
       }
+      lastSavedHtml.current = html;
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      return {};
     },
     [sessionId, studentId]
   );
@@ -104,7 +112,7 @@ export function SessionFeedbackEditor({ sessionId, studentId, initialFeedback }:
       StarterKit,
       Placeholder.configure({ placeholder: "Write feedback…" }),
     ],
-    content: contentToHtml(initialFeedback),
+    content: initialHtml,
     editorProps: {
       attributes: {
         class:
@@ -127,6 +135,23 @@ export function SessionFeedbackEditor({ sessionId, studentId, initialFeedback }:
       }
     };
   }, [editor, save]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      saveNow: async () => {
+        if (saveTimeoutRef.current) {
+          clearTimeout(saveTimeoutRef.current);
+          saveTimeoutRef.current = null;
+        }
+        if (!editor) return {};
+        const html = editor.getHTML();
+        if (html === lastSavedHtml.current) return {};
+        return save(html);
+      },
+    }),
+    [editor, save]
+  );
 
   const handleBlur = useCallback(() => {
     if (saveTimeoutRef.current) {
@@ -162,4 +187,4 @@ export function SessionFeedbackEditor({ sessionId, studentId, initialFeedback }:
       </div>
     </div>
   );
-}
+});
