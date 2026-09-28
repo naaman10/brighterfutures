@@ -64,7 +64,14 @@ export default async function StudentDetailPage({ params, searchParams }: Props)
         studentId={id}
         student={student}
         sessions={sessions}
-        defaultTab={tab === "bft-learn" || tab === "sessions" ? tab : "details"}
+        defaultTab={
+          tab === "sessions" ||
+          tab === "bft-learn" ||
+          tab === "details" ||
+          tab === "teaching-assistant"
+            ? tab
+            : "sessions"
+        }
         canSendWelcome={canSendWelcome}
         canResendWelcome={canResendWelcome}
         welcomeSentAtDisplay={welcomeSentAtDisplay}
