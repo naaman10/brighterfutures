@@ -29,6 +29,7 @@ export function AddSessionForm({ studentId }: Props) {
   const [mode, setMode] = useState<"single" | "recurring">("single");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
@@ -50,13 +51,32 @@ export function AddSessionForm({ studentId }: Props) {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-      <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-        Add session(s)
-      </h3>
-      {error && (
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-      )}
+    <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex w-full items-center justify-between p-4 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800"
+      >
+        <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
+          Add session(s)
+        </h3>
+        <svg
+          className={`size-5 text-zinc-500 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {isExpanded && (
+        <form action={handleSubmit} className="space-y-4 border-t border-zinc-200 p-4 dark:border-zinc-700">
+          {error && (
+            <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          )}
       <div>
         <label className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400">
           Subject *
@@ -213,6 +233,8 @@ export function AddSessionForm({ studentId }: Props) {
           ? "Add session"
           : "Add recurring sessions"}
       </button>
-    </form>
+        </form>
+      )}
+    </div>
   );
 }
