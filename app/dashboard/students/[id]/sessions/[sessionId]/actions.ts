@@ -9,7 +9,6 @@ import {
   updateSessionFeedback,
   updateSessionFeedbackSentAt,
   updateSessionStatus,
-  updateSessionSummary,
 } from "@/lib/db";
 import { performRescheduleSession } from "@/lib/reschedule-session";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
@@ -24,18 +23,6 @@ function hasFeedbackContent(feedback: string): boolean {
     .replace(/&nbsp;/gi, " ")
     .trim();
   return text.length > 0;
-}
-
-export async function saveSessionSummaryAction(
-  sessionId: string,
-  studentId: string,
-  summaryMarkdown: string | null
-): Promise<{ error?: string }> {
-  const result = await updateSessionSummary(sessionId, summaryMarkdown);
-  if ("error" in result) return { error: result.error };
-  revalidatePath(`/dashboard/students/${studentId}`);
-  revalidatePath(`/dashboard/students/${studentId}/sessions/${sessionId}`);
-  return {};
 }
 
 export async function updateSessionStatusAction(

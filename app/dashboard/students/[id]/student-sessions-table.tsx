@@ -23,6 +23,18 @@ function sessionLabel(session: Session): string {
   return `${session.subject} on ${formatDisplayDate(session.session_date) || "—"} at ${formatDisplayTime(session.session_time) || "—"}`;
 }
 
+function feedbackSnippet(markdown: string | null): string {
+  if (!markdown) return "—";
+  const text = markdown
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!text) return "—";
+  if (text.length <= 100) return text;
+  return `${text.slice(0, 100)}…`;
+}
+
 export function StudentSessionsTable({ studentId, sessions, studentDob }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -216,6 +228,9 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                   <option value="cancelled">Status: Cancelled</option>
                 </select>
               </th>
+              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Feedback
+              </th>
               <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Actions
               </th>
@@ -252,6 +267,9 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                 </td>
                 <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                   {SESSION_STATUS_LABELS[session.status ?? "planned"]}
+                </td>
+                <td className="max-w-xs px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                  {feedbackSnippet(session.feedback_markdown)}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-3">

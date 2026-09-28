@@ -6,7 +6,6 @@ import { SendFeedbackButton } from "./send-feedback-button";
 import { SessionFeedbackEditor } from "./session-feedback-editor";
 import type { EditableSessionStatus } from "@/lib/session-status";
 import { SessionStatusSelect } from "./session-status-select";
-import { SessionSummaryEditor } from "./session-summary-editor";
 import { DeleteSessionButton } from "@/app/dashboard/components/delete-session-button";
 import { SessionGoogleMeetIcon } from "@/app/dashboard/components/session-google-meet-icon";
 import { AddGoogleMeetButton } from "./add-google-meet-button";
@@ -154,14 +153,6 @@ export default async function SessionViewPage({ params }: Props) {
             </Link>
           </div>
         ) : null}
-      </div>
-
-      <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
-        <SessionSummaryEditor
-          sessionId={sessionId}
-          studentId={studentId}
-          initialSummary={session.summary_markdown}
-        />
       </div>
 
       <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">

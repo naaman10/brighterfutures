@@ -281,17 +281,15 @@ export async function generateStudentAISummary(
   if (!student) return { error: "Student not found" };
 
   if (sessions.length === 0) {
-    return { error: "No sessions yet. Add at least one session with summary or feedback to generate an AI summary." };
+    return { error: "No sessions yet. Add at least one session with feedback to generate an AI summary." };
   }
 
   const sessionBlocks = sessions.map((s, i) => {
     const date = formatDisplayDate(s.session_date);
     const time = formatDisplayTime(s.session_time);
-    const summaryText = stripHtml(s.summary_markdown);
     const feedbackText = stripHtml(s.feedback_markdown);
     return [
       `## Session ${i + 1} — ${date} ${time} — ${s.subject}`,
-      summaryText ? `**Summary:** ${summaryText}` : "",
       feedbackText ? `**Feedback:** ${feedbackText}` : "",
     ]
       .filter(Boolean)
@@ -301,9 +299,9 @@ export async function generateStudentAISummary(
   const sessionData = sessionBlocks.join("\n\n---\n\n");
   const studentName = `${student.first_name} ${student.last_name}`.trim();
 
-  const systemPrompt = `You are a teaching assistant. Review the summary and feedback for all of the student's previous sessions and provide a concise summary of their progress and recommend any areas the student should focus on. Be clear and practical.`;
+  const systemPrompt = `You are a teaching assistant. Review the feedback for all of the student's previous sessions and provide a concise summary of their progress and recommend any areas the student should focus on. Be clear and practical.`;
 
-  const userMessage = `Student: ${studentName}\n\nBelow are the session summaries and feedback (oldest to newest):\n\n${sessionData}`;
+  const userMessage = `Student: ${studentName}\n\nBelow is the session feedback (oldest to newest):\n\n${sessionData}`;
 
   // Keep retries in the existing loop rather than also retrying in the SDK.
   const openai = new OpenAI({ apiKey, maxRetries: 0 });

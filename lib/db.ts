@@ -734,7 +734,6 @@ export type Session = {
   session_time: string;
   subject: string;
   status: SessionStatus;
-  summary_markdown: string | null;
   feedback_markdown: string | null;
   feedback_sent_at: string | Date | null;
   google_event_id?: string | null;
@@ -763,7 +762,6 @@ export async function getSessionsByStudentId(studentId: string): Promise<Session
       session_time,
       subject,
       status,
-      summary_markdown,
       feedback_markdown,
       feedback_sent_at,
       google_meet_added,
@@ -804,7 +802,6 @@ export async function getSessionsForMonth(
       s.session_time,
       s.subject,
       s.status,
-      s.summary_markdown,
       s.feedback_markdown,
       s.feedback_sent_at,
       s.google_meet_added,
@@ -837,7 +834,6 @@ export async function getSessionsForDate(
       s.session_time,
       s.subject,
       s.status,
-      s.summary_markdown,
       s.feedback_markdown,
       s.feedback_sent_at,
       s.google_meet_added,
@@ -882,7 +878,6 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
           s.session_time,
           s.subject,
           s.status,
-          s.summary_markdown,
           s.feedback_markdown,
           s.feedback_sent_at,
           s.google_meet_added,
@@ -905,7 +900,6 @@ export async function getSessions(status?: string | null): Promise<SessionWithSt
           s.session_time,
           s.subject,
           s.status,
-          s.summary_markdown,
           s.feedback_markdown,
           s.feedback_sent_at,
           s.google_meet_added,
@@ -934,7 +928,6 @@ export async function getSessionById(sessionId: string): Promise<Session | null>
       session_time,
       subject,
       status,
-      summary_markdown,
       feedback_markdown,
       feedback_sent_at,
       google_event_id,
@@ -966,7 +959,6 @@ export async function getSessionByGoogleEventId(
       session_time,
       subject,
       status,
-      summary_markdown,
       feedback_markdown,
       feedback_sent_at,
       google_event_id,
@@ -1003,7 +995,6 @@ export async function getSessionWithStudentNames(
       s.session_time,
       s.subject,
       s.status,
-      s.summary_markdown,
       s.feedback_markdown,
       s.feedback_sent_at,
       s.google_event_id,
@@ -1021,24 +1012,6 @@ export async function getSessionWithStudentNames(
   `;
   const row = rows[0];
   return (row as SessionWithStudentNames) ?? null;
-}
-
-/**
- * Updates a session's summary_markdown. Call from session view auto-save.
- */
-export async function updateSessionSummary(
-  sessionId: string,
-  summary_markdown: string | null
-): Promise<{ ok: true } | { error: string }> {
-  try {
-    await sql`
-      UPDATE sessions SET summary_markdown = ${summary_markdown}, updated_at = NOW() WHERE id = ${sessionId}
-    `;
-    return { ok: true };
-  } catch (e) {
-    const message = e instanceof Error ? e.message : "Database error";
-    return { error: message };
-  }
 }
 
 /**

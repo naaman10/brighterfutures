@@ -357,7 +357,7 @@ export function StudentTabs({
             AI summary
           </h2>
           <p className="mb-4 text-sm text-zinc-300">
-            Generate a summary of the student&apos;s progress and recommended focus areas from all session summaries and feedback.
+            Generate a summary of the student&apos;s progress and recommended focus areas from all session feedback.
           </p>
           <StudentAISummary studentId={studentId} initialSummary={student.ai_summary} />
         </div>
