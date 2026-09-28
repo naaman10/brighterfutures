@@ -81,14 +81,6 @@ export function InvoicesTable({ invoices }: Props) {
     });
   };
 
-  const toggleAll = () => {
-    if (selected.size === invoices.length) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(invoices.map((i) => i.id)));
-    }
-  };
-
   const toggleAllOutstanding = () => {
     const outstandingIds = new Set(outstandingInvoices.map((i) => i.id));
     const allOutstandingSelected = outstandingInvoices.every((i) => selected.has(i.id));
