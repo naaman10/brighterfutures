@@ -69,6 +69,9 @@ export function InvoicesTable({ invoices }: Props) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [discountInvoice, setDiscountInvoice] = useState<Invoice | null>(null);
 
+  const outstandingInvoices = invoices.filter((inv) => inv.status !== "paid");
+  const paidInvoices = invoices.filter((inv) => inv.status === "paid");
+
   const toggleOne = (id: number) => {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -83,6 +86,36 @@ export function InvoicesTable({ invoices }: Props) {
       setSelected(new Set());
     } else {
       setSelected(new Set(invoices.map((i) => i.id)));
+    }
+  };
+
+  const toggleAllOutstanding = () => {
+    const outstandingIds = new Set(outstandingInvoices.map((i) => i.id));
+    const allOutstandingSelected = outstandingInvoices.every((i) => selected.has(i.id));
+    
+    if (allOutstandingSelected) {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        outstandingIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelected((prev) => new Set([...prev, ...outstandingIds]));
+    }
+  };
+
+  const toggleAllPaid = () => {
+    const paidIds = new Set(paidInvoices.map((i) => i.id));
+    const allPaidSelected = paidInvoices.every((i) => selected.has(i.id));
+    
+    if (allPaidSelected) {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        paidIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } else {
+      setSelected((prev) => new Set([...prev, ...paidIds]));
     }
   };
 
@@ -200,8 +233,152 @@ export function InvoicesTable({ invoices }: Props) {
   const canCancel = selectedInvoices.length > 0;
   const canSendReminder = selectedInvoices.some((i) => i.status === "issued");
 
+  const renderTable = (
+    invoiceList: Invoice[],
+    title: string,
+    toggleAllFn: () => void
+  ) => {
+    if (invoiceList.length === 0) {
+      return (
+        <div>
+          <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+            {title}
+          </h2>
+          <p className="rounded-lg border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+            No {title.toLowerCase()} yet.
+          </p>
+        </div>
+      );
+    }
+
+    const allSelected = invoiceList.every((i) => selected.has(i.id));
+
+    return (
+      <div>
+        <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
+          {title}
+        </h2>
+        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-left">
+                    <input
+                      type="checkbox"
+                      checked={invoiceList.length > 0 && allSelected}
+                      onChange={toggleAllFn}
+                      aria-label={`Select all ${title.toLowerCase()}`}
+                      className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                    />
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Invoice
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Parent
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Billing month
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Due date
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Status
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Discount
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Total
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    &nbsp;
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+                {invoiceList.map((invoice) => (
+                  <tr key={invoice.id}>
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        checked={selected.has(invoice.id)}
+                        onChange={() => toggleOne(invoice.id)}
+                        aria-label={`Select invoice ${invoice.invoice_number}`}
+                        className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                      {invoice.invoice_number}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                      {invoice.parent_name?.trim() || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                      {formatDisplayDate(invoice.billing_month) || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                      {formatDisplayDate(invoice.due_date) || "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                          invoice.status === "paid"
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                            : invoice.status === "overdue"
+                              ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:bg-amber-300"
+                              : invoice.status === "issued"
+                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+                                : invoice.status === "cancelled"
+                                  ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
+                                  : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                        }`}
+                      >
+                        {formatStatus(invoice.status)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-zinc-600 dark:text-zinc-400">
+                      {formatDiscountDisplay(invoice)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                      {formatCurrency(invoice.total)}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {invoice.status === "draft" && (
+                          <button
+                            type="button"
+                            onClick={() => setDiscountInvoice(invoice)}
+                            className="text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50"
+                            title={
+                              discountHasValue(invoice)
+                                ? "Edit discount for this invoice"
+                                : "Add a discount to this invoice"
+                            }
+                          >
+                            {discountHasValue(invoice) ? "Edit discount" : "Add discount"}
+                          </button>
+                        )}
+                        <InvoiceDownloadButton
+                          invoiceId={invoice.id}
+                          invoiceNumber={invoice.invoice_number}
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-6">
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-3">
           <button
@@ -412,121 +589,8 @@ export function InvoicesTable({ invoices }: Props) {
         />
       )}
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
-            <thead>
-              <tr>
-                <th className="px-4 py-3 text-left">
-                  <input
-                    type="checkbox"
-                    checked={invoices.length > 0 && selected.size === invoices.length}
-                    onChange={toggleAll}
-                    aria-label="Select all invoices"
-                    className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                  />
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Invoice
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Parent
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Billing month
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Due date
-                </th>
-                <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Discount
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Total
-                </th>
-                <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  &nbsp;
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-              {invoices.map((invoice) => (
-                <tr key={invoice.id}>
-                  <td className="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      checked={selected.has(invoice.id)}
-                      onChange={() => toggleOne(invoice.id)}
-                      aria-label={`Select invoice ${invoice.invoice_number}`}
-                      className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    {invoice.invoice_number}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                    {invoice.parent_name?.trim() || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                    {formatDisplayDate(invoice.billing_month) || "—"}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
-                    {formatDisplayDate(invoice.due_date) || "—"}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                        invoice.status === "paid"
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
-                          : invoice.status === "overdue"
-                            ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:bg-amber-300"
-                            : invoice.status === "issued"
-                              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
-                              : invoice.status === "cancelled"
-                                ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
-                                : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                      }`}
-                    >
-                      {formatStatus(invoice.status)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm text-zinc-600 dark:text-zinc-400">
-                    {formatDiscountDisplay(invoice)}
-                  </td>
-                  <td className="px-4 py-3 text-right text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    {formatCurrency(invoice.total)}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      {invoice.status === "draft" && (
-                        <button
-                          type="button"
-                          onClick={() => setDiscountInvoice(invoice)}
-                          className="text-sm font-medium text-zinc-700 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-zinc-50"
-                          title={
-                            discountHasValue(invoice)
-                              ? "Edit discount for this invoice"
-                              : "Add a discount to this invoice"
-                          }
-                        >
-                          {discountHasValue(invoice) ? "Edit discount" : "Add discount"}
-                        </button>
-                      )}
-                      <InvoiceDownloadButton
-                        invoiceId={invoice.id}
-                        invoiceNumber={invoice.invoice_number}
-                      />
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      {renderTable(outstandingInvoices, "Outstanding Invoices", toggleAllOutstanding)}
+      {renderTable(paidInvoices, "Paid Invoices", toggleAllPaid)}
     </div>
   );
 }
