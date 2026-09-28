@@ -455,7 +455,7 @@ export function InvoicesTable({ invoices }: Props) {
             </h2>
             <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
               Are you sure you want to delete {selected.size} selected invoice
-              {selected.size !== 1 ? "s" : ""}? This cannot be undone.
+              {selected.size !== 1 ? "s" : ""}? The invoice{selected.size !== 1 ? "s" : ""} will be marked as deleted and hidden from view.
             </p>
             <div className="flex justify-end gap-2">
               <button

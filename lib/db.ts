@@ -319,7 +319,7 @@ export type Invoice = {
 };
 
 /**
- * Fetches all invoices with parent name.
+ * Fetches all invoices with parent name (excludes deleted invoices).
  */
 export async function getInvoices(): Promise<Invoice[]> {
   const rows = await sql`
@@ -340,13 +340,14 @@ export async function getInvoices(): Promise<Invoice[]> {
       i.paid_at
     FROM invoices i
     LEFT JOIN parents p ON p.id = i.parents_id
+    WHERE i.status != 'deleted'
     ORDER BY i.created_at DESC NULLS LAST, i.invoice_number DESC
   `;
   return rows as Invoice[];
 }
 
 /**
- * Fetches a single invoice by id with parent details.
+ * Fetches a single invoice by id with parent details (excludes deleted invoices).
  */
 export async function getInvoiceById(id: number): Promise<Invoice | null> {
   const rows = await sql`
@@ -369,7 +370,7 @@ export async function getInvoiceById(id: number): Promise<Invoice | null> {
       i.paid_at
     FROM invoices i
     LEFT JOIN parents p ON p.id = i.parents_id
-    WHERE i.id = ${id}
+    WHERE i.id = ${id} AND i.status != 'deleted'
   `;
   const row = rows[0];
   return (row as Invoice) ?? null;
@@ -378,7 +379,7 @@ export async function getInvoiceById(id: number): Promise<Invoice | null> {
 /**
  * Returns totals for the next billing month:
  * - billing_month: first day of that month
- * - total_owed: sum of subtotal for all invoices in that month (excluding cancelled)
+ * - total_owed: sum of subtotal for all invoices in that month (excluding cancelled and deleted)
  * - total_paid: sum of subtotal for invoices in that month with status = 'paid'
  */
 export async function getInvoiceTotalsForNextMonth(): Promise<{
@@ -392,7 +393,7 @@ export async function getInvoiceTotalsForNextMonth(): Promise<{
     )
     SELECT
       nm.start_date AS billing_month,
-      COALESCE(SUM(CASE WHEN i.id IS NOT NULL AND i.status != 'cancelled' THEN i.subtotal ELSE 0 END), 0)::float AS total_owed,
+      COALESCE(SUM(CASE WHEN i.id IS NOT NULL AND i.status NOT IN ('cancelled', 'deleted') THEN i.subtotal ELSE 0 END), 0)::float AS total_owed,
       COALESCE(SUM(CASE WHEN i.status = 'paid' THEN i.subtotal ELSE 0 END), 0)::float AS total_paid
     FROM next_month nm
     LEFT JOIN invoices i
@@ -475,7 +476,7 @@ export async function updateInvoiceDiscount(
 }
 
 /**
- * Deletes invoices by id. Returns the number of rows deleted.
+ * Soft-deletes invoices by id (sets status to 'deleted'). Returns the number of rows updated.
  */
 export async function deleteInvoices(
   ids: number[]
@@ -485,7 +486,7 @@ export async function deleteInvoices(
   }
   try {
     for (const id of ids) {
-      await sql`DELETE FROM invoices WHERE id = ${id}`;
+      await sql`UPDATE invoices SET status = 'deleted' WHERE id = ${id}`;
     }
     return { ok: true, deleted: ids.length };
   } catch (e) {
@@ -575,7 +576,7 @@ export async function getSessionsByParentForMonth(
 }
 
 /**
- * Returns whether an invoice already exists for the given parent and billing month.
+ * Returns whether an invoice already exists for the given parent and billing month (excludes deleted invoices).
  */
 export async function hasInvoiceForParentAndMonth(
   parentId: string,
@@ -585,13 +586,14 @@ export async function hasInvoiceForParentAndMonth(
     SELECT 1 FROM invoices
     WHERE parents_id = ${parentId}
       AND billing_month = ${billingMonthStart}::date
+      AND status != 'deleted'
     LIMIT 1
   `;
   return rows.length > 0;
 }
 
 /**
- * Returns the invoice for the given parent and billing month, or null.
+ * Returns the invoice for the given parent and billing month, or null (excludes deleted invoices).
  */
 export async function getInvoiceByParentAndMonth(
   parentId: string,
@@ -617,6 +619,7 @@ export async function getInvoiceByParentAndMonth(
     LEFT JOIN parents p ON p.id = i.parents_id
     WHERE i.parents_id = ${parentId}
       AND i.billing_month = ${billingMonthStart}::date
+      AND i.status != 'deleted'
     LIMIT 1
   `;
   const row = rows[0];
