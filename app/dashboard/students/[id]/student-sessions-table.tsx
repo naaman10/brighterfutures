@@ -29,7 +29,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("completed");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const birthdayPick = pickBirthdaySessionIdForStudent(sessions, studentDob, 5);
 
@@ -95,39 +95,6 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            Status:
-          </label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            <option value="all">All</option>
-            <option value="completed">Completed</option>
-            <option value="planned">Planned</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
-            Sort by date:
-          </label>
-          <select
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-            className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            <option value="asc">Ascending</option>
-            <option value="desc">Descending</option>
-          </select>
-        </div>
-        <div className="text-xs text-zinc-500 dark:text-zinc-400">
-          Showing {filteredAndSortedSessions.length} of {sessions.length} sessions
-        </div>
-      </div>
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-3">
           <button
@@ -208,8 +175,28 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                   className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                Date
+              <th className="px-4 py-3 text-left">
+                <button
+                  onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+                  className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+                >
+                  Date
+                  <svg
+                    className="size-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    {sortOrder === "asc" ? (
+                      <path d="M12 5v14M19 12l-7 7-7-7" />
+                    ) : (
+                      <path d="M12 19V5M5 12l7-7 7 7" />
+                    )}
+                  </svg>
+                </button>
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Time
@@ -217,8 +204,17 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Subject
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                Status
+              <th className="px-4 py-3 text-left">
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="text-xs font-medium uppercase tracking-wide text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200 bg-transparent border-none cursor-pointer focus:outline-none focus:ring-0"
+                >
+                  <option value="all">Status: All</option>
+                  <option value="completed">Status: Completed</option>
+                  <option value="planned">Status: Planned</option>
+                  <option value="cancelled">Status: Cancelled</option>
+                </select>
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Actions
