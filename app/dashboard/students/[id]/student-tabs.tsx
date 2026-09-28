@@ -12,7 +12,7 @@ import { StudentSessionsTable } from "./student-sessions-table";
 import { CreateBftLearnAccountForm } from "./create-bft-learn-account-form";
 import { BftLearnContentSection } from "./bft-learn-content-section";
 
-type TabKey = "details" | "sessions" | "bft-learn";
+type TabKey = "details" | "sessions" | "bft-learn" | "teaching-assistant";
 
 type Props = {
   studentId: string;
@@ -55,7 +55,7 @@ export function StudentTabs({
   studentId,
   student,
   sessions,
-  defaultTab = "details",
+  defaultTab = "sessions",
   canSendWelcome,
   canResendWelcome,
   welcomeSentAtDisplay,
@@ -65,9 +65,10 @@ export function StudentTabs({
 
   const tabs = useMemo(
     () => [
-      { key: "details" as const, label: "Details" },
       { key: "sessions" as const, label: "Sessions" },
       { key: "bft-learn" as const, label: "BFT Learn" },
+      { key: "details" as const, label: "Details" },
+      { key: "teaching-assistant" as const, label: "Teaching Assistant" },
     ],
     []
   );
@@ -259,16 +260,6 @@ export function StudentTabs({
 
       {tab === "sessions" && (
         <div className="space-y-8">
-          <div className="rounded-xl bg-black p-6 text-white">
-            <h2 className="mb-3 text-lg font-medium text-white">
-              AI summary
-            </h2>
-            <p className="mb-4 text-sm text-zinc-300">
-              Generate a summary of the student&apos;s progress and recommended focus areas from all session summaries and feedback.
-            </p>
-            <StudentAISummary studentId={studentId} initialSummary={student.ai_summary} />
-          </div>
-
           <section>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
@@ -350,6 +341,18 @@ export function StudentTabs({
             </div>
           )}
         </section>
+      )}
+
+      {tab === "teaching-assistant" && (
+        <div className="rounded-xl bg-black p-6 text-white">
+          <h2 className="mb-3 text-lg font-medium text-white">
+            AI summary
+          </h2>
+          <p className="mb-4 text-sm text-zinc-300">
+            Generate a summary of the student&apos;s progress and recommended focus areas from all session summaries and feedback.
+          </p>
+          <StudentAISummary studentId={studentId} initialSummary={student.ai_summary} />
+        </div>
       )}
     </div>
   );

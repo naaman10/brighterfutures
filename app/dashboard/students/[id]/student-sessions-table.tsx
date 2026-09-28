@@ -28,8 +28,23 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>("completed");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const birthdayPick = pickBirthdaySessionIdForStudent(sessions, studentDob, 5);
+
+  const filteredAndSortedSessions = sessions
+    .filter((session) => {
+      if (statusFilter === "all") return true;
+      return session.status === statusFilter;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(`${a.session_date}T${a.session_time}`);
+      const dateB = new Date(`${b.session_date}T${b.session_time}`);
+      return sortOrder === "asc" 
+        ? dateA.getTime() - dateB.getTime()
+        : dateB.getTime() - dateA.getTime();
+    });
 
   const toggleOne = (id: string) => {
     setSelected((prev) => {
@@ -41,10 +56,10 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
   };
 
   const toggleAll = () => {
-    if (selected.size === sessions.length) {
+    if (selected.size === filteredAndSortedSessions.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(sessions.map((s) => s.id)));
+      setSelected(new Set(filteredAndSortedSessions.map((s) => s.id)));
     }
   };
 
@@ -80,6 +95,39 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
 
   return (
     <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            Status:
+          </label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          >
+            <option value="all">All</option>
+            <option value="completed">Completed</option>
+            <option value="planned">Planned</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">
+            Sort by date:
+          </label>
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+            className="rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+          >
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+          </select>
+        </div>
+        <div className="text-xs text-zinc-500 dark:text-zinc-400">
+          Showing {filteredAndSortedSessions.length} of {sessions.length} sessions
+        </div>
+      </div>
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-3">
           <button
@@ -154,7 +202,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
               <th className="px-4 py-3 text-left">
                 <input
                   type="checkbox"
-                  checked={sessions.length > 0 && selected.size === sessions.length}
+                  checked={filteredAndSortedSessions.length > 0 && selected.size === filteredAndSortedSessions.length}
                   onChange={toggleAll}
                   aria-label="Select all sessions"
                   className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
@@ -178,7 +226,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
             </tr>
           </thead>
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-            {sessions.map((session) => (
+            {filteredAndSortedSessions.map((session) => (
               <tr key={session.id}>
                 <td className="px-4 py-3">
                   <input
