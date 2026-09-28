@@ -2,14 +2,14 @@
  * Group existing sessions into recurrence parents.
  *
  * Dry run (default):
- *   node --experimental-strip-types scripts/backfill-session-recurrences.ts
+ *   npx tsx scripts/backfill-session-recurrences.ts
  *
  * Apply:
- *   node --experimental-strip-types scripts/backfill-session-recurrences.ts --apply
+ *   npx tsx scripts/backfill-session-recurrences.ts --apply
  */
 import { readFileSync } from "node:fs";
 import { neon } from "@neondatabase/serverless";
-import { planRecurrenceBackfill } from "../lib/session-recurrence.ts";
+import { planRecurrenceBackfill } from "../lib/session-recurrence";
 
 function loadEnv(path: string) {
   for (const line of readFileSync(path, "utf8").split("\n")) {
