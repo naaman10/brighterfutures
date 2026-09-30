@@ -10,6 +10,7 @@ import {
 } from "@/lib/db";
 import { performMovePlannedRescheduleSession } from "@/lib/move-planned-reschedule-session";
 import { performRescheduleSession } from "@/lib/reschedule-session";
+import { isDeleted } from "@/lib/session-status";
 import { getAuthenticatedCalendarClient } from "./client";
 import { getGoogleCalendarId } from "./config";
 import { parseEventDateTime } from "./events";
@@ -38,7 +39,7 @@ async function processChangedEvent(
       ? await getSessionById(sessionIdFromProps)
       : null);
 
-  if (!session) return;
+  if (!session || isDeleted(session.status)) return;
   if (shouldSkipInboundSync(session)) {
     await markSessionSyncSource(session.id, null);
     return;

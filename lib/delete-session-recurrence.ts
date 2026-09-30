@@ -18,7 +18,13 @@ function isSubsequentSessionToDelete(session: {
   if (isDeleted(session.status) || KEEP_SESSION_STATUSES.has(session.status)) {
     return false;
   }
-  return !isSessionDateTimeBeforeNow(session.session_date, session.session_time);
+  // Past cancellations stay in the student history. They are already hidden on the calendar.
+  if (session.status === "cancelled") {
+    return !isSessionDateTimeBeforeNow(session.session_date, session.session_time);
+  }
+  // Still-scheduled sessions are removed even when their start time has passed.
+  // Leaving them as planned kept deleted series on the calendar.
+  return true;
 }
 
 export async function performDeleteSessionRecurrence(

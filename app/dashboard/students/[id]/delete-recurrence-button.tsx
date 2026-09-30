@@ -80,8 +80,8 @@ export function DeleteRecurrenceButton({
               <span className="font-medium text-zinc-900 dark:text-zinc-50">
                 {seriesLabel}
               </span>
-              ? Upcoming sessions in this series will be removed from the app and
-              Google Calendar. Past sessions will be kept.
+              ? Scheduled sessions in this series will be removed from the app and
+              Google Calendar. Completed sessions will be kept.
             </p>
             <div className="flex justify-end gap-2">
               <button

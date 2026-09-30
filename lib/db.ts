@@ -815,6 +815,15 @@ export async function getSessionsForMonth(
     WHERE s.session_date >= ${startDate}::date
       AND s.session_date <= ${endDate}::date
       AND s.status != 'deleted'
+      AND NOT (
+        s.recurrence_id IS NOT NULL
+        AND s.status IN ('planned', 'in_progress', 'planned_reschedule')
+        AND EXISTS (
+          SELECT 1 FROM session_recurrences r
+          WHERE r.id = s.recurrence_id
+            AND r.status = 'deleted'
+        )
+      )
     ORDER BY s.session_date ASC, s.session_time ASC
   `;
   return rows as SessionWithStudent[];
@@ -846,6 +855,15 @@ export async function getSessionsForDate(
     JOIN students st ON st.id = s.student_id
     WHERE s.session_date = ${dateStr}
       AND s.status != 'deleted'
+      AND NOT (
+        s.recurrence_id IS NOT NULL
+        AND s.status IN ('planned', 'in_progress', 'planned_reschedule')
+        AND EXISTS (
+          SELECT 1 FROM session_recurrences r
+          WHERE r.id = s.recurrence_id
+            AND r.status = 'deleted'
+        )
+      )
     ORDER BY s.session_time ASC
   `;
   return rows as SessionWithStudent[];
