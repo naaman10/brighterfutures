@@ -1198,9 +1198,11 @@ export async function getRecurrencesByStudentId(
       month_weekday_occurrence::int AS month_weekday_occurrence,
       session_time::text AS session_time,
       (start_date::date)::text AS start_date,
-      (end_date::date)::text AS end_date
+      (end_date::date)::text AS end_date,
+      status
     FROM session_recurrences
     WHERE student_id = ${studentId}
+      AND status != 'deleted'
     ORDER BY start_date ASC, session_time ASC
   `;
   return rows as SessionRecurrence[];
@@ -1219,7 +1221,8 @@ export async function getRecurrenceById(
       month_weekday_occurrence::int AS month_weekday_occurrence,
       session_time::text AS session_time,
       (start_date::date)::text AS start_date,
-      (end_date::date)::text AS end_date
+      (end_date::date)::text AS end_date,
+      status
     FROM session_recurrences
     WHERE id = ${recurrenceId}
   `;
@@ -1248,6 +1251,7 @@ export async function updateSessionRecurrence(
           end_date = ${data.end_date}::date,
           updated_at = NOW()
       WHERE id = ${recurrenceId}
+        AND status != 'deleted'
     `;
     return { ok: true };
   } catch (e) {
@@ -1330,6 +1334,26 @@ export async function markSessionAsDeleted(
   sessionId: string
 ): Promise<{ ok: true } | { error: string }> {
   return updateSessionStatus(sessionId, "deleted");
+}
+
+/**
+ * Soft-delete a recurrence series (row kept for records).
+ */
+export async function markRecurrenceAsDeleted(
+  recurrenceId: string
+): Promise<{ ok: true } | { error: string }> {
+  try {
+    await sql`
+      UPDATE session_recurrences
+      SET status = 'deleted', updated_at = NOW()
+      WHERE id = ${recurrenceId}
+        AND status != 'deleted'
+    `;
+    return { ok: true };
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Database error";
+    return { error: message };
+  }
 }
 
 export async function setSessionGoogleEvent(

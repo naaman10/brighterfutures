@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { applySeriesEdit } from "@/lib/apply-session-recurrence";
+import { performDeleteSessionRecurrence } from "@/lib/delete-session-recurrence";
 import { isRecurrenceInterval } from "@/lib/session-recurrence";
 
 export async function updateSessionRecurrenceAction(
@@ -31,6 +32,19 @@ export async function updateSessionRecurrenceAction(
     sessionTime,
     endDate,
   });
+  if (result.error) return result;
+
+  revalidatePath(`/dashboard/students/${studentId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/sessions");
+  return result;
+}
+
+export async function deleteSessionRecurrenceAction(
+  studentId: string,
+  recurrenceId: string
+): Promise<{ error?: string; deletedSessions?: number }> {
+  const result = await performDeleteSessionRecurrence(recurrenceId, studentId);
   if (result.error) return result;
 
   revalidatePath(`/dashboard/students/${studentId}`);

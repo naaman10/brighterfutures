@@ -32,6 +32,10 @@ const INTERVAL_STEP_DAYS: Record<Exclude<RecurrenceInterval, "monthly">, number>
   every_3_weeks: 21,
 };
 
+export const RECURRENCE_STATUSES = ["active", "deleted"] as const;
+
+export type RecurrenceStatus = (typeof RECURRENCE_STATUSES)[number];
+
 export type SessionRecurrence = {
   id: string;
   student_id: string;
@@ -42,7 +46,12 @@ export type SessionRecurrence = {
   session_time: string;
   start_date: string;
   end_date: string;
+  status: RecurrenceStatus;
 };
+
+export function isDeletedRecurrence(status: string | null | undefined): boolean {
+  return status === "deleted";
+}
 
 export function isRecurrenceInterval(value: string): value is RecurrenceInterval {
   return (RECURRENCE_INTERVALS as readonly string[]).includes(value);

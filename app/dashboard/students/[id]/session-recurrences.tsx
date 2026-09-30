@@ -11,6 +11,7 @@ import {
   type SessionRecurrence,
 } from "@/lib/session-recurrence";
 import { updateSessionRecurrenceAction } from "./recurrence-actions";
+import { DeleteRecurrenceButton } from "./delete-recurrence-button";
 
 const DAYS = [
   "Sunday",
@@ -101,17 +102,24 @@ function RecurrenceRow({
             {formatDisplayDate(recurrence.end_date) || "—"}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setEditing((open) => !open);
-            setError(null);
-            setSeriesInterval(recurrence.interval);
-          }}
-          className="btn-secondary"
-        >
-          {editing ? "Close" : "Edit series"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setEditing((open) => !open);
+              setError(null);
+              setSeriesInterval(recurrence.interval);
+            }}
+            className="btn-secondary"
+          >
+            {editing ? "Close" : "Edit series"}
+          </button>
+          <DeleteRecurrenceButton
+            studentId={studentId}
+            recurrenceId={recurrence.id}
+            seriesLabel={`${recurrence.subject} (${RECURRENCE_INTERVAL_LABELS[recurrence.interval]} on ${dayLabel})`}
+          />
+        </div>
       </div>
       {editing && (
         <form action={handleSubmit} className="mt-4 space-y-4">

@@ -13,6 +13,7 @@ import {
 } from "@/lib/google-calendar";
 import { londonCalendarDate } from "@/lib/next-session";
 import {
+  isDeletedRecurrence,
   isRecurrenceInterval,
   normalizeSessionTime,
   planSeriesEdit,
@@ -36,6 +37,9 @@ export async function applySeriesEdit(
   const recurrence = await getRecurrenceById(input.recurrenceId);
   if (!recurrence || recurrence.student_id !== input.studentId) {
     return { error: "Recurrence not found." };
+  }
+  if (isDeletedRecurrence(recurrence.status)) {
+    return { error: "This series has been deleted." };
   }
   const subject = input.subject.trim();
   if (!subject) return { error: "Subject is required." };
