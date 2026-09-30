@@ -9,6 +9,7 @@ import { SESSION_STATUS_LABELS } from "@/lib/session-status";
 import { pickBirthdaySessionIdForStudent } from "@/lib/birthday";
 import { formatDisplayDate, formatDisplayTime } from "@/lib/format";
 import { BirthdayEmoji } from "../../components/birthday-emoji";
+import { MaterialSymbol } from "../../components/material-symbol";
 import { SessionGoogleMeetIcon } from "../../components/session-google-meet-icon";
 import { DeleteSessionButton } from "../../components/delete-session-button";
 import { deleteSelectedSessionsAction } from "../../sessions/actions";
@@ -266,7 +267,16 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                   </span>
                 </td>
                 <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
-                  {SESSION_STATUS_LABELS[session.status ?? "planned"]}
+                  <span className="inline-flex items-center gap-1.5">
+                    {session.status === "completed" && (
+                      <MaterialSymbol
+                        name="check_circle"
+                        fill
+                        className="text-[18px] leading-none text-blue-600 dark:text-blue-400"
+                      />
+                    )}
+                    {SESSION_STATUS_LABELS[session.status ?? "planned"]}
+                  </span>
                 </td>
                 <td className="max-w-xs px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
                   {feedbackSnippet(session.feedback_markdown)}
