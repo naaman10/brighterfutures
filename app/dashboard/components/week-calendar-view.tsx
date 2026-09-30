@@ -97,8 +97,8 @@ export function WeekCalendarView({ weekAnchor, monthParam, view, sessions }: Pro
   }, [weekOffset, displayDates, navBase, router, view]);
 
   return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-lg flex-1 flex-col overflow-hidden rounded-lg border border-zinc-200 md:mx-0 md:max-w-none dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200 px-2 py-2 dark:border-zinc-700">
+    <div className="surface mx-auto flex h-[min(40rem,calc(100dvh-8rem))] min-h-[28rem] w-full max-w-lg flex-col overflow-hidden p-0 md:mx-0 md:h-[min(46rem,calc(100dvh-6rem))] md:max-w-none">
+      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-zinc-200 px-5 py-3 dark:border-zinc-700">
         <Link
           href={buildDashboardCalendarUrl({ ...navBase, week: prevWeek })}
           className="rounded px-1.5 py-0.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-50"

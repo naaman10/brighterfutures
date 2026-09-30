@@ -364,7 +364,7 @@ export function BftLearnContentSection({ studentId }: Props) {
                         type="button"
                         onClick={() => void handleAssign(item.entryId, item.name || item.entryId)}
                         disabled={assigningEntryId === item.entryId}
-                        className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                        className="btn-secondary"
                       >
                         {assigningEntryId === item.entryId ? "Assigning…" : "Assign"}
                       </button>
@@ -404,7 +404,7 @@ function EnrollmentAction({
     return (
       <Link
         href={enrollmentPath(studentId, enrollment, "assess")}
-        className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        className="btn-secondary"
       >
         Assess
       </Link>

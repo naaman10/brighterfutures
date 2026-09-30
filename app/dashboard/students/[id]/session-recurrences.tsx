@@ -39,8 +39,8 @@ export function SessionRecurrences({ studentId, recurrences }: Props) {
   if (recurrences.length === 0) return null;
 
   return (
-    <section className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
+    <section className="surface p-0">
+      <div className="border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
         <h3 className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
           Recurring sessions
         </h3>
@@ -89,7 +89,7 @@ function RecurrenceRow({
   }
 
   return (
-    <li className="px-4 py-3">
+    <li className="px-6 py-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
@@ -108,7 +108,7 @@ function RecurrenceRow({
             setError(null);
             setSeriesInterval(recurrence.interval);
           }}
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="btn-secondary"
         >
           {editing ? "Close" : "Edit series"}
         </button>
@@ -213,7 +213,7 @@ function RecurrenceRow({
           <button
             type="submit"
             disabled={pending}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="btn-primary"
           >
             {pending ? "Saving…" : "Save series"}
           </button>

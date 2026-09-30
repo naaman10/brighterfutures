@@ -23,7 +23,7 @@ export default async function EditStudentPage({ params }: Props) {
           ← Back to student
         </Link>
       </div>
-      <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
         Update student details
       </h1>
       <EditStudentForm student={student} action={updateStudentAction} />

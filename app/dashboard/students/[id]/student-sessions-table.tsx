@@ -100,7 +100,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
 
   if (sessions.length === 0) {
     return (
-      <p className="rounded-lg border border-zinc-200 bg-white p-4 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+      <p className="surface text-sm text-zinc-500 dark:text-zinc-400">
         No sessions yet.
       </p>
     );
@@ -114,7 +114,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
             type="button"
             onClick={() => setShowDeleteConfirm(true)}
             disabled={deleting}
-            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-950/30"
+            className="btn-danger-outline"
           >
             Delete selected ({selected.size})
           </button>
@@ -140,7 +140,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-sessions-title"
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 surface p-6 shadow-xl"
           >
             <h2
               id="delete-sessions-title"
@@ -158,7 +158,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                 type="button"
                 onClick={closeDeleteConfirm}
                 disabled={deleting}
-                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="btn-secondary"
               >
                 Cancel
               </button>
@@ -166,7 +166,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                 type="button"
                 onClick={handleDeleteConfirmed}
                 disabled={deleting}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="btn-danger"
               >
                 {deleting ? "Deleting…" : "Delete sessions"}
               </button>
@@ -175,11 +175,11 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
         </>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="overflow-hidden surface p-0">
         <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
           <thead>
             <tr>
-              <th className="px-4 py-3 text-left">
+              <th className="px-6 py-4 text-left">
                 <input
                   type="checkbox"
                   checked={filteredAndSortedSessions.length > 0 && selected.size === filteredAndSortedSessions.length}
@@ -188,7 +188,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                   className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                 />
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-6 py-4 text-left">
                 <button
                   onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
                   className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
@@ -211,13 +211,13 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                   </svg>
                 </button>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Time
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Subject
               </th>
-              <th className="px-4 py-3 text-left">
+              <th className="px-6 py-4 text-left">
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
@@ -229,10 +229,10 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                   <option value="cancelled">Status: Cancelled</option>
                 </select>
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Feedback
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Actions
               </th>
             </tr>
@@ -240,7 +240,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
           <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
             {filteredAndSortedSessions.map((session) => (
               <tr key={session.id}>
-                <td className="px-4 py-3">
+                <td className="px-6 py-4">
                   <input
                     type="checkbox"
                     checked={selected.has(session.id)}
@@ -249,7 +249,7 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                     className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                   />
                 </td>
-                <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                   <div className="flex items-center gap-2">
                     <span>{formatDisplayDate(session.session_date) || "—"}</span>
                     {birthdayPick?.sessionId === session.id && (
@@ -257,31 +257,31 @@ export function StudentSessionsTable({ studentId, sessions, studentDob }: Props)
                     )}
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                   {formatDisplayTime(session.session_time) || "—"}
                 </td>
-                <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                   <span className="inline-flex items-center gap-1.5">
                     {session.subject}
                     <SessionGoogleMeetIcon googleMeetAdded={session.google_meet_added} />
                   </span>
                 </td>
-                <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
                   <span className="inline-flex items-center gap-1.5">
                     {session.status === "completed" && (
                       <MaterialSymbol
                         name="check_circle"
                         fill
-                        className="text-[18px] leading-none text-blue-600 dark:text-blue-400"
+                        className="text-[18px] leading-none text-accent"
                       />
                     )}
                     {SESSION_STATUS_LABELS[session.status ?? "planned"]}
                   </span>
                 </td>
-                <td className="max-w-xs px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                <td className="max-w-xs px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
                   {feedbackSnippet(session.feedback_markdown)}
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-6 py-4 text-right">
                   <div className="flex items-center justify-end gap-3">
                     <Link
                       href={`/dashboard/students/${studentId}/sessions/${session.id}`}

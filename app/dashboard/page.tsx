@@ -71,24 +71,9 @@ export default async function DashboardPage({
     );
   }
 
-  const usesWeekFillLayout = view === "week" || view == null;
-
   return (
-    <div
-      className={
-        usesWeekFillLayout
-          ? "flex max-h-[calc(100dvh-7.5rem)] min-h-0 flex-1 flex-col overflow-hidden max-md:h-[calc(100dvh-7.5rem)] md:max-h-none md:overflow-visible"
-          : "flex min-h-0 flex-1 flex-col"
-      }
-    >
-      <div
-        className={
-          usesWeekFillLayout
-            ? "max-md:max-h-[38%] max-md:shrink-0 max-md:overflow-y-auto"
-            : "shrink-0"
-        }
-      >
-      <h1 className="mb-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+    <div>
+      <h1 className="mb-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
         Dashboard
       </h1>
       <p className="mb-6 text-zinc-600 dark:text-zinc-400">
@@ -100,13 +85,13 @@ export default async function DashboardPage({
           <h2 className="mb-3 text-lg font-medium text-zinc-900 dark:text-zinc-50">
             Today&apos;s sessions
           </h2>
-          <ul className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+          <ul className="surface overflow-hidden bg-lavender p-0">
             {(() => {
               const birthdaySessionIdToTooltip = pickBirthdaySessionIdByStudent(sessionsToday, 5);
               return sessionsToday.map((s) => (
               <li
                 key={s.id}
-                className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-4 py-3 last:border-b-0 dark:border-zinc-700"
+                className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-6 py-4 last:border-b-0 dark:border-zinc-700"
               >
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
@@ -125,7 +110,7 @@ export default async function DashboardPage({
                   <span className="text-sm text-zinc-500 dark:text-zinc-500">
                     {s.student_first_name} {s.student_last_name}
                   </span>
-                  <span className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400">
+                  <span className="rounded-full bg-white/80 px-2.5 py-1 text-xs font-medium text-zinc-700 dark:bg-zinc-700 dark:text-zinc-300">
                     {SESSION_STATUS_LABELS[s.status ?? "planned"]}
                   </span>
                 </div>
@@ -143,20 +128,13 @@ export default async function DashboardPage({
       )}
 
       {dbError && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
           {dbError}
           {dbErrorHint && <p className="mt-2">{dbErrorHint}</p>}
         </div>
       )}
-      </div>
 
-      <section
-        className={
-          usesWeekFillLayout
-            ? "flex min-h-0 flex-1 flex-col"
-            : undefined
-        }
-      >
+      <section>
         <DashboardCalendar
           view={view}
           year={year}
@@ -164,7 +142,6 @@ export default async function DashboardPage({
           monthParam={monthParam}
           weekParam={weekParam}
           sessions={sessionsMonth}
-          fillHeight={usesWeekFillLayout}
         />
       </section>
     </div>

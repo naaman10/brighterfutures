@@ -88,7 +88,7 @@ export function EnrollmentFeedback({ enrollmentId, adminUserId, studentName }: P
     <section className="mt-6 space-y-4">
       {/* Existing Feedback */}
       {feedbackList.length > 0 && (
-        <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="surface p-6">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             Feedback History
           </h2>
@@ -119,7 +119,7 @@ export function EnrollmentFeedback({ enrollmentId, adminUserId, studentName }: P
       )}
 
       {/* Add New Feedback */}
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="surface p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Add Feedback for {studentName}
         </h2>
@@ -145,7 +145,7 @@ export function EnrollmentFeedback({ enrollmentId, adminUserId, studentName }: P
               type="button"
               onClick={submitFeedback}
               disabled={submitting || !newFeedback.trim()}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn-primary"
             >
               {submitting ? "Saving..." : "Save Feedback"}
             </button>

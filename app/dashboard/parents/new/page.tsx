@@ -12,7 +12,7 @@ export default function NewParentPage() {
           ← Dashboard
         </Link>
       </div>
-      <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
         Add parent
       </h1>
       <AddParentForm />

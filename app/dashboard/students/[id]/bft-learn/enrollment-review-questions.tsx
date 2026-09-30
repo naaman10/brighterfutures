@@ -13,7 +13,7 @@ function displayValue(value: string): string {
 export function EnrollmentReviewQuestions({ review }: { review: BftLearnReview }) {
   if (review.questions.length === 0) {
     return (
-      <section className="mt-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <section className="mt-6 surface p-6">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Questions
         </h2>
@@ -25,7 +25,7 @@ export function EnrollmentReviewQuestions({ review }: { review: BftLearnReview }
   }
 
   return (
-    <section className="mt-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+    <section className="mt-6 surface p-6">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
         Questions
       </h2>
@@ -50,7 +50,7 @@ export function EnrollmentReviewQuestions({ review }: { review: BftLearnReview }
                 {index + 1}. {prompt}
               </p>
               <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-                <div className={`rounded-lg border p-3 ${
+                <div className={`rounded-2xl border p-4 ${
                   isCorrect
                     ? "border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950/30"
                     : isIncorrect
@@ -77,7 +77,7 @@ export function EnrollmentReviewQuestions({ review }: { review: BftLearnReview }
                   </dd>
                 </div>
                 {correctAnswer ? (
-                  <div className="rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/50">
+                  <div className="rounded-2xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50">
                     <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Correct answer
                     </dt>

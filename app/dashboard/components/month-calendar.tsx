@@ -77,8 +77,8 @@ export function MonthCalendar({ year, month, monthParam, view, sessions }: Props
   const navOpts = view ? { view, month: monthParam } : { month: monthParam };
 
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
-      <div className="flex items-center justify-between gap-2 border-b border-zinc-200 px-4 py-3 dark:border-zinc-700">
+    <div className="surface p-0">
+      <div className="flex items-center justify-between gap-2 border-b border-zinc-200 px-6 py-4 dark:border-zinc-700">
         <Link
           href={buildDashboardCalendarUrl({ ...navOpts, month: prevMonthParam })}
           className="rounded px-2 py-1 text-sm font-medium text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-700 dark:hover:text-zinc-50"
@@ -97,7 +97,7 @@ export function MonthCalendar({ year, month, monthParam, view, sessions }: Props
           →
         </Link>
       </div>
-      <div className="overflow-x-auto p-4">
+      <div className="overflow-x-auto p-6">
         <table className="w-full min-w-[400px] table-fixed">
           <thead>
             <tr>
@@ -130,14 +130,14 @@ export function MonthCalendar({ year, month, monthParam, view, sessions }: Props
                     <td
                       key={colIdx}
                       className={`h-24 min-h-[6rem] border border-zinc-200 p-1 align-top dark:border-zinc-700 ${
-                        isToday ? "bg-amber-50 dark:bg-amber-950/20" : ""
+                        isToday ? "bg-accent-soft dark:bg-accent-soft" : ""
                       }`}
                     >
                       <div className="flex flex-col gap-0.5">
                         <span
                           className={`text-xs font-medium ${
                             isToday
-                              ? "text-amber-700 dark:text-amber-400"
+                              ? "text-accent dark:text-accent"
                               : "text-zinc-600 dark:text-zinc-400"
                           }`}
                         >

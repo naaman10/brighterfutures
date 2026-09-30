@@ -26,7 +26,7 @@ export default async function EditParentPage({ params }: Props) {
         <span className="text-zinc-400 dark:text-zinc-500">/</span>
         <span className="text-sm text-zinc-900 dark:text-zinc-50">{parentName}</span>
       </div>
-      <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
         Edit parent
       </h1>
       <EditParentForm parent={parent} />

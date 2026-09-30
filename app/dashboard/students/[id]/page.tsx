@@ -56,7 +56,7 @@ export default async function StudentDetailPage({ params, searchParams }: Props)
         </Link>
       </div>
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           {student.first_name} {student.last_name}
         </h1>
         <RecordStatusBadge status={parseRecordStatus(student.status)} />

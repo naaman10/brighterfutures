@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { National_Park } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
@@ -33,6 +33,10 @@ export const metadata: Metadata = {
     apple: "/favicon/apple-touch-icon.png",
   },
   manifest: "/favicon/site.webmanifest",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#f6f4ef",
 };
 
 export default function RootLayout({

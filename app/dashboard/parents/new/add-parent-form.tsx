@@ -61,11 +61,11 @@ export function AddParentForm() {
   return (
     <form action={handleSubmit} className="space-y-8">
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200">
           {error}
         </div>
       )}
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+      <section className="surface">
         <h2 className="mb-4 text-lg font-medium text-zinc-900 dark:text-zinc-50">
           Parent details
         </h2>
@@ -133,7 +133,7 @@ export function AddParentForm() {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+      <section className="surface">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-medium text-zinc-900 dark:text-zinc-50">
             Students (optional)
@@ -150,7 +150,7 @@ export function AddParentForm() {
           {students.map((student, index) => (
             <div
               key={index}
-              className="grid gap-4 rounded border border-zinc-200 p-3 dark:border-zinc-700 sm:grid-cols-2 lg:grid-cols-4"
+              className="grid gap-4 rounded-2xl border border-zinc-200 p-4 dark:border-zinc-700 sm:grid-cols-2 lg:grid-cols-4"
             >
               <input
                 placeholder="First name"
@@ -193,13 +193,13 @@ export function AddParentForm() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="btn-primary"
         >
           {isSubmitting ? "Adding..." : "Add parent"}
         </button>
         <Link
           href="/dashboard"
-          className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="btn-secondary"
         >
           Cancel
         </Link>

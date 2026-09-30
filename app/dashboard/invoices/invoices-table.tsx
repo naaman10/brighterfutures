@@ -236,7 +236,7 @@ export function InvoicesTable({ invoices }: Props) {
           <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
             {title}
           </h2>
-          <p className="rounded-lg border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+          <p className="surface p-6 text-zinc-500 dark:text-zinc-400">
             No {title.toLowerCase()} yet.
           </p>
         </div>
@@ -250,12 +250,12 @@ export function InvoicesTable({ invoices }: Props) {
         <h2 className="mb-3 text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           {title}
         </h2>
-        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="overflow-hidden surface p-0">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left">
+                  <th className="px-6 py-4 text-left">
                     <input
                       type="checkbox"
                       checked={invoiceList.length > 0 && allSelected}
@@ -264,28 +264,28 @@ export function InvoicesTable({ invoices }: Props) {
                       className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                     />
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Invoice
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Parent
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Billing month
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Due date
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Status
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Discount
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Total
                   </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     &nbsp;
                   </th>
                 </tr>
@@ -293,7 +293,7 @@ export function InvoicesTable({ invoices }: Props) {
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
                 {invoiceList.map((invoice) => (
                   <tr key={invoice.id}>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <input
                         type="checkbox"
                         checked={selected.has(invoice.id)}
@@ -302,27 +302,27 @@ export function InvoicesTable({ invoices }: Props) {
                         className="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
                       />
                     </td>
-                    <td className="px-4 py-3 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                    <td className="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-50">
                       {invoice.invoice_number}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                    <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
                       {invoice.parent_name?.trim() || "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                       {formatDisplayDate(invoice.billing_month) || "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                       {formatDisplayDate(invoice.due_date) || "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
                           invoice.status === "paid"
-                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300"
+                            ? "bg-mint text-emerald-800 dark:text-emerald-200"
                             : invoice.status === "overdue"
                               ? "bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:bg-amber-300"
                               : invoice.status === "issued"
-                                ? "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300"
+                                ? "bg-accent-soft text-accent dark:text-pink-200"
                                 : invoice.status === "cancelled"
                                   ? "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                                   : "bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
@@ -331,13 +331,13 @@ export function InvoicesTable({ invoices }: Props) {
                         {formatStatus(invoice.status)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right text-sm text-zinc-600 dark:text-zinc-400">
+                    <td className="px-6 py-4 text-right text-sm text-zinc-600 dark:text-zinc-400">
                       {formatDiscountDisplay(invoice)}
                     </td>
-                    <td className="px-4 py-3 text-right text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                    <td className="px-6 py-4 text-right text-sm font-medium text-zinc-900 dark:text-zinc-50">
                       {formatCurrency(invoice.total)}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
                         {invoice.status === "draft" && (
                           <button
@@ -377,7 +377,7 @@ export function InvoicesTable({ invoices }: Props) {
             type="button"
             onClick={handleSend}
             disabled={sending || markingPaid || deleting || regenerating || cancelling}
-            className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-800 dark:hover:bg-zinc-200"
+            className="btn-primary"
           >
             {sending ? "Sending…" : `Send ${selected.size} selected`}
           </button>
@@ -385,7 +385,7 @@ export function InvoicesTable({ invoices }: Props) {
             type="button"
             onClick={handleMarkAsPaid}
             disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder}
-            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="btn-secondary"
           >
             {markingPaid ? "Updating…" : "Mark as paid"}
           </button>
@@ -394,7 +394,7 @@ export function InvoicesTable({ invoices }: Props) {
             onClick={handleSendReminder}
             disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder || !canSendReminder}
             title={!canSendReminder ? "Select issued invoices to send reminders" : "Send reminders to issued invoices' parent(s)"}
-            className="rounded-lg border border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-600 dark:bg-amber-950/30 dark:text-amber-300 dark:hover:bg-amber-950/60"
+            className="btn-secondary"
           >
             {sendingReminder ? "Sending…" : "Send payment reminder"}
           </button>
@@ -403,7 +403,7 @@ export function InvoicesTable({ invoices }: Props) {
             onClick={() => setShowRegenerateConfirm(true)}
             disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder || !canRegenerate}
             title={!canRegenerate ? "Select draft invoices to regenerate" : "Recalculate subtotal from current sessions"}
-            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="btn-secondary"
           >
             {regenerating ? "Regenerating…" : "Regenerate selected"}
           </button>
@@ -411,7 +411,7 @@ export function InvoicesTable({ invoices }: Props) {
             type="button"
             onClick={() => setShowCancelConfirm(true)}
             disabled={sending || markingPaid || deleting || regenerating || cancelling || !canCancel}
-            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-amber-400 dark:hover:bg-amber-950/30"
+            className="btn-secondary"
           >
             {cancelling ? "Cancelling…" : "Cancel invoice(s)"}
           </button>
@@ -419,7 +419,7 @@ export function InvoicesTable({ invoices }: Props) {
             type="button"
             onClick={openDeleteConfirm}
             disabled={sending || markingPaid || deleting || regenerating || cancelling}
-            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-950/30"
+            className="btn-danger-outline"
           >
             Delete selected
           </button>
@@ -445,7 +445,7 @@ export function InvoicesTable({ invoices }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-invoices-title"
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 surface p-6 shadow-xl"
           >
             <h2
               id="delete-invoices-title"
@@ -462,7 +462,7 @@ export function InvoicesTable({ invoices }: Props) {
                 type="button"
                 onClick={closeDeleteConfirm}
                 disabled={deleting}
-                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="btn-secondary"
               >
                 Cancel
               </button>
@@ -470,7 +470,7 @@ export function InvoicesTable({ invoices }: Props) {
                 type="button"
                 onClick={handleDeleteConfirmed}
                 disabled={deleting}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 dark:bg-red-600 dark:hover:bg-red-700"
+                className="btn-danger"
               >
                 {deleting ? "Deleting…" : "Delete"}
               </button>
@@ -490,7 +490,7 @@ export function InvoicesTable({ invoices }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="regenerate-invoices-title"
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 surface p-6 shadow-xl"
           >
             <h2
               id="regenerate-invoices-title"
@@ -507,7 +507,7 @@ export function InvoicesTable({ invoices }: Props) {
                 type="button"
                 onClick={() => !regenerating && setShowRegenerateConfirm(false)}
                 disabled={regenerating}
-                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="btn-secondary"
               >
                 Cancel
               </button>
@@ -515,7 +515,7 @@ export function InvoicesTable({ invoices }: Props) {
                 type="button"
                 onClick={handleRegenerateConfirmed}
                 disabled={regenerating}
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="btn-primary"
               >
                 {regenerating ? "Regenerating…" : "Regenerate"}
               </button>
@@ -535,7 +535,7 @@ export function InvoicesTable({ invoices }: Props) {
             role="dialog"
             aria-modal="true"
             aria-labelledby="cancel-invoices-title"
-            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+            className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 surface p-6 shadow-xl"
           >
             <h2
               id="cancel-invoices-title"
@@ -552,7 +552,7 @@ export function InvoicesTable({ invoices }: Props) {
                 type="button"
                 onClick={() => !cancelling && setShowCancelConfirm(false)}
                 disabled={cancelling}
-                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="btn-secondary"
               >
                 Back
               </button>
@@ -560,7 +560,7 @@ export function InvoicesTable({ invoices }: Props) {
                 type="button"
                 onClick={handleCancelConfirmed}
                 disabled={cancelling}
-                className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50 dark:bg-amber-600 dark:hover:bg-amber-700"
+                className="btn-warning"
               >
                 {cancelling ? "Cancelling…" : "Cancel invoice(s)"}
               </button>

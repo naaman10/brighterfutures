@@ -43,9 +43,9 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={[
-        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+        "btn-tab",
         active
-          ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+          ? "bg-accent text-white"
           : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50",
       ].join(" ")}
       aria-pressed={active}
@@ -82,7 +82,7 @@ export function StudentTabs({
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="inline-flex items-center gap-1 rounded-full border border-zinc-200/80 bg-white p-1 shadow-[var(--shadow-card)] dark:border-zinc-700 dark:bg-zinc-900">
           {tabs.map((t) => (
             <TabButton key={t.key} active={tab === t.key} onClick={() => setTab(t.key)}>
               {t.label}
@@ -91,7 +91,7 @@ export function StudentTabs({
         </div>
         <Link
           href={`/dashboard/students/${studentId}/edit`}
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="btn-secondary"
         >
           Update details
         </Link>
@@ -99,7 +99,7 @@ export function StudentTabs({
 
       {tab === "details" && (
         <div className="space-y-6">
-          <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="surface p-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Basic details
             </h2>
@@ -154,7 +154,7 @@ export function StudentTabs({
             </dl>
           </section>
 
-          <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="surface p-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               School
             </h2>
@@ -186,7 +186,7 @@ export function StudentTabs({
             </dl>
           </section>
 
-          <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="surface p-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               SEN &amp; medical
             </h2>
@@ -218,7 +218,7 @@ export function StudentTabs({
             </dl>
           </section>
 
-          <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+          <section className="surface p-6">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Collection
             </h2>
@@ -247,7 +247,7 @@ export function StudentTabs({
           </section>
 
           {(canSendWelcome || student.welcome) && (
-            <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="surface p-6">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Welcome email
               </h2>
@@ -287,7 +287,7 @@ export function StudentTabs({
       )}
 
       {tab === "bft-learn" && (
-        <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="surface p-6">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             BFT Learn
           </h2>
@@ -352,7 +352,7 @@ export function StudentTabs({
       )}
 
       {tab === "teaching-assistant" && (
-        <div className="rounded-xl bg-black p-6 text-white">
+        <div className="rounded-3xl bg-black p-6 text-white">
           <h2 className="mb-3 text-lg font-medium text-white">
             AI summary
           </h2>

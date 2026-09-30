@@ -30,7 +30,7 @@ export function GenerateInvoicesButton() {
         type="button"
         onClick={handleClick}
         disabled={loading}
-        className="h-10 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="btn-primary"
       >
         {loading ? "Generating…" : "Generate invoices for next month"}
       </button>

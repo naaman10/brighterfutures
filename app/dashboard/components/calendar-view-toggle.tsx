@@ -37,16 +37,16 @@ export function CalendarViewToggle({ view, monthParam, weekParam }: Props) {
 
   return (
     <div
-      className="inline-flex rounded-lg border border-zinc-200 p-0.5 dark:border-zinc-700"
+      className="inline-flex rounded-full border border-zinc-200/80 bg-white p-0.5 shadow-[var(--shadow-card)] dark:border-zinc-700 dark:bg-zinc-900"
       role="group"
       aria-label="Calendar view"
     >
       <button
         type="button"
         onClick={() => setView("week")}
-        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+        className={`btn-tab ${
           activeView === "week"
-            ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+            ? "bg-accent text-white"
             : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
         }`}
         aria-pressed={activeView === "week"}
@@ -56,9 +56,9 @@ export function CalendarViewToggle({ view, monthParam, weekParam }: Props) {
       <button
         type="button"
         onClick={() => setView("month")}
-        className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+        className={`btn-tab ${
           activeView === "month"
-            ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+            ? "bg-accent text-white"
             : "text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
         }`}
         aria-pressed={activeView === "month"}

@@ -69,7 +69,7 @@ export function EditParentForm({ parent }: EditParentFormProps) {
   return (
     <form action={handleSubmit} className="max-w-md space-y-6">
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-950/30 dark:text-red-200">
           {error}
         </div>
       )}
@@ -118,7 +118,7 @@ export function EditParentForm({ parent }: EditParentFormProps) {
         />
       </div>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <section className="surface p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Contact
         </h2>
@@ -177,7 +177,7 @@ export function EditParentForm({ parent }: EditParentFormProps) {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <section className="surface p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Address
         </h2>
@@ -229,7 +229,7 @@ export function EditParentForm({ parent }: EditParentFormProps) {
         </div>
       </section>
 
-      <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <section className="surface p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Emergency contact
         </h2>
@@ -287,14 +287,14 @@ export function EditParentForm({ parent }: EditParentFormProps) {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="btn-primary"
         >
           {pending ? "Saving…" : "Save changes"}
         </button>
         <Link
           href="/dashboard/parents"
           aria-disabled={pending}
-          className={`rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700 ${pending ? "pointer-events-none opacity-50" : ""}`}
+          className={`btn-secondary ${pending ? "pointer-events-none opacity-50" : ""}`}
         >
           Cancel
         </Link>

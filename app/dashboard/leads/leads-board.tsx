@@ -57,11 +57,22 @@ function getStatusLabel(status: KanbanStatus): string {
 function leadStatusBadgeClass(status: KanbanStatus): string {
   switch (status) {
     case "in_progress":
-      return "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200";
+      return "bg-peach text-zinc-800 dark:text-zinc-100";
     case "closed":
-      return "bg-zinc-200 text-zinc-800 dark:bg-zinc-700 dark:text-zinc-200";
+      return "bg-mint text-emerald-800 dark:text-emerald-200";
     default:
-      return "bg-sky-100 text-sky-900 dark:bg-sky-900/40 dark:text-sky-200";
+      return "bg-accent-soft text-accent dark:text-pink-200";
+  }
+}
+
+function columnTone(status: KanbanStatus): string {
+  switch (status) {
+    case "in_progress":
+      return "bg-lavender";
+    case "closed":
+      return "bg-mint";
+    default:
+      return "bg-peach";
   }
 }
 
@@ -133,7 +144,7 @@ function LeadDetailModal({
         aria-label="Close"
         onClick={onClose}
       />
-      <div className="relative z-10 max-h-[min(90vh,640px)] w-full max-w-lg overflow-y-auto rounded-xl border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="relative z-10 max-h-[min(90vh,640px)] w-full max-w-lg overflow-y-auto surface p-6 shadow-xl">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
             <h2 id="lead-modal-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
@@ -147,7 +158,7 @@ function LeadDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 rounded-lg border border-zinc-300 px-2 py-1 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            className="btn-secondary"
           >
             Close
           </button>
@@ -159,7 +170,7 @@ function LeadDetailModal({
               type="button"
               disabled={sendingOnboardingId === leadId}
               onClick={() => onSendOnboarding(leadId)}
-              className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              className="btn-primary"
             >
               {sendingOnboardingId === leadId ? "Sending…" : "Send onboarding"}
             </button>
@@ -263,7 +274,7 @@ export function LeadsBoard({ initialLeads }: Props) {
     <div>
       {onboardingNotice && (
         <div
-          className={`mb-3 rounded-lg border p-3 text-sm ${
+          className={`mb-3 rounded-2xl border px-4 py-3 text-sm ${
             onboardingNotice.kind === "ok"
               ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200"
               : "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200"
@@ -273,7 +284,7 @@ export function LeadsBoard({ initialLeads }: Props) {
         </div>
       )}
       {saveError && (
-        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mb-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
           {saveError}
         </div>
       )}
@@ -281,7 +292,7 @@ export function LeadsBoard({ initialLeads }: Props) {
         {STATUSES.map((status) => (
           <section
             key={status}
-            className="rounded-lg border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900"
+            className={`surface ${columnTone(status)}`}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
@@ -302,7 +313,7 @@ export function LeadsBoard({ initialLeads }: Props) {
             </div>
             <div className="space-y-3">
               {grouped[status].length === 0 ? (
-                <p className="rounded border border-dashed border-zinc-300 px-3 py-2 text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                <p className="rounded-2xl border border-dashed border-zinc-300 px-4 py-3 text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
                   No leads
                 </p>
               ) : (
@@ -348,7 +359,7 @@ export function LeadsBoard({ initialLeads }: Props) {
                           if (leadId) setModalLeadId(leadId);
                         }
                       }}
-                      className={`rounded-lg border border-zinc-200 bg-zinc-50 p-3 text-left outline-none transition-colors hover:bg-zinc-100/80 focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500 ${
+                      className={`rounded-2xl border border-zinc-200 bg-zinc-50 p-4 text-left outline-none transition-colors hover:bg-zinc-100/80 focus-visible:ring-2 focus-visible:ring-zinc-400 dark:border-zinc-700 dark:bg-zinc-800/60 dark:hover:bg-zinc-800 dark:focus-visible:ring-zinc-500 ${
                         canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-default opacity-90"
                       }`}
                     >

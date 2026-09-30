@@ -45,7 +45,7 @@ export function StudentAISummary({ studentId, initialSummary }: Props) {
           type="button"
           onClick={handleClick}
           disabled={loading}
-          className="flex items-center gap-2 rounded-lg border border-white/40 bg-white/10 px-3 py-1.5 text-sm font-medium text-white hover:bg-white/20 disabled:opacity-50"
+          className="btn-secondary border-white/40 bg-white/10 text-white hover:bg-white/20 hover:text-white"
         >
           <svg
             className="size-4 shrink-0"
@@ -69,11 +69,11 @@ export function StudentAISummary({ studentId, initialSummary }: Props) {
         <p className="text-sm text-red-300">{result.error}</p>
       )}
       {(displaySummary ?? null) && (
-        <div className="rounded-lg border border-white/20 bg-white/5 overflow-hidden">
+        <div className="rounded-2xl border border-white/20 bg-white/5 overflow-hidden">
           <button
             type="button"
             onClick={() => setExpanded((e) => !e)}
-            className="flex w-full items-center justify-between gap-2 p-3 text-left text-sm text-white hover:bg-white/5 transition-colors"
+            className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm text-white hover:bg-white/5 transition-colors"
             aria-expanded={expanded}
           >
             <span className="font-medium">Summary</span>
@@ -90,13 +90,13 @@ export function StudentAISummary({ studentId, initialSummary }: Props) {
             </span>
           </button>
           {expanded ? (
-            <div className="ai-summary-markdown border-t border-white/20 p-4 text-sm text-white">
+            <div className="ai-summary-markdown border-t border-white/20 px-4 py-4 text-sm text-white">
               <ReactMarkdown components={markdownComponents}>
                 {displaySummary}
               </ReactMarkdown>
             </div>
           ) : (
-            <div className="border-t border-white/20 p-3 text-sm text-white/90 line-clamp-2 overflow-hidden [&>*]:!mb-0">
+            <div className="border-t border-white/20 px-4 py-3 text-sm text-white/90 line-clamp-2 overflow-hidden [&>*]:!mb-0">
               <ReactMarkdown components={markdownComponents}>
                 {displaySummary}
               </ReactMarkdown>

@@ -19,7 +19,7 @@ function parseSearchParams(searchParams: SearchParams): { limit?: number; query?
 function statusColor(status: string): string {
   const s = status.toLowerCase();
   if (s === "delivered" || s === "processed") {
-    return "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300";
+    return "bg-mint text-emerald-800 dark:text-emerald-200";
   }
   if (s === "bounce" || s === "bounced" || s === "dropped" || s === "blocked") {
     return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300";
@@ -42,13 +42,13 @@ export default async function EmailLogsPage({
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           Email logs
         </h1>
       </div>
 
       <form
-        className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-zinc-200 bg-white p-3 text-sm dark:border-zinc-700 dark:bg-zinc-900"
+        className="mb-4 flex flex-wrap items-end gap-3 surface text-sm"
         method="GET"
       >
         <div>
@@ -86,14 +86,14 @@ export default async function EmailLogsPage({
         </div>
         <button
           type="submit"
-          className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+          className="btn-primary"
         >
           Apply
         </button>
       </form>
 
       {!result.ok ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
           <p>{result.error}</p>
           <p className="mt-2">
             Email logs are unavailable. Check that{" "}
@@ -104,25 +104,25 @@ export default async function EmailLogsPage({
           </p>
         </div>
       ) : result.logs.length === 0 ? (
-        <p className="rounded-lg border border-zinc-200 bg-white p-6 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="surface p-6 text-sm text-zinc-500 dark:text-zinc-400">
           No email logs yet.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="overflow-hidden surface p-0">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
               <thead>
                 <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Sent at
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     To
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Subject / Template
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                  <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                     Status
                   </th>
                 </tr>
@@ -130,18 +130,18 @@ export default async function EmailLogsPage({
               <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
                 {result.logs.map((log) => (
                   <tr key={log.id}>
-                    <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                       {formatDisplayDateTime(log.timestamp) || "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                    <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                       {log.to || "—"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-zinc-700 dark:text-zinc-300">
+                    <td className="px-6 py-4 text-sm text-zinc-700 dark:text-zinc-300">
                       {log.subject || log.templateId || "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${statusColor(log.status)}`}
+                        className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${statusColor(log.status)}`}
                       >
                         {log.status}
                       </span>
