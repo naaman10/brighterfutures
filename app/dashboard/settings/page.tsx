@@ -30,7 +30,7 @@ export default async function SettingsPage({ searchParams }: Props) {
         </Link>
       </div>
 
-      <h1 className="mb-2 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <h1 className="mb-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
         Settings
       </h1>
       <p className="mb-8 text-zinc-600 dark:text-zinc-400">

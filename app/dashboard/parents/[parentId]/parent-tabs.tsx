@@ -31,9 +31,9 @@ function TabButton({
       type="button"
       onClick={onClick}
       className={[
-        "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+        "btn-tab",
         active
-          ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+          ? "bg-accent text-white"
           : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50",
       ].join(" ")}
       aria-pressed={active}
@@ -59,7 +59,7 @@ export function ParentTabs({ parentId, parent, students, defaultTab = "details" 
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex items-center gap-1 rounded-xl border border-zinc-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="inline-flex items-center gap-1 rounded-full border border-zinc-200/80 bg-white p-1 shadow-[var(--shadow-card)] dark:border-zinc-700 dark:bg-zinc-900">
           {tabs.map((t) => (
             <TabButton key={t.key} active={tab === t.key} onClick={() => setTab(t.key)}>
               {t.label}
@@ -68,7 +68,7 @@ export function ParentTabs({ parentId, parent, students, defaultTab = "details" 
         </div>
         <Link
           href={`/dashboard/parents/${parentId}/edit`}
-          className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+          className="btn-secondary"
         >
           Edit parent
         </Link>
@@ -77,7 +77,7 @@ export function ParentTabs({ parentId, parent, students, defaultTab = "details" 
       {tab === "details" ? (
         <div className="space-y-8">
           <div className="space-y-6">
-            <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="surface p-6">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Contact
               </h2>
@@ -123,7 +123,7 @@ export function ParentTabs({ parentId, parent, students, defaultTab = "details" 
               </dl>
             </section>
 
-            <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="surface p-6">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Address
               </h2>
@@ -159,7 +159,7 @@ export function ParentTabs({ parentId, parent, students, defaultTab = "details" 
               </dl>
             </section>
 
-            <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+            <section className="surface p-6">
               <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                 Emergency contact
               </h2>
@@ -201,22 +201,22 @@ export function ParentTabs({ parentId, parent, students, defaultTab = "details" 
               </h2>
               <Link
                 href={`/dashboard/parents/${parentId}/students/new`}
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                className="btn-primary"
               >
                 Add student
               </Link>
             </div>
 
             {students.length === 0 ? (
-              <p className="rounded-lg border border-zinc-200 bg-white p-6 text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+              <p className="surface p-6 text-sm text-zinc-500 dark:text-zinc-400">
                 No students added yet.
               </p>
             ) : (
-              <ul className="overflow-hidden rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+              <ul className="overflow-hidden surface p-0">
                 {students.map((student) => (
                   <li
                     key={student.id}
-                    className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-4 py-3 last:border-b-0 dark:border-zinc-700"
+                    className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 px-6 py-4 last:border-b-0 dark:border-zinc-700"
                   >
                     <div>
                       <p className="flex flex-wrap items-center gap-2 font-medium text-zinc-900 dark:text-zinc-50">
@@ -240,7 +240,7 @@ export function ParentTabs({ parentId, parent, students, defaultTab = "details" 
           </div>
         </div>
       ) : (
-        <section className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+        <section className="surface p-6">
           <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
             Terms
           </h2>

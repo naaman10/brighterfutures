@@ -33,7 +33,7 @@ export function SessionStatusFilter({ currentStatus }: Props) {
     <select
       value={currentStatus ?? ""}
       onChange={(e) => handleChange(e.target.value)}
-      className="rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
+      className="rounded-full border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
       aria-label="Filter by status"
     >
       <option value="">All statuses</option>

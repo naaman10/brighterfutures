@@ -21,7 +21,6 @@ export function DeleteSessionButton({
   studentId,
   redirectTo,
   sessionLabel,
-  variant = "inline",
 }: Props) {
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -59,13 +58,8 @@ export function DeleteSessionButton({
     });
   }
 
-  const triggerClass =
-    variant === "button"
-      ? "inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50"
-      : "inline-flex h-8 w-8 items-center justify-center rounded text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 disabled:opacity-50 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50";
-
-  const iconClass =
-    variant === "button" ? "text-[22px] leading-none" : "text-[20px] leading-none";
+  const triggerClass = "btn-icon";
+  const iconClass = "text-[16px] leading-none";
 
   return (
     <>
@@ -91,7 +85,7 @@ export function DeleteSessionButton({
             role="dialog"
             aria-modal="true"
             aria-labelledby="delete-session-title"
-            className="fixed text-center left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-lg border border-zinc-200 bg-white p-6 shadow-xl dark:border-zinc-700 dark:bg-zinc-900"
+            className="fixed text-center left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 surface p-6 shadow-xl"
           >
             <h2
               id="delete-session-title"
@@ -111,7 +105,7 @@ export function DeleteSessionButton({
                 type="button"
                 onClick={close}
                 disabled={pending}
-                className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                className="btn-secondary"
               >
                 Cancel
               </button>
@@ -119,7 +113,7 @@ export function DeleteSessionButton({
                 type="button"
                 onClick={confirmDelete}
                 disabled={pending}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="btn-danger"
               >
                 {pending ? "Deleting…" : "Delete session"}
               </button>

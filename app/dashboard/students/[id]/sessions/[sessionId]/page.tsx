@@ -72,9 +72,9 @@ export default async function SessionViewPage({ params }: Props) {
         </span>
       </div>
 
-      <div className="mb-8 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="mb-8 surface p-6">
         <div className="mb-4 flex flex-wrap items-start justify-between gap-4">
-          <h1 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
             Session details
           </h1>
           <div className="flex flex-wrap items-center gap-2">
@@ -155,7 +155,7 @@ export default async function SessionViewPage({ params }: Props) {
         ) : null}
       </div>
 
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="surface p-6">
         <SessionFeedbackEditor
           sessionId={sessionId}
           studentId={studentId}

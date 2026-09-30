@@ -36,7 +36,7 @@ export async function BftLearnEnrollmentPage({
   if ("error" in result) {
     return (
       <div>
-        <h1 className="mb-2 text-xl font-semibold text-zinc-900 dark:text-zinc-50">
+        <h1 className="mb-2 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           {mode === "assess" ? "Assess enrollment" : "Enrollment details"}
         </h1>
         <p className="text-sm text-red-600 dark:text-red-400">{result.error}</p>

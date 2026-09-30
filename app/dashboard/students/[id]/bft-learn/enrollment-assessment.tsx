@@ -203,7 +203,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
 
   if (review.questions.length === 0) {
     return (
-      <section className="mt-6 rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <section className="mt-6 surface p-6">
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Assessment
         </h2>
@@ -217,7 +217,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
   return (
     <section className="mt-6 space-y-6">
       {/* Progress indicator */}
-      <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="surface">
         <div className="mb-2 flex items-center justify-between text-sm">
           <span className="font-medium text-zinc-900 dark:text-zinc-50">
             Grading Progress
@@ -237,7 +237,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
       </div>
 
       {/* Questions */}
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="surface p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Questions
         </h2>
@@ -257,7 +257,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
       </div>
 
       {/* Overall feedback */}
-      <div className="rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="surface p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
           Overall Feedback
         </h2>
@@ -274,7 +274,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center justify-between gap-4 rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="flex items-center justify-between gap-4 surface">
         <div className="text-sm text-zinc-600 dark:text-zinc-400">
           {hasUnsavedChanges && (
             <span className="inline-flex items-center gap-2">
@@ -288,7 +288,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
             type="button"
             onClick={saveAssessment}
             disabled={saving || !hasUnsavedChanges}
-            className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+            className="btn-secondary"
           >
             {saving ? "Saving..." : "Save Draft"}
           </button>
@@ -296,7 +296,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
             type="button"
             onClick={completeAssessment}
             disabled={saving}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-primary"
           >
             Complete Assessment
           </button>

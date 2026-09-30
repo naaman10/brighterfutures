@@ -2,12 +2,12 @@ import { signIn } from "@/auth";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-      <main className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="mb-2 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4">
+      <main className="surface w-full max-w-sm p-8">
+        <h1 className="mb-2 text-2xl font-semibold tracking-tight text-foreground">
           Brighter Futures
         </h1>
-        <p className="mb-6 text-zinc-600 dark:text-zinc-400">
+        <p className="mb-6 text-muted">
           Sign in with Google to access your client dashboard.
         </p>
         <form
@@ -18,7 +18,7 @@ export default function LoginPage() {
         >
           <button
             type="submit"
-            className="flex w-full items-center justify-center gap-3 rounded-xl bg-zinc-900 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="btn-primary w-full"
           >
             <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden>
               <path

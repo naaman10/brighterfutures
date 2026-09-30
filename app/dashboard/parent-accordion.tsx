@@ -18,7 +18,7 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
 
   return (
     <li className="border-b border-zinc-200 last:border-b-0 dark:border-zinc-700">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-6 py-4">
         <button
           type="button"
           onClick={() => setOpen((o) => !o)}
@@ -45,7 +45,7 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
               View
             </Link>
             {hasStudents && (
-              <span className="rounded bg-zinc-200 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-600 dark:text-zinc-300">
+              <span className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-medium text-accent">
                 {students.length} student{students.length !== 1 ? "s" : ""}
               </span>
             )}
@@ -59,7 +59,7 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
         </button>
       </div>
       {open && (
-        <div className="border-t border-zinc-100 bg-zinc-50 px-4 py-3 pl-10 dark:border-zinc-700 dark:bg-zinc-800/50">
+        <div className="border-t border-zinc-100 bg-zinc-50 px-6 py-4 pl-12 dark:border-zinc-700 dark:bg-zinc-800/50">
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Students
@@ -86,7 +86,7 @@ export function ParentAccordion({ parent, index }: ParentAccordionProps) {
               {students.map((student) => (
                 <li
                   key={student.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-900"
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-600 dark:bg-zinc-900"
                 >
                   <div>
                     <p className="flex flex-wrap items-center gap-2 font-medium text-zinc-900 dark:text-zinc-50">

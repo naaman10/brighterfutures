@@ -1,17 +1,15 @@
 "use client";
 
-import Link from "next/link";
-import NextImage from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DashboardSidebar } from "./dashboard-sidebar";
 
 type Props = {
   children: React.ReactNode;
-  headerRight: React.ReactNode;
+  signOut: React.ReactNode;
 };
 
-export function DashboardShell({ children, headerRight }: Props) {
+export function DashboardShell({ children, signOut }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
@@ -19,61 +17,36 @@ export function DashboardShell({ children, headerRight }: Props) {
     setSidebarOpen(false);
   }, [pathname]);
 
-  return (
-    <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
-      <header className="shrink-0 border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex h-14 items-center justify-between gap-2 px-4">
-          <div className="flex min-w-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setSidebarOpen((o) => !o)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-50 md:hidden"
-              aria-label={sidebarOpen ? "Close menu" : "Open menu"}
-              aria-expanded={sidebarOpen}
-            >
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                aria-hidden
-              >
-                {sidebarOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
-            </button>
-            <Link
-              href="/dashboard"
-              className="flex items-center gap-2 text-lg font-semibold text-zinc-900 dark:text-zinc-50"
-            >
-              <NextImage
-                src="/bft-logo-no-text.png"
-                alt=""
-                width={32}
-                height={32}
-                className="h-8 w-8 object-contain"
-              />
-              <span className="truncate">Brighter Futures</span>
-            </Link>
-          </div>
-          <div className="flex items-center gap-4">{headerRight}</div>
-        </div>
-      </header>
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [sidebarOpen]);
 
-      {/* Mobile backdrop */}
+  return (
+    <div className="flex min-h-screen bg-transparent">
+      {!sidebarOpen && (
+        <button
+          type="button"
+          onClick={() => setSidebarOpen(true)}
+          className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-full bg-sidebar text-sidebar-text shadow-[var(--shadow-card)] md:hidden"
+          aria-label="Open menu"
+          aria-expanded={false}
+        >
+          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 6h16M4 12h16M4 18h16"
+            />
+          </svg>
+        </button>
+      )}
+
       <button
         type="button"
         onClick={() => setSidebarOpen(false)}
@@ -84,19 +57,17 @@ export function DashboardShell({ children, headerRight }: Props) {
         tabIndex={-1}
       />
 
-      <div className="flex min-h-0 flex-1">
-        <div
-          className={`fixed left-0 z-40 flex h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col border-r border-zinc-200 bg-white transition-transform duration-200 ease-out dark:border-zinc-800 dark:bg-zinc-900 md:static md:h-auto md:translate-x-0 md:min-h-0 md:transition-none ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
-          style={{ top: "3.5rem" }}
-        >
-          <DashboardSidebar />
-        </div>
-        <main className="flex min-h-0 min-w-0 flex-1 flex-col px-4 py-8 lg:px-8">
-          {children}
-        </main>
+      <div
+        className={`fixed inset-0 z-40 flex w-full shrink-0 flex-col overflow-hidden bg-sidebar shadow-[0_12px_40px_rgba(28,25,23,0.12)] transition-transform duration-200 ease-out md:inset-auto md:sticky md:top-4 md:m-4 md:h-[calc(100dvh-2rem)] md:w-56 md:rounded-3xl md:translate-x-0 md:self-start md:transition-none ${
+          sidebarOpen ? "translate-x-0" : "max-md:-translate-x-full"
+        }`}
+      >
+        <DashboardSidebar signOut={signOut} onClose={() => setSidebarOpen(false)} />
       </div>
+
+      <main className="min-w-0 flex-1 px-4 pb-8 pt-16 md:px-8 md:py-4">
+        {children}
+      </main>
     </div>
   );
 }

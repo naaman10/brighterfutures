@@ -82,7 +82,7 @@ export function CreateBftLearnAccountForm({ studentId, defaultName }: Props) {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+        className="btn-primary"
       >
         {isSubmitting ? "Creating…" : "Create BFT Learn account"}
       </button>

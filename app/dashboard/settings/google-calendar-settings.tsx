@@ -54,7 +54,7 @@ export function GoogleCalendarSettings({
   }
 
   return (
-    <section className="max-w-xl rounded-lg border border-zinc-200 bg-white p-6 dark:border-zinc-700 dark:bg-zinc-900">
+    <section className="max-w-xl surface p-6">
       <h2 className="mb-4 text-lg font-medium text-zinc-900 dark:text-zinc-50">
         Google Calendar
       </h2>
@@ -119,7 +119,7 @@ export function GoogleCalendarSettings({
         {configured && (
           <a
             href="/api/google-calendar/connect"
-            className="inline-flex rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="btn-primary"
           >
             {connected ? "Reconnect Google Calendar" : "Connect Google Calendar"}
           </a>
@@ -130,7 +130,7 @@ export function GoogleCalendarSettings({
               type="button"
               onClick={handleVerify}
               disabled={pending}
-              className="inline-flex rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
+              className="btn-secondary"
             >
               Test access
             </button>
@@ -138,7 +138,7 @@ export function GoogleCalendarSettings({
               type="button"
               onClick={handleBackfill}
               disabled={pending}
-              className="inline-flex rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:text-zinc-100 dark:hover:bg-zinc-800"
+              className="btn-secondary"
             >
               {pending ? "Syncing…" : "Sync existing sessions"}
             </button>

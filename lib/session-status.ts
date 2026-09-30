@@ -79,11 +79,11 @@ export function getCalendarSessionClasses(
     : "";
 
   if (isPlannedReschedule(status)) {
-    return `border-red-300 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100 ${hover}`;
+    return `border-red-200 bg-red-50 text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100 ${hover}`;
   }
 
   const baseHover = interactive
-    ? "hover:bg-zinc-50 dark:hover:bg-zinc-700"
+    ? "hover:bg-accent-soft dark:hover:bg-zinc-700"
     : "";
-  return `border-zinc-200 bg-white dark:border-zinc-600 dark:bg-zinc-800 ${baseHover}`;
+  return `border-transparent bg-peach text-zinc-900 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-50 ${baseHover}`;
 }

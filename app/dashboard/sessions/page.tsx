@@ -36,18 +36,18 @@ export default async function SessionsPage({
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
         Sessions
       </h1>
 
       {dbError && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
           {dbError}
         </div>
       )}
 
       {!dbError && sessions.length === 0 ? (
-        <p className="rounded-lg border border-zinc-200 bg-white p-6 text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400">
+        <p className="surface p-6 text-zinc-500 dark:text-zinc-400">
           No sessions yet. Add sessions from a student&apos;s page.
         </p>
       ) : (
@@ -59,27 +59,27 @@ export default async function SessionsPage({
           {(() => {
             const birthdaySessionIdToTooltip = pickBirthdaySessionIdByStudent(sessions, 5);
             return (
-              <div className="rounded-lg border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+              <div className="surface p-0">
             <div className="overflow-x-auto overflow-y-visible">
               <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
                 <thead>
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Date
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Time
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Student
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Subject
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Status
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
                       Actions
                     </th>
                   </tr>
@@ -87,7 +87,7 @@ export default async function SessionsPage({
                 <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
                   {sessions.map((session) => (
                     <tr key={session.id}>
-                      <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                      <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                         <div className="flex items-center gap-2">
                           <span>{formatDisplayDate(session.session_date) || "—"}</span>
                           {(() => {
@@ -97,10 +97,10 @@ export default async function SessionsPage({
                           })()}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                      <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                         {formatDisplayTime(session.session_time) || "—"}
                       </td>
-                      <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                      <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                         <Link
                           href={`/dashboard/students/${session.student_id}`}
                           className="font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
@@ -108,7 +108,7 @@ export default async function SessionsPage({
                           {session.student_first_name} {session.student_last_name}
                         </Link>
                       </td>
-                      <td className="px-4 py-3 text-sm text-zinc-900 dark:text-zinc-50">
+                      <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
                         <span className="inline-flex items-center gap-1.5">
                           {session.subject}
                           <SessionGoogleMeetIcon
@@ -116,10 +116,10 @@ export default async function SessionsPage({
                           />
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-sm text-zinc-600 dark:text-zinc-400">
+                      <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
                         {SESSION_STATUS_LABELS[session.status ?? "planned"]}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-3">
                           <Link
                             href={`/dashboard/students/${session.student_id}/sessions/${session.id}`}

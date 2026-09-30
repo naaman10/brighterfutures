@@ -455,13 +455,13 @@ export function WeekCalendarGrid({
         <div
           className={`pointer-events-none absolute inset-y-0 z-30 w-12 ${
             edgeHint === "left" ? "left-0" : "right-0"
-          } bg-[#f75074]/10`}
+          } bg-accent/10`}
           aria-hidden
         />
       )}
 
       {isPreviewWeek && drag && (
-        <p className="pointer-events-none absolute left-0 right-0 top-0 z-[101] bg-[#f75074] px-2 py-1 text-center text-xs font-medium text-white">
+        <p className="pointer-events-none absolute left-0 right-0 top-0 z-[101] bg-accent px-2 py-1 text-center text-xs font-medium text-white">
           Release to place session on this week
         </p>
       )}
@@ -486,7 +486,7 @@ export function WeekCalendarGrid({
                   <span
                     className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold md:h-7 md:w-7 md:text-sm ${
                       isToday
-                        ? "bg-[#f75074] text-white"
+                        ? "bg-accent text-white"
                         : "text-zinc-900 dark:text-zinc-50"
                     }`}
                   >
@@ -616,7 +616,7 @@ export function WeekCalendarGrid({
 
                   {drag && isDropTarget && (
                     <div
-                      className="pointer-events-none absolute left-0.5 right-0.5 z-20 rounded border-2 border-dashed border-[#f75074] bg-[#f75074]/10 md:left-1 md:right-1"
+                      className="pointer-events-none absolute left-0.5 right-0.5 z-20 rounded border-2 border-dashed border-accent bg-accent/10 md:left-1 md:right-1"
                       style={{
                         top: `${ghostTop}px`,
                         height: `${ghostHeight - 2}px`,
@@ -632,7 +632,7 @@ export function WeekCalendarGrid({
 
       {drag && ghostPos && (
         <div
-          className="pointer-events-none fixed z-[102] w-36 max-w-[40vw] overflow-hidden rounded border border-[#f75074] bg-white px-2 py-1 text-xs shadow-lg dark:bg-zinc-800"
+          className="pointer-events-none fixed z-[102] w-36 max-w-[40vw] overflow-hidden rounded-lg border border-accent bg-white px-2 py-1 text-xs shadow-lg dark:bg-zinc-800"
           style={{
             left: ghostPos.x,
             top: ghostPos.y + 8,

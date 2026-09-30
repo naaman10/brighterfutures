@@ -33,7 +33,7 @@ export default async function ViewParentPage({ params }: Props) {
       </div>
 
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">{parentName}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">{parentName}</h1>
         <RecordStatusBadge status={parseRecordStatus(parent.status)} />
       </div>
 
