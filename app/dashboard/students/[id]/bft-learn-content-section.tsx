@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import {
   bftLearnProgressStatusLabel,
   type BftLearnContentFilters,
@@ -42,7 +43,7 @@ export function BftLearnContentSection({ studentId }: Props) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [assigningEntryId, setAssigningEntryId] = useState<string | null>(null);
+  const { pending: assigning, activeKey: assigningEntryId, run } = useActionLock<string>();
   const enrollmentsLoadedRef = useRef(false);
 
   const loadContent = useCallback(
@@ -114,48 +115,45 @@ export function BftLearnContentSection({ studentId }: Props) {
   }
 
   async function handleAssign(entryId: string, contentName: string) {
-    if (assigningEntryId) return;
-    setAssigningEntryId(entryId);
+    await run(async () => {
+      try {
+        const response = await fetch(`/api/bft-learn/enroll/${encodeURIComponent(studentId)}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contentIds: [entryId] }),
+        });
+        const body = (await response.json()) as { error?: string };
 
-    try {
-      const response = await fetch(`/api/bft-learn/enroll/${encodeURIComponent(studentId)}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contentIds: [entryId] }),
-      });
-      const body = (await response.json()) as { error?: string };
+        if (!response.ok) {
+          toast.error(body.error ?? "Failed to assign content.");
+          return;
+        }
 
-      if (!response.ok) {
-        toast.error(body.error ?? "Failed to assign content.");
-        return;
+        const assignedItem = items.find((item) => item.entryId === entryId);
+        setEnrollments((prev) => {
+          if (prev.some((enrollment) => enrollment.entryId === entryId)) return prev;
+          return [
+            {
+              id: "",
+              entryId,
+              name: assignedItem?.name || contentName,
+              type: assignedItem?.type ?? "",
+              subject: assignedItem?.subject ?? "",
+              ageGroup: assignedItem?.ageGroup ?? "",
+              status: "enrolled",
+              progressStatus: "not_started",
+            },
+            ...prev,
+          ];
+        });
+        toast.success(`Assigned "${contentName}".`);
+        await loadContent(selectedFilters, new AbortController().signal, {
+          refreshEnrollments: true,
+        });
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Failed to assign content.");
       }
-
-      const assignedItem = items.find((item) => item.entryId === entryId);
-      setEnrollments((prev) => {
-        if (prev.some((enrollment) => enrollment.entryId === entryId)) return prev;
-        return [
-          {
-            id: "",
-            entryId,
-            name: assignedItem?.name || contentName,
-            type: assignedItem?.type ?? "",
-            subject: assignedItem?.subject ?? "",
-            ageGroup: assignedItem?.ageGroup ?? "",
-            status: "enrolled",
-            progressStatus: "not_started",
-          },
-          ...prev,
-        ];
-      });
-      toast.success(`Assigned "${contentName}".`);
-      await loadContent(selectedFilters, new AbortController().signal, {
-        refreshEnrollments: true,
-      });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to assign content.");
-    } finally {
-      setAssigningEntryId(null);
-    }
+    }, entryId);
   }
 
   const enrolledEntryIds = useMemo(
@@ -360,14 +358,16 @@ export function BftLearnContentSection({ studentId }: Props) {
                       {displayValue(item.type)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
+                      <ActionButton
                         type="button"
                         onClick={() => void handleAssign(item.entryId, item.name || item.entryId)}
-                        disabled={assigningEntryId === item.entryId}
+                        pending={assigningEntryId === item.entryId}
+                        pendingLabel="Assigning…"
+                        disabled={assigning}
                         className="btn-secondary"
                       >
-                        {assigningEntryId === item.entryId ? "Assigning…" : "Assign"}
-                      </button>
+                        Assign
+                      </ActionButton>
                     </td>
                   </tr>
                 ))}

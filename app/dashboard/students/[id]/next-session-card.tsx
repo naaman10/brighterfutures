@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import Link from "next/link";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Session } from "@/lib/db";
@@ -24,8 +25,7 @@ type Props = {
 export function NextSessionCard({ studentId, session }: Props) {
   const router = useRouter();
   const feedbackRef = useRef<SessionFeedbackEditorHandle>(null);
-  const pendingRef = useRef(false);
-  const [pending, setPending] = useState<"complete" | "send" | null>(null);
+  const { pending: busy, activeKey, run } = useActionLock<"complete" | "send">();
 
   if (!session) {
     return (
@@ -41,13 +41,10 @@ export function NextSessionCard({ studentId, session }: Props) {
   }
 
   const feedbackSentAtDisplay = formatDisplayDateTime(session.feedback_sent_at);
-  const busy = pending !== null;
 
   async function handleComplete() {
-    if (!session || pendingRef.current) return;
-    pendingRef.current = true;
-    setPending("complete");
-    try {
+    if (!session) return;
+    await run(async () => {
       const saveResult = await feedbackRef.current?.saveNow();
       if (saveResult?.error) return;
       const result = await completeSessionAction(session.id, studentId);
@@ -57,17 +54,12 @@ export function NextSessionCard({ studentId, session }: Props) {
       }
       toast.success("Session completed.");
       router.refresh();
-    } finally {
-      pendingRef.current = false;
-      setPending(null);
-    }
+    }, "complete");
   }
 
   async function handleCompleteAndSend() {
-    if (!session || pendingRef.current) return;
-    pendingRef.current = true;
-    setPending("send");
-    try {
+    if (!session) return;
+    await run(async () => {
       const saveResult = await feedbackRef.current?.saveNow();
       if (saveResult?.error) return;
       const result = await completeSessionAndSendFeedbackAction(session.id, studentId);
@@ -77,10 +69,7 @@ export function NextSessionCard({ studentId, session }: Props) {
       }
       toast.success("Session completed and feedback sent.");
       router.refresh();
-    } finally {
-      pendingRef.current = false;
-      setPending(null);
-    }
+    }, "send");
   }
 
   return (
@@ -139,22 +128,26 @@ export function NextSessionCard({ studentId, session }: Props) {
       />
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <button
+        <ActionButton
           type="button"
           onClick={handleComplete}
+          pending={activeKey === "complete"}
+          pendingLabel="Completing…"
           disabled={busy}
           className="btn-secondary"
         >
-          {pending === "complete" ? "Completing…" : "Complete Session"}
-        </button>
-        <button
+          Complete Session
+        </ActionButton>
+        <ActionButton
           type="button"
           onClick={handleCompleteAndSend}
+          pending={activeKey === "send"}
+          pendingLabel="Sending…"
           disabled={busy}
           className="btn-primary"
         >
-          {pending === "send" ? "Sending…" : "Complete Session & Send Feedback"}
-        </button>
+          Complete Session & Send Feedback
+        </ActionButton>
         {feedbackSentAtDisplay && (
           <span className="text-sm text-zinc-600 dark:text-zinc-400">
             Sent at: {feedbackSentAtDisplay}

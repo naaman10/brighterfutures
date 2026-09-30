@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import type { Invoice } from "@/lib/db";
 
 function hasDiscount(invoice: Invoice): boolean {
@@ -30,7 +31,7 @@ export function EditDiscountModal({ invoice, onClose, onSaved, updateDiscount }:
     const n = Number(invoice.discount_pct);
     return Number.isNaN(n) ? "" : String(n);
   });
-  const [saving, setSaving] = useState(false);
+  const { pending: saving, run } = useActionLock();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,15 +41,15 @@ export function EditDiscountModal({ invoice, onClose, onSaved, updateDiscount }:
       toast.error("Enter valid discount amount (≥ 0) and percentage (0–100).");
       return;
     }
-    setSaving(true);
-    const result = await updateDiscount(invoice.id, amountNum, pctNum);
-    setSaving(false);
-    if (result.ok) {
-      toast.success("Discount updated.");
-      onSaved();
-    } else {
-      toast.error(result.error ?? "Failed to update discount.");
-    }
+    await run(async () => {
+      const result = await updateDiscount(invoice.id, amountNum, pctNum);
+      if (result.ok) {
+        toast.success("Discount updated.");
+        onSaved();
+      } else {
+        toast.error(result.error ?? "Failed to update discount.");
+      }
+    });
   }
 
   return (
@@ -109,13 +110,14 @@ export function EditDiscountModal({ invoice, onClose, onSaved, updateDiscount }:
             >
               Cancel
             </button>
-            <button
+            <ActionButton
               type="submit"
-              disabled={saving}
+              pending={saving}
+              pendingLabel="Saving…"
               className="btn-primary"
             >
-              {saving ? "Saving…" : "Save"}
-            </button>
+              Save
+            </ActionButton>
           </div>
         </form>
       </div>

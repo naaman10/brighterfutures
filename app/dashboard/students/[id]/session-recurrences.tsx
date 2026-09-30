@@ -10,6 +10,7 @@ import {
   normalizeSessionTime,
   type SessionRecurrence,
 } from "@/lib/session-recurrence";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { updateSessionRecurrenceAction } from "./recurrence-actions";
 import { DeleteRecurrenceButton } from "./delete-recurrence-button";
 
@@ -65,28 +66,27 @@ function RecurrenceRow({
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [seriesInterval, setSeriesInterval] = useState(recurrence.interval);
-  const [pending, setPending] = useState(false);
+  const { pending, run } = useActionLock();
   const [error, setError] = useState<string | null>(null);
   const dayLabel = DAYS[recurrence.day_of_week] ?? "Day";
 
   async function handleSubmit(formData: FormData) {
-    if (pending) return;
-    setPending(true);
-    setError(null);
-    const result = await updateSessionRecurrenceAction(
-      studentId,
-      recurrence.id,
-      formData
-    );
-    setPending(false);
-    if (result.error) {
-      setError(result.error);
-      return;
-    }
-    if (result.calendarWarning) toast.warning(result.calendarWarning);
-    else toast.success("Recurring sessions updated.");
-    setEditing(false);
-    router.refresh();
+    await run(async () => {
+      setError(null);
+      const result = await updateSessionRecurrenceAction(
+        studentId,
+        recurrence.id,
+        formData
+      );
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      if (result.calendarWarning) toast.warning(result.calendarWarning);
+      else toast.success("Recurring sessions updated.");
+      setEditing(false);
+      router.refresh();
+    });
   }
 
   return (
@@ -218,13 +218,14 @@ function RecurrenceRow({
               />
             </div>
           </div>
-          <button
+          <ActionButton
             type="submit"
-            disabled={pending}
+            pending={pending}
+            pendingLabel="Saving…"
             className="btn-primary"
           >
-            {pending ? "Saving…" : "Save series"}
-          </button>
+            Save series
+          </ActionButton>
         </form>
       )}
     </li>

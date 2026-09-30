@@ -3,28 +3,27 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { addStudentToParent } from "../../actions";
 
 type Props = { parentId: string };
 
 export function AddStudentForm({ parentId }: Props) {
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { pending, run } = useActionLock();
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
-    if (isSubmitting) return;
-    setError(null);
-    setIsSubmitting(true);
-    const result = await addStudentToParent(parentId, formData);
-    if (result?.error) {
-      setError(result.error);
-      setIsSubmitting(false);
-      return;
-    }
-    router.push("/dashboard/parents");
-    router.refresh();
-    setIsSubmitting(false);
+    await run(async () => {
+      setError(null);
+      const result = await addStudentToParent(parentId, formData);
+      if (result?.error) {
+        setError(result.error);
+        return;
+      }
+      router.push("/dashboard/parents");
+      router.refresh();
+    });
   }
 
   return (
@@ -74,13 +73,14 @@ export function AddStudentForm({ parentId }: Props) {
         </div>
       </div>
       <div className="flex gap-3">
-        <button
+        <ActionButton
           type="submit"
-          disabled={isSubmitting}
+          pending={pending}
+          pendingLabel="Adding..."
           className="btn-primary"
         >
-          {isSubmitting ? "Adding..." : "Add student"}
-        </button>
+          Add student
+        </ActionButton>
         <Link
           href="/dashboard/parents"
           className="btn-secondary"

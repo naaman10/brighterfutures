@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { generateInvoiceForParentAndMonth } from "./actions";
 
 type ParentOption = {
@@ -26,7 +27,7 @@ export function GenerateSingleInvoiceModal({ parents }: Props) {
   const [month, setMonth] = useState("");
   const [discountAmount, setDiscountAmount] = useState("");
   const [discountPct, setDiscountPct] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { pending: loading, run } = useActionLock();
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const router = useRouter();
@@ -46,26 +47,26 @@ export function GenerateSingleInvoiceModal({ parents }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!parentId || !month) return;
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-    const billingMonth = `${month}-01`;
-    const options =
-      discountAmount !== "" || discountPct !== ""
-        ? {
-            discount_amount: discountAmount !== "" ? Number(discountAmount) : undefined,
-            discount_pct: discountPct !== "" ? Number(discountPct) : undefined,
-          }
-        : undefined;
-    const result = await generateInvoiceForParentAndMonth(parentId, billingMonth, options);
-    setLoading(false);
-    if (result.ok && result.message) {
-      setMessage(result.message);
-      router.refresh();
-      setTimeout(closeModal, 1500);
-    } else {
-      setError(result.error ?? "Failed to generate invoice.");
-    }
+    await run(async () => {
+      setError(null);
+      setMessage(null);
+      const billingMonth = `${month}-01`;
+      const options =
+        discountAmount !== "" || discountPct !== ""
+          ? {
+              discount_amount: discountAmount !== "" ? Number(discountAmount) : undefined,
+              discount_pct: discountPct !== "" ? Number(discountPct) : undefined,
+            }
+          : undefined;
+      const result = await generateInvoiceForParentAndMonth(parentId, billingMonth, options);
+      if (result.ok && result.message) {
+        setMessage(result.message);
+        router.refresh();
+        setTimeout(closeModal, 1500);
+      } else {
+        setError(result.error ?? "Failed to generate invoice.");
+      }
+    });
   }
 
   return (
@@ -194,13 +195,14 @@ export function GenerateSingleInvoiceModal({ parents }: Props) {
                 >
                   Cancel
                 </button>
-                <button
+                <ActionButton
                   type="submit"
-                  disabled={loading}
+                  pending={loading}
+                  pendingLabel="Generating…"
                   className="btn-primary"
                 >
-                  {loading ? "Generating…" : "Generate invoice"}
-                </button>
+                  Generate invoice
+                </ActionButton>
               </div>
             </form>
           </div>

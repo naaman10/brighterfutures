@@ -156,6 +156,15 @@ body {
     opacity: 0.5;
   }
 
+  .btn-primary:disabled[aria-busy="true"],
+  .btn-secondary:disabled[aria-busy="true"],
+  .btn-danger:disabled[aria-busy="true"],
+  .btn-danger-outline:disabled[aria-busy="true"],
+  .btn-warning:disabled[aria-busy="true"] {
+    cursor: wait;
+    opacity: 0.85;
+  }
+
   .btn-primary {
     background: var(--accent);
     color: #fff;

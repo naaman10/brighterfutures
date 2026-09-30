@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { Invoice } from "@/lib/db";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { InvoiceDownloadButton } from "./invoice-download-button";
 import { formatDisplayDate } from "@/lib/format";
 import {
@@ -58,12 +59,15 @@ const LOCKED_STATUSES = ["issued", "paid"];
 export function InvoicesTable({ invoices }: Props) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  const [sending, setSending] = useState(false);
-  const [sendingReminder, setSendingReminder] = useState(false);
-  const [markingPaid, setMarkingPaid] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [regenerating, setRegenerating] = useState(false);
-  const [cancelling, setCancelling] = useState(false);
+  const { pending, activeKey, run } = useActionLock<
+    "send" | "reminder" | "paid" | "delete" | "regenerate" | "cancel"
+  >();
+  const sending = activeKey === "send";
+  const sendingReminder = activeKey === "reminder";
+  const markingPaid = activeKey === "paid";
+  const deleting = activeKey === "delete";
+  const regenerating = activeKey === "regenerate";
+  const cancelling = activeKey === "cancel";
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRegenerateConfirm, setShowRegenerateConfirm] = useState(false);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
@@ -113,49 +117,49 @@ export function InvoicesTable({ invoices }: Props) {
 
   async function handleSend() {
     if (selected.size === 0) return;
-    setSending(true);
-    const ids = Array.from(selected);
-    const result = await sendSelectedInvoices(ids);
-    setSending(false);
-    if (result.ok && result.sent != null) {
-      setSelected(new Set());
-      router.refresh();
-      toast.success(`Sent ${result.sent} invoice${result.sent !== 1 ? "s" : ""}`);
-    } else {
-      toast.error(result.error ?? "Failed to send invoices");
-    }
+    await run(async () => {
+      const ids = Array.from(selected);
+      const result = await sendSelectedInvoices(ids);
+      if (result.ok && result.sent != null) {
+        setSelected(new Set());
+        router.refresh();
+        toast.success(`Sent ${result.sent} invoice${result.sent !== 1 ? "s" : ""}`);
+      } else {
+        toast.error(result.error ?? "Failed to send invoices");
+      }
+    }, "send");
   }
 
   async function handleMarkAsPaid() {
     if (selected.size === 0) return;
-    setMarkingPaid(true);
-    const ids = Array.from(selected);
-    const result = await markSelectedInvoicesAsPaid(ids);
-    setMarkingPaid(false);
-    if (result.ok && result.updated != null) {
-      setSelected(new Set());
-      router.refresh();
-      toast.success(`Marked ${result.updated} invoice${result.updated !== 1 ? "s" : ""} as paid`);
-    } else {
-      toast.error(result.error ?? "Failed to mark invoices as paid");
-    }
+    await run(async () => {
+      const ids = Array.from(selected);
+      const result = await markSelectedInvoicesAsPaid(ids);
+      if (result.ok && result.updated != null) {
+        setSelected(new Set());
+        router.refresh();
+        toast.success(`Marked ${result.updated} invoice${result.updated !== 1 ? "s" : ""} as paid`);
+      } else {
+        toast.error(result.error ?? "Failed to mark invoices as paid");
+      }
+    }, "paid");
   }
 
   async function handleSendReminder() {
     if (selected.size === 0) return;
-    setSendingReminder(true);
-    const ids = Array.from(selected);
-    const result = await sendPaymentReminders(ids);
-    setSendingReminder(false);
-    if (result.ok && result.sent != null) {
-      setSelected(new Set());
-      router.refresh();
-      toast.success(
-        `Sent ${result.sent} payment reminder${result.sent !== 1 ? "s" : ""}`
-      );
-    } else {
-      toast.error(result.error ?? "Failed to send payment reminders");
-    }
+    await run(async () => {
+      const ids = Array.from(selected);
+      const result = await sendPaymentReminders(ids);
+      if (result.ok && result.sent != null) {
+        setSelected(new Set());
+        router.refresh();
+        toast.success(
+          `Sent ${result.sent} payment reminder${result.sent !== 1 ? "s" : ""}`
+        );
+      } else {
+        toast.error(result.error ?? "Failed to send payment reminders");
+      }
+    }, "reminder");
   }
 
   function openDeleteConfirm() {
@@ -168,56 +172,56 @@ export function InvoicesTable({ invoices }: Props) {
 
   async function handleDeleteConfirmed() {
     if (selected.size === 0) return;
-    setDeleting(true);
-    const ids = Array.from(selected);
-    const result = await deleteSelectedInvoices(ids);
-    setDeleting(false);
-    setShowDeleteConfirm(false);
-    if (result.ok && result.deleted != null) {
-      setSelected(new Set());
-      router.refresh();
-      toast.success(`Deleted ${result.deleted} invoice${result.deleted !== 1 ? "s" : ""}`);
-    } else {
-      toast.error(result.error ?? "Failed to delete invoices");
-    }
+    await run(async () => {
+      const ids = Array.from(selected);
+      const result = await deleteSelectedInvoices(ids);
+      setShowDeleteConfirm(false);
+      if (result.ok && result.deleted != null) {
+        setSelected(new Set());
+        router.refresh();
+        toast.success(`Deleted ${result.deleted} invoice${result.deleted !== 1 ? "s" : ""}`);
+      } else {
+        toast.error(result.error ?? "Failed to delete invoices");
+      }
+    }, "delete");
   }
 
   async function handleRegenerateConfirmed() {
     if (selected.size === 0) return;
-    setRegenerating(true);
-    const ids = Array.from(selected);
-    const result = await regenerateSelectedInvoices(ids);
-    setRegenerating(false);
-    setShowRegenerateConfirm(false);
-    if (result.regenerated != null && result.regenerated > 0) {
-      setSelected(new Set());
-      router.refresh();
-      toast.success(
-        `Regenerated ${result.regenerated} invoice${result.regenerated !== 1 ? "s" : ""}.${result.errors?.length ? ` ${result.errors.length} skipped.` : ""}`
-      );
-      if (result.errors?.length) {
-        result.errors.forEach((err) => toast.warning(err));
+    await run(async () => {
+      const ids = Array.from(selected);
+      const result = await regenerateSelectedInvoices(ids);
+      setShowRegenerateConfirm(false);
+      if (result.regenerated != null && result.regenerated > 0) {
+        setSelected(new Set());
+        router.refresh();
+        toast.success(
+          `Regenerated ${result.regenerated} invoice${result.regenerated !== 1 ? "s" : ""}.${result.errors?.length ? ` ${result.errors.length} skipped.` : ""}`
+        );
+        if (result.errors?.length) {
+          result.errors.forEach((err) => toast.warning(err));
+        }
+      } else {
+        toast.error(result.errors?.[0] ?? "No invoices could be regenerated.");
+        result.errors?.slice(1).forEach((err) => toast.warning(err));
       }
-    } else {
-      toast.error(result.errors?.[0] ?? "No invoices could be regenerated.");
-      result.errors?.slice(1).forEach((err) => toast.warning(err));
-    }
+    }, "regenerate");
   }
 
   async function handleCancelConfirmed() {
     if (selected.size === 0) return;
-    setCancelling(true);
-    const ids = Array.from(selected);
-    const result = await cancelSelectedInvoices(ids);
-    setCancelling(false);
-    setShowCancelConfirm(false);
-    if (result.ok && result.cancelled != null) {
-      setSelected(new Set());
-      router.refresh();
-      toast.success(`Cancelled ${result.cancelled} invoice${result.cancelled !== 1 ? "s" : ""}`);
-    } else {
-      toast.error(result.error ?? "Failed to cancel invoices");
-    }
+    await run(async () => {
+      const ids = Array.from(selected);
+      const result = await cancelSelectedInvoices(ids);
+      setShowCancelConfirm(false);
+      if (result.ok && result.cancelled != null) {
+        setSelected(new Set());
+        router.refresh();
+        toast.success(`Cancelled ${result.cancelled} invoice${result.cancelled !== 1 ? "s" : ""}`);
+      } else {
+        toast.error(result.error ?? "Failed to cancel invoices");
+      }
+    }, "cancel");
   }
 
   const selectedInvoices = invoices.filter((i) => selected.has(i.id));
@@ -373,52 +377,62 @@ export function InvoicesTable({ invoices }: Props) {
     <div className="space-y-6">
       {selected.size > 0 && (
         <div className="flex flex-wrap items-center gap-3">
-          <button
+          <ActionButton
             type="button"
             onClick={handleSend}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling}
+            pending={sending}
+            pendingLabel="Sending…"
+            disabled={pending}
             className="btn-primary"
           >
-            {sending ? "Sending…" : `Send ${selected.size} selected`}
-          </button>
-          <button
+            {`Send ${selected.size} selected`}
+          </ActionButton>
+          <ActionButton
             type="button"
             onClick={handleMarkAsPaid}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder}
+            pending={markingPaid}
+            pendingLabel="Updating…"
+            disabled={pending}
             className="btn-secondary"
           >
-            {markingPaid ? "Updating…" : "Mark as paid"}
-          </button>
-          <button
+            Mark as paid
+          </ActionButton>
+          <ActionButton
             type="button"
             onClick={handleSendReminder}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder || !canSendReminder}
+            pending={sendingReminder}
+            pendingLabel="Sending…"
+            disabled={pending || !canSendReminder}
             title={!canSendReminder ? "Select issued invoices to send reminders" : "Send reminders to issued invoices' parent(s)"}
             className="btn-secondary"
           >
-            {sendingReminder ? "Sending…" : "Send payment reminder"}
-          </button>
-          <button
+            Send payment reminder
+          </ActionButton>
+          <ActionButton
             type="button"
             onClick={() => setShowRegenerateConfirm(true)}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling || sendingReminder || !canRegenerate}
+            pending={regenerating}
+            pendingLabel="Regenerating…"
+            disabled={pending || !canRegenerate}
             title={!canRegenerate ? "Select draft invoices to regenerate" : "Recalculate subtotal from current sessions"}
             className="btn-secondary"
           >
-            {regenerating ? "Regenerating…" : "Regenerate selected"}
-          </button>
-          <button
+            Regenerate selected
+          </ActionButton>
+          <ActionButton
             type="button"
             onClick={() => setShowCancelConfirm(true)}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling || !canCancel}
+            pending={cancelling}
+            pendingLabel="Cancelling…"
+            disabled={pending || !canCancel}
             className="btn-secondary"
           >
-            {cancelling ? "Cancelling…" : "Cancel invoice(s)"}
-          </button>
+            Cancel invoice(s)
+          </ActionButton>
           <button
             type="button"
             onClick={openDeleteConfirm}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling}
+            disabled={pending}
             className="btn-danger-outline"
           >
             Delete selected
@@ -426,7 +440,7 @@ export function InvoicesTable({ invoices }: Props) {
           <button
             type="button"
             onClick={() => setSelected(new Set())}
-            disabled={sending || markingPaid || deleting || regenerating || cancelling}
+            disabled={pending}
             className="text-sm text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
           >
             Clear selection
@@ -466,14 +480,15 @@ export function InvoicesTable({ invoices }: Props) {
               >
                 Cancel
               </button>
-              <button
+              <ActionButton
                 type="button"
                 onClick={handleDeleteConfirmed}
-                disabled={deleting}
+                pending={deleting}
+                pendingLabel="Deleting…"
                 className="btn-danger"
               >
-                {deleting ? "Deleting…" : "Delete"}
-              </button>
+                Delete
+              </ActionButton>
             </div>
           </div>
         </>
@@ -511,14 +526,15 @@ export function InvoicesTable({ invoices }: Props) {
               >
                 Cancel
               </button>
-              <button
+              <ActionButton
                 type="button"
                 onClick={handleRegenerateConfirmed}
-                disabled={regenerating}
+                pending={regenerating}
+                pendingLabel="Regenerating…"
                 className="btn-primary"
               >
-                {regenerating ? "Regenerating…" : "Regenerate"}
-              </button>
+                Regenerate
+              </ActionButton>
             </div>
           </div>
         </>
@@ -556,14 +572,15 @@ export function InvoicesTable({ invoices }: Props) {
               >
                 Back
               </button>
-              <button
+              <ActionButton
                 type="button"
                 onClick={handleCancelConfirmed}
-                disabled={cancelling}
+                pending={cancelling}
+                pendingLabel="Cancelling…"
                 className="btn-warning"
               >
-                {cancelling ? "Cancelling…" : "Cancel invoice(s)"}
-              </button>
+                Cancel invoice(s)
+              </ActionButton>
             </div>
           </div>
         </>

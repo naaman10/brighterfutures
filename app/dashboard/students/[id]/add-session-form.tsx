@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { SESSION_STATUSES, SESSION_STATUS_LABELS } from "@/lib/session-status";
 import { addSessions } from "./actions";
 
@@ -28,26 +29,24 @@ type Props = { studentId: string };
 export function AddSessionForm({ studentId }: Props) {
   const [mode, setMode] = useState<"single" | "recurring">("single");
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const { pending, run } = useActionLock();
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
-    if (isSubmitting) return;
-    setError(null);
-    setIsSubmitting(true);
-    formData.set("mode", mode);
-    const result = await addSessions(studentId, formData);
-    if (result.error) {
-      setError(result.error);
-      setIsSubmitting(false);
-      return;
-    }
-    if (result.calendarWarning) {
-      toast.warning(result.calendarWarning);
-    }
-    router.refresh();
-    setIsSubmitting(false);
+    await run(async () => {
+      setError(null);
+      formData.set("mode", mode);
+      const result = await addSessions(studentId, formData);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      if (result.calendarWarning) {
+        toast.warning(result.calendarWarning);
+      }
+      router.refresh();
+    });
   }
 
   return (
@@ -220,19 +219,14 @@ export function AddSessionForm({ studentId }: Props) {
           </div>
         </div>
       )}
-      <button
+      <ActionButton
         type="submit"
-        disabled={isSubmitting}
+        pending={pending}
+        pendingLabel={mode === "single" ? "Adding..." : "Adding sessions..."}
         className="btn-primary"
       >
-        {isSubmitting
-          ? mode === "single"
-            ? "Adding..."
-            : "Adding sessions..."
-          : mode === "single"
-          ? "Add session"
-          : "Add recurring sessions"}
-      </button>
+        {mode === "single" ? "Add session" : "Add recurring sessions"}
+      </ActionButton>
         </form>
       )}
     </div>

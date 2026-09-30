@@ -3,37 +3,39 @@
 import { useState } from "react";
 import { generateInvoices } from "./actions";
 import { useRouter } from "next/navigation";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 
 export function GenerateInvoicesButton() {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const { pending, run } = useActionLock();
   const router = useRouter();
 
   async function handleClick() {
-    setLoading(true);
-    setError(null);
-    setMessage(null);
-    const result = await generateInvoices();
-    setLoading(false);
-    if (result.ok && result.message) {
-      setMessage(result.message);
-      router.refresh();
-    } else {
-      setError(result.error ?? "Failed to generate invoices.");
-    }
+    await run(async () => {
+      setError(null);
+      setMessage(null);
+      const result = await generateInvoices();
+      if (result.ok && result.message) {
+        setMessage(result.message);
+        router.refresh();
+      } else {
+        setError(result.error ?? "Failed to generate invoices.");
+      }
+    });
   }
 
   return (
     <>
-      <button
+      <ActionButton
         type="button"
         onClick={handleClick}
-        disabled={loading}
+        pending={pending}
+        pendingLabel="Generating…"
         className="btn-primary"
       >
-        {loading ? "Generating…" : "Generate invoices for next month"}
-      </button>
+        Generate invoices for next month
+      </ActionButton>
       {message && (
         <span className="text-sm text-emerald-700 dark:text-emerald-300">
           {message}

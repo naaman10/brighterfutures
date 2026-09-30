@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { rescheduleSessionAction } from "../actions";
 
 type Props = {
@@ -18,22 +18,22 @@ export function RescheduleSessionForm({
   defaultSubject,
 }: Props) {
   const router = useRouter();
-  const [pending, setPending] = useState(false);
+  const { pending, run } = useActionLock();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setPending(true);
     const form = e.currentTarget;
     const formData = new FormData(form);
-    const result = await rescheduleSessionAction(sessionId, studentId, formData);
-    setPending(false);
-    if (result.error) {
-      toast.error(result.error);
-      return;
-    }
-    toast.success("Session rescheduled. A new session has been created.");
-    router.push(`/dashboard/students/${studentId}/sessions/${sessionId}`);
-    router.refresh();
+    await run(async () => {
+      const result = await rescheduleSessionAction(sessionId, studentId, formData);
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+      toast.success("Session rescheduled. A new session has been created.");
+      router.push(`/dashboard/students/${studentId}/sessions/${sessionId}`);
+      router.refresh();
+    });
   }
 
   return (
@@ -84,13 +84,14 @@ export function RescheduleSessionForm({
         />
       </div>
       <div className="flex gap-3">
-        <button
+        <ActionButton
           type="submit"
-          disabled={pending}
+          pending={pending}
+          pendingLabel="Rescheduling…"
           className="btn-primary"
         >
-          {pending ? "Rescheduling…" : "Reschedule session"}
-        </button>
+          Reschedule session
+        </ActionButton>
         <Link
           href={`/dashboard/students/${studentId}/sessions/${sessionId}`}
           className="btn-secondary"

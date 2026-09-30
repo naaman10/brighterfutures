@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import type { ParentBasic } from "@/lib/db";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { RecordStatusField } from "@/app/dashboard/components/record-status-field";
 import { parseRecordStatus } from "@/lib/record-status";
 import { updateParentAction } from "../actions";
@@ -15,51 +16,50 @@ type EditParentFormProps = {
 
 export function EditParentForm({ parent }: EditParentFormProps) {
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState(false);
+  const { pending, run } = useActionLock();
   const router = useRouter();
 
   async function handleSubmit(formData: FormData) {
-    setError(null);
+    await run(async () => {
+      setError(null);
 
-    const newStatus = parseRecordStatus(formData.get("status") as string);
-    const wasActive = parseRecordStatus(parent.status) === "active";
-    const isDeactivating = wasActive && newStatus === "inactive";
+      const newStatus = parseRecordStatus(formData.get("status") as string);
+      const wasActive = parseRecordStatus(parent.status) === "active";
+      const isDeactivating = wasActive && newStatus === "inactive";
 
-    setPending(true);
-    const toastId = toast.loading(
-      isDeactivating
-        ? "Saving parent and updating students & sessions…"
-        : "Saving parent…"
-    );
+      const toastId = toast.loading(
+        isDeactivating
+          ? "Saving parent and updating students & sessions…"
+          : "Saving parent…"
+      );
 
-    try {
-      const result = await updateParentAction(parent.id, formData);
-      if (result?.error) {
-        setError(result.error);
-        toast.error(result.error, { id: toastId });
-        return;
+      try {
+        const result = await updateParentAction(parent.id, formData);
+        if (result?.error) {
+          setError(result.error);
+          toast.error(result.error, { id: toastId });
+          return;
+        }
+
+        if (result.deactivated) {
+          const { studentsUpdated, sessionsCancelled } = result.deactivated;
+          toast.success(
+            `Parent saved. ${studentsUpdated} student${studentsUpdated !== 1 ? "s" : ""} set inactive and ${sessionsCancelled} upcoming session${sessionsCancelled !== 1 ? "s" : ""} cancelled.`,
+            { id: toastId }
+          );
+        } else if (newStatus === "active" && parseRecordStatus(parent.status) === "inactive") {
+          toast.success("Parent saved and set to active.", { id: toastId });
+        } else {
+          toast.success("Parent saved.", { id: toastId });
+        }
+
+        router.push("/dashboard/parents");
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Failed to save parent.";
+        setError(message);
+        toast.error(message, { id: toastId });
       }
-
-      if (result.deactivated) {
-        const { studentsUpdated, sessionsCancelled } = result.deactivated;
-        toast.success(
-          `Parent saved. ${studentsUpdated} student${studentsUpdated !== 1 ? "s" : ""} set inactive and ${sessionsCancelled} upcoming session${sessionsCancelled !== 1 ? "s" : ""} cancelled.`,
-          { id: toastId }
-        );
-      } else if (newStatus === "active" && parseRecordStatus(parent.status) === "inactive") {
-        toast.success("Parent saved and set to active.", { id: toastId });
-      } else {
-        toast.success("Parent saved.", { id: toastId });
-      }
-
-      router.push("/dashboard/parents");
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Failed to save parent.";
-      setError(message);
-      toast.error(message, { id: toastId });
-    } finally {
-      setPending(false);
-    }
+    });
   }
 
   const inputClass =
@@ -284,13 +284,14 @@ export function EditParentForm({ parent }: EditParentFormProps) {
       </section>
 
       <div className="flex gap-3">
-        <button
+        <ActionButton
           type="submit"
-          disabled={pending}
+          pending={pending}
+          pendingLabel="Saving…"
           className="btn-primary"
         >
-          {pending ? "Saving…" : "Save changes"}
-        </button>
+          Save changes
+        </ActionButton>
         <Link
           href="/dashboard/parents"
           aria-disabled={pending}

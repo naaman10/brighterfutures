@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import type { StudentDetail } from "@/lib/db";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { RecordStatusField } from "@/app/dashboard/components/record-status-field";
 import { parseRecordStatus } from "@/lib/record-status";
 
@@ -20,11 +21,14 @@ function toDateInputValue(val: unknown): string {
 
 export function EditStudentForm({ student, action }: Props) {
   const [error, setError] = useState<string | null>(null);
+  const { pending, run } = useActionLock();
 
   async function handleSubmit(formData: FormData) {
-    setError(null);
-    const result = await action(student.id, formData);
-    if (result.error) setError(result.error);
+    await run(async () => {
+      setError(null);
+      const result = await action(student.id, formData);
+      if (result.error) setError(result.error);
+    });
   }
 
   const dobValue = toDateInputValue(student.dob);
@@ -222,12 +226,14 @@ export function EditStudentForm({ student, action }: Props) {
       </section>
 
       <div className="flex gap-3">
-        <button
+        <ActionButton
           type="submit"
+          pending={pending}
+          pendingLabel="Saving…"
           className="btn-primary"
         >
           Save changes
-        </button>
+        </ActionButton>
         <Link
           href={`/dashboard/students/${student.id}`}
           className="btn-secondary"

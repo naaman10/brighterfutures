@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { createBftLearnAccount } from "./bft-learn-actions";
 
 type Props = {
@@ -12,36 +13,33 @@ type Props = {
 
 export function CreateBftLearnAccountForm({ studentId, defaultName }: Props) {
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { pending, run } = useActionLock();
   const router = useRouter();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (isSubmitting) return;
-    setError(null);
-    setIsSubmitting(true);
-
     const formData = new FormData(event.currentTarget);
     const email = (formData.get("email") as string)?.trim() ?? "";
     const name = (formData.get("name") as string)?.trim() ?? "";
 
-    try {
-      const result = await createBftLearnAccount(studentId, { email, name });
-      if (result?.error) {
-        setError(result.error);
-        return;
-      }
+    await run(async () => {
+      setError(null);
+      try {
+        const result = await createBftLearnAccount(studentId, { email, name });
+        if (result?.error) {
+          setError(result.error);
+          return;
+        }
 
-      toast.success("BFT Learn account created.");
-      router.refresh();
-    } catch (e) {
-      console.error("[CreateBftLearnAccountForm]", e);
-      setError(
-        e instanceof Error ? e.message : "Failed to create BFT Learn account."
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
+        toast.success("BFT Learn account created.");
+        router.refresh();
+      } catch (e) {
+        console.error("[CreateBftLearnAccountForm]", e);
+        setError(
+          e instanceof Error ? e.message : "Failed to create BFT Learn account."
+        );
+      }
+    });
   }
 
   return (
@@ -79,13 +77,14 @@ export function CreateBftLearnAccountForm({ studentId, defaultName }: Props) {
         />
       </div>
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
-      <button
+      <ActionButton
         type="submit"
-        disabled={isSubmitting}
+        pending={pending}
+        pendingLabel="Creating…"
         className="btn-primary"
       >
-        {isSubmitting ? "Creating…" : "Create BFT Learn account"}
-      </button>
+        Create BFT Learn account
+      </ActionButton>
     </form>
   );
 }

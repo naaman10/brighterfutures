@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 
 type Feedback = {
   id: string;
@@ -22,7 +23,7 @@ export function EnrollmentFeedback({ enrollmentId, adminUserId, studentName }: P
   const [feedbackList, setFeedbackList] = useState<Feedback[]>([]);
   const [newFeedback, setNewFeedback] = useState("");
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const { pending: submitting, run } = useActionLock();
 
   useEffect(() => {
     loadFeedback();
@@ -52,36 +53,35 @@ export function EnrollmentFeedback({ enrollmentId, adminUserId, studentName }: P
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const response = await fetch(
-        `/api/bft-learn/enrollment/${encodeURIComponent(enrollmentId)}/feedback`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            feedback: newFeedback.trim(),
-            createdBy: adminUserId,
-          }),
+    await run(async () => {
+      try {
+        const response = await fetch(
+          `/api/bft-learn/enrollment/${encodeURIComponent(enrollmentId)}/feedback`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              feedback: newFeedback.trim(),
+              createdBy: adminUserId,
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to save feedback");
         }
-      );
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to save feedback");
+        toast.success("Feedback saved successfully");
+        setNewFeedback("");
+        await loadFeedback();
+        router.refresh();
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Failed to save feedback";
+        toast.error(message);
       }
-
-      toast.success("Feedback saved successfully");
-      setNewFeedback("");
-      await loadFeedback();
-      router.refresh();
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Failed to save feedback";
-      toast.error(message);
-    } finally {
-      setSubmitting(false);
-    }
+    });
   };
 
   return (
@@ -141,14 +141,16 @@ export function EnrollmentFeedback({ enrollmentId, adminUserId, studentName }: P
             />
           </div>
           <div className="flex justify-end">
-            <button
+            <ActionButton
               type="button"
               onClick={submitFeedback}
-              disabled={submitting || !newFeedback.trim()}
+              pending={submitting}
+              pendingLabel="Saving..."
+              disabled={!newFeedback.trim()}
               className="btn-primary"
             >
-              {submitting ? "Saving..." : "Save Feedback"}
-            </button>
+              Save Feedback
+            </ActionButton>
           </div>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import { addParentWithStudents } from "./actions";
 
 type StudentRow = {
@@ -19,7 +20,7 @@ const emptyStudent: StudentRow = {
 export function AddParentForm() {
   const [students, setStudents] = useState<StudentRow[]>([{ ...emptyStudent }]);
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { pending, run } = useActionLock();
 
   function addStudent() {
     setStudents((prev) => [...prev, { ...emptyStudent }]);
@@ -38,24 +39,22 @@ export function AddParentForm() {
   }
 
   async function handleSubmit(formData: FormData) {
-    if (isSubmitting) return;
-    setError(null);
-    setIsSubmitting(true);
+    await run(async () => {
+      setError(null);
 
-    const toSend = students
-      .map((s) => ({
-        first_name: s.first_name.trim(),
-        last_name: s.last_name.trim(),
-        age: s.age.trim() ? parseInt(s.age, 10) || null : null,
-      }))
-      .filter((s) => s.first_name || s.last_name);
-    formData.set("students", JSON.stringify(toSend));
-    const result = await addParentWithStudents(formData);
-    if (result && "error" in result) {
-      setError(result.error);
-    }
-
-    setIsSubmitting(false);
+      const toSend = students
+        .map((s) => ({
+          first_name: s.first_name.trim(),
+          last_name: s.last_name.trim(),
+          age: s.age.trim() ? parseInt(s.age, 10) || null : null,
+        }))
+        .filter((s) => s.first_name || s.last_name);
+      formData.set("students", JSON.stringify(toSend));
+      const result = await addParentWithStudents(formData);
+      if (result && "error" in result) {
+        setError(result.error);
+      }
+    });
   }
 
   return (
@@ -190,13 +189,14 @@ export function AddParentForm() {
       </section>
 
       <div className="flex gap-3">
-        <button
+        <ActionButton
           type="submit"
-          disabled={isSubmitting}
+          pending={pending}
+          pendingLabel="Adding..."
           className="btn-primary"
         >
-          {isSubmitting ? "Adding..." : "Add parent"}
-        </button>
+          Add parent
+        </ActionButton>
         <Link
           href="/dashboard"
           className="btn-secondary"

@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { ActionButton, useActionLock } from "@/app/dashboard/components/action-button";
 import {
   bftLearnQuestionPrompt,
   formatBftReviewValue,
@@ -37,7 +38,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
   const [grades, setGrades] = useState<Map<string, QuestionGrade>>(new Map());
   const [feedback, setFeedback] = useState<Map<string, string>>(new Map());
   const [overallFeedback, setOverallFeedback] = useState("");
-  const [saving, setSaving] = useState(false);
+  const { pending, activeKey, run } = useActionLock<"save" | "complete">();
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Debug: Log the entire review data structure
@@ -95,8 +96,7 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
     setHasUnsavedChanges(true);
   }, []);
 
-  const saveAssessment = async () => {
-    setSaving(true);
+  const persistAssessment = async (): Promise<boolean> => {
     try {
       const response = await fetch(
         `/api/bft-learn/assessment/${encodeURIComponent(review.enrollment.id)}`,
@@ -125,16 +125,17 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
 
       toast.success("Assessment saved");
       setHasUnsavedChanges(false);
+      return true;
     } catch (e) {
       const message = e instanceof Error ? e.message : "Failed to save assessment";
       toast.error(message);
-    } finally {
-      setSaving(false);
+      return false;
     }
   };
 
+  const saveAssessment = () => run(() => persistAssessment(), "save");
+
   const completeAssessment = async () => {
-    // Check all questions are graded
     const ungradedQuestions = review.questions.filter((q) => {
       const grade = grades.get(q.questionId);
       return !grade || grade.pointsEarned === undefined;
@@ -145,43 +146,42 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
       return;
     }
 
-    // Save first
-    if (hasUnsavedChanges) {
-      await saveAssessment();
-    }
-
-    const confirmed = window.confirm(
-      "Complete this assessment? Points will be awarded and this cannot be undone."
-    );
-
-    if (!confirmed) return;
-
-    setSaving(true);
-    try {
-      const response = await fetch(
-        `/api/bft-learn/assessment/${encodeURIComponent(review.enrollment.id)}/complete`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assessedBy: adminUserId }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to complete assessment");
+    await run(async () => {
+      if (hasUnsavedChanges) {
+        const saved = await persistAssessment();
+        if (!saved) return;
       }
 
-      toast.success("Assessment completed! Points have been awarded.");
-      router.push(`/dashboard/students/${studentId}?tab=bft-learn`);
-      router.refresh();
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Failed to complete assessment";
-      toast.error(message);
-    } finally {
-      setSaving(false);
-    }
+      const confirmed = window.confirm(
+        "Complete this assessment? Points will be awarded and this cannot be undone."
+      );
+
+      if (!confirmed) return;
+
+      try {
+        const response = await fetch(
+          `/api/bft-learn/assessment/${encodeURIComponent(review.enrollment.id)}/complete`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ assessedBy: adminUserId }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to complete assessment");
+        }
+
+        toast.success("Assessment completed! Points have been awarded.");
+        router.push(`/dashboard/students/${studentId}?tab=bft-learn`);
+        router.refresh();
+      } catch (e) {
+        const message = e instanceof Error ? e.message : "Failed to complete assessment";
+        toast.error(message);
+      }
+    }, "complete");
   };
 
   // Auto-save every 30 seconds
@@ -284,22 +284,26 @@ export function EnrollmentAssessment({ review, studentId, adminUserId }: Props) 
           )}
         </div>
         <div className="flex gap-3">
-          <button
+          <ActionButton
             type="button"
-            onClick={saveAssessment}
-            disabled={saving || !hasUnsavedChanges}
+            onClick={() => void saveAssessment()}
+            pending={activeKey === "save"}
+            pendingLabel="Saving..."
+            disabled={pending || !hasUnsavedChanges}
             className="btn-secondary"
           >
-            {saving ? "Saving..." : "Save Draft"}
-          </button>
-          <button
+            Save Draft
+          </ActionButton>
+          <ActionButton
             type="button"
-            onClick={completeAssessment}
-            disabled={saving}
+            onClick={() => void completeAssessment()}
+            pending={activeKey === "complete"}
+            pendingLabel="Completing..."
+            disabled={pending}
             className="btn-primary"
           >
             Complete Assessment
-          </button>
+          </ActionButton>
         </div>
       </div>
     </section>
