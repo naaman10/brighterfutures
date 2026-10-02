@@ -34,58 +34,60 @@ export default async function StudentsPage() {
           or from the Add parent flow.
         </p>
       ) : (
-        <div className="overflow-hidden surface p-0">
-          <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
-            <thead>
-              <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Name
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Parent
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Status
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Age
-                </th>
-                <th className="px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Sessions
-                </th>
-                <th className="px-6 py-4 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
-              {students.map((student) => (
-                <tr key={student.id}>
-                  <td className="px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                    {student.first_name} {student.last_name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-                    {student.parent_name?.trim() || "—"}
-                  </td>
-                  <td className="px-6 py-4 text-sm">
-                    <RecordStatusBadge status={parseRecordStatus(student.status)} />
-                  </td>
-                  <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
-                    {student.age != null ? student.age : "—"}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">View for schedule</td>
-                  <td className="px-6 py-4 text-right">
-                    <Link
-                      href={`/dashboard/students/${student.id}`}
-                      className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
-                    >
-                      View
-                    </Link>
-                  </td>
+        <div className="surface overflow-hidden p-0">
+          <div className="max-h-[calc(100dvh-9.5rem)] overflow-auto overscroll-contain lg:max-h-none lg:overflow-x-auto lg:overflow-y-visible">
+            <table className="w-max min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+              <thead className="sticky top-0 z-10 bg-white dark:bg-zinc-800 lg:static">
+                <tr>
+                  <th className="whitespace-nowrap px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Name
+                  </th>
+                  <th className="whitespace-nowrap px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Parent
+                  </th>
+                  <th className="whitespace-nowrap px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Status
+                  </th>
+                  <th className="whitespace-nowrap px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Age
+                  </th>
+                  <th className="whitespace-nowrap px-6 py-4 text-left text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Sessions
+                  </th>
+                  <th className="whitespace-nowrap px-6 py-4 text-right text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-zinc-200 dark:divide-zinc-700">
+                {students.map((student) => (
+                  <tr key={student.id}>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm font-medium text-zinc-900 dark:text-zinc-50">
+                      {student.first_name} {student.last_name}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+                      {student.parent_name?.trim() || "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm">
+                      <RecordStatusBadge status={parseRecordStatus(student.status)} />
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">
+                      {student.age != null ? student.age : "—"}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-zinc-900 dark:text-zinc-50">View for schedule</td>
+                    <td className="whitespace-nowrap px-6 py-4 text-right">
+                      <Link
+                        href={`/dashboard/students/${student.id}`}
+                        className="text-sm font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+                      >
+                        View
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
